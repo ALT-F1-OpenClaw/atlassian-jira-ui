@@ -9,10 +9,10 @@ interface Issue {
   id: string;
   key: string;
   summary: string;
-  status: string;
-  priority: string;
-  assignee: string;
-  type: string;
+  status: { name: string; category: string };
+  priority: { name: string; iconUrl: string };
+  assignee: { accountId: string; displayName: string; avatarUrl: string } | null;
+  type: { name: string; iconUrl: string };
   updated: string;
 }
 
@@ -87,16 +87,16 @@ function ListView({ project }: { project: string }) {
               <td className="px-4 py-3 font-mono text-blue-400">
                 {issue.key}
               </td>
-              <td className="px-4 py-3 text-zinc-400">{issue.type}</td>
+              <td className="px-4 py-3 text-zinc-400">{issue.type?.name}</td>
               <td className="max-w-md truncate px-4 py-3">{issue.summary}</td>
               <td className="px-4 py-3">
-                <StatusBadge status={issue.status} />
+                <StatusBadge status={issue.status?.name} />
               </td>
               <td className="px-4 py-3">
-                <PriorityIcon priority={issue.priority} />
+                <PriorityIcon priority={issue.priority?.name} />
               </td>
               <td className="px-4 py-3 text-zinc-400">
-                {issue.assignee || "—"}
+                {issue.assignee?.displayName || "—"}
               </td>
               <td className="px-4 py-3 text-zinc-500">
                 {issue.updated?.substring(0, 10) || "—"}

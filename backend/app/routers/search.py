@@ -12,10 +12,11 @@ async def jql_search(
     max_results: int = Query(default=50, le=100),
 ):
     """Execute a JQL search."""
+    fields = "summary,status,priority,issuetype,assignee,updated"
     data = await jira_request(
         "GET",
         "/search/jql",
-        params={"jql": jql, "maxResults": max_results},
+        params={"jql": jql, "maxResults": max_results, "fields": fields},
     )
     return {
         "issues": [
@@ -47,10 +48,11 @@ async def quick_search(
         jql = f'project = "{project}" AND {jql}'
     jql += " ORDER BY updated DESC"
 
+    fields = "summary,status,project"
     data = await jira_request(
         "GET",
         "/search/jql",
-        params={"jql": jql, "maxResults": max_results},
+        params={"jql": jql, "maxResults": max_results, "fields": fields},
     )
     return {
         "issues": [

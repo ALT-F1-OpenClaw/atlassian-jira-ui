@@ -89,14 +89,14 @@ async def list_issues(
     if type:
         jql_parts.append(f'issuetype = "{type}"')
 
-    jql = " AND ".join(jql_parts) if jql_parts else "ORDER BY updated DESC"
-    if jql_parts:
-        jql += " ORDER BY updated DESC"
+    jql = " AND ".join(jql_parts) if jql_parts else "created IS NOT EMPTY"
+    jql += " ORDER BY updated DESC"
 
+    fields = "summary,description,status,priority,issuetype,assignee,reporter,project,labels,created,updated,duedate"
     data = await jira_request(
         "GET",
         "/search/jql",
-        params={"jql": jql, "maxResults": max_results},
+        params={"jql": jql, "maxResults": max_results, "fields": fields},
     )
 
     issues = [_format_issue(i) for i in (data or {}).get("issues", [])]
