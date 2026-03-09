@@ -35,6 +35,22 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 └─────────────────────────────────────────────┘
 ```
 
+## Screenshots
+
+### Kanban Board
+![Kanban Board](docs/screenshots/01-kanban-board.png)
+
+### Issue Detail View
+![Issue Detail](docs/screenshots/02-issue-detail.png)
+
+### List View
+![List View](docs/screenshots/03-list-view.png)
+
+### Create Issue Modal
+![Create Modal](docs/screenshots/04-create-modal.png)
+
+*UI designs generated with [Google Stitch](https://stitch.withgoogle.com/) — Gemini 3 Pro*
+
 ## What's Better
 
 | Jira's UI | This UI |
