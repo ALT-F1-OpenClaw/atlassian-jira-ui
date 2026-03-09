@@ -2,7 +2,7 @@ services:
   backend:
     build: ./backend
     ports:
-      - "8000:8000"
+      - "35400:35400"
     env_file:
       - ./backend/.env
     restart: unless-stopped

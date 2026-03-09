@@ -114,7 +114,7 @@ source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
 # Edit .env with your Jira credentials
-uvicorn app.main:app --reload
+uvicorn app.main:app --reload --port 35400
 
 # Frontend (new terminal)
 cd frontend
@@ -137,6 +137,64 @@ Open http://localhost:5173
 JIRA_HOST=https://yourcompany.atlassian.net
 JIRA_EMAIL=you@company.com
 JIRA_API_TOKEN=your-api-token
+```
+
+### App Secret Key
+
+Generate a secure random key for `APP_SECRET_KEY`:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+# or
+openssl rand -base64 32
+```
+
+## Docker
+
+### Prerequisites
+
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed
+
+### Run with Docker Compose
+
+```bash
+# 1. Configure your environment
+cp backend/.env.example backend/.env
+# Edit backend/.env with your Jira credentials and APP_SECRET_KEY
+
+# 2. Build and start both services
+docker compose up --build
+
+# Or run in detached mode
+docker compose up --build -d
+```
+
+- **Frontend** — <http://localhost:5173>
+- **Backend API** — <http://localhost:35400>
+
+### Manage containers
+
+```bash
+# Stop services
+docker compose down
+
+# View logs
+docker compose logs -f
+
+# Rebuild after code changes
+docker compose up --build
+```
+
+### Run services individually
+
+```bash
+# Backend only
+docker build -t jira-ui-backend ./backend
+docker run -p 35400:35400 --env-file ./backend/.env jira-ui-backend
+
+# Frontend only
+docker build -t jira-ui-frontend ./frontend
+docker run -p 5173:80 jira-ui-frontend
 ```
 
 ## Project Structure
