@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 const API = import.meta.env.VITE_API_URL || "";
+const APP_VERSION = __APP_VERSION__;
 
 type View = "board" | "list" | "detail";
 
@@ -134,6 +135,7 @@ export default function App() {
         <div className="flex items-center gap-4">
           <h1 className="text-lg font-bold">
             ⚡ <span className="text-zinc-300">Jira UI</span>
+            <span className="ml-2 text-xs font-normal text-zinc-600">v{APP_VERSION}</span>
           </h1>
           <select
             value={project}

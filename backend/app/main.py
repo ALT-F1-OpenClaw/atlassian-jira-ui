@@ -14,6 +14,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from .config import get_settings
 from .jira_client import close_client
 from .routers import projects, issues, boards, search
+from .version import __version__
 
 
 @asynccontextmanager
@@ -25,7 +26,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Atlassian Jira UI",
     description="Modern alternative frontend for Jira Cloud",
-    version="0.1.0",
+    version=__version__,
     lifespan=lifespan,
 )
 
@@ -47,4 +48,4 @@ app.include_router(search.router)
 
 @app.get("/api/health")
 async def health():
-    return {"status": "ok", "version": "0.1.0"}
+    return {"status": "ok", "version": __version__}
