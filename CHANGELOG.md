@@ -1,3 +1,8 @@
+## [1.2.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.1.0...v1.2.0) (2026-03-10)
+
+### Features
+
+* add BDD tests for list view and project roadmap ([ff7e68e](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/ff7e68ecb3a48681ee4405662d47b2c7ca95b55f))
 ## [1.1.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.0.0...v1.1.0) (2026-03-10)
 
 ### Features
