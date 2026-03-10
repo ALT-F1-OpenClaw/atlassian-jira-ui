@@ -1,3 +1,8 @@
+## [1.6.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.6.0...v1.6.1) (2026-03-10)
+
+### Bug Fixes
+
+* fallback to issue count when Jira API omits total field ([5091baf](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/5091bafc1c6766ea76727b0e6f7a02e94d37aa58))
 ## [1.6.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.5.0...v1.6.0) (2026-03-10)
 
 ### Features
