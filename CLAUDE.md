@@ -83,6 +83,11 @@ CORS_ORIGINS=http://localhost:5173
 VITE_API_URL=http://localhost:35400
 ```
 
+## References
+
+- [Jira REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/) — all backend endpoints proxy to this
+- [Jira Agile REST API](https://developer.atlassian.com/cloud/jira/software/rest/intro/) — boards/sprints (`base="agile"` in `jira_request`)
+
 ## Current State
 
 Phase 1, Section 1 (List View) is complete: table, sorting, filters, pagination — all with BDD tests.

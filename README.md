@@ -309,6 +309,12 @@ The bump script updates the version in:
 - Rate limiting with exponential backoff
 - Session-based auth for multi-user deployment
 
+## References
+
+- [Jira REST API v3 Documentation](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/)
+- [Jira Agile REST API](https://developer.atlassian.com/cloud/jira/software/rest/intro/)
+- [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+
 ## License
 
 MIT — see [LICENSE](./LICENSE)
