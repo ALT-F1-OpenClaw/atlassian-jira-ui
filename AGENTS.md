@@ -59,6 +59,15 @@ Issue & { transitions: { id: string, name: string }[] }
 { key: string, name: string, id: string }[]
 ```
 
+### Screenshots
+
+- Screenshots use **mock data only** — never production/private Jira data
+- `scripts/screenshots.mjs` intercepts API calls via Playwright `page.route()` and returns mock fixtures
+- Mock data mirrors the test fixtures from `App.test.tsx` — keep them in sync
+- Only the frontend dev server is needed (no backend required)
+- Run: `cd frontend && npm run dev`, then `node scripts/screenshots.mjs`
+- Output: `docs/screenshots/` (gitignored)
+
 ## Rules
 
 - Never include `Co-Authored-By` in commit messages
