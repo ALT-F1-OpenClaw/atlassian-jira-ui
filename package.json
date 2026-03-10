@@ -1,0 +1,15 @@
+{
+  "name": "atlassian-jira-ui",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Modern alternative UI for Atlassian Jira Cloud",
+  "scripts": {
+    "changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s",
+    "changelog:init": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 0",
+    "version:bump": "node scripts/bump-version.mjs"
+  },
+  "devDependencies": {
+    "conventional-changelog-cli": "^5.0.0",
+    "conventional-changelog-conventionalcommits": "^9.0.0"
+  }
+}

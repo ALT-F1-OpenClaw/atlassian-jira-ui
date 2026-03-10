@@ -252,6 +252,29 @@ atlassian-jira-ui/
 | GET | `/api/search` | JQL search |
 | GET | `/api/search/quick` | Fuzzy text search |
 
+## Releasing a New Version
+
+```bash
+# Install dependencies (first time only)
+npm install
+
+# Bump version (updates all sources + generates CHANGELOG + commits + tags)
+node scripts/bump-version.mjs patch   # 1.0.0 → 1.0.1
+node scripts/bump-version.mjs minor   # 1.0.0 → 1.1.0
+node scripts/bump-version.mjs major   # 1.0.0 → 2.0.0
+node scripts/bump-version.mjs 2.5.0   # explicit version
+
+# Push to remote
+git push && git push --tags
+```
+
+The bump script updates the version in:
+
+- `package.json` (root)
+- `frontend/package.json`
+- `backend/app/version.py`
+- `CHANGELOG.md` (auto-generated from conventional commits)
+
 ## Security
 
 - API token never sent to frontend — backend acts as proxy
