@@ -1,3 +1,8 @@
+## [1.6.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.5.0...v1.6.0) (2026-03-10)
+
+### Features
+
+* add filter dropdowns to header bar (task 1.3) ([9549d58](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/9549d5825c33ff923d51e3faa517995e06c3cf4d))
 ## [1.5.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.4.0...v1.5.0) (2026-03-10)
 
 ### Features
