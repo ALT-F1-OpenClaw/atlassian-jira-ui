@@ -1,3 +1,8 @@
+## [1.3.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.2.0...v1.3.0) (2026-03-10)
+
+### Features
+
+* add backend start script and annotate roadmap with BDD test coverage ([12196c3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/12196c32d6e3f94ff57239dec37d8c543c7496e7))
 ## [1.2.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.1.0...v1.2.0) (2026-03-10)
 
 ### Features
