@@ -4,7 +4,7 @@
 
 ### 1. List view enhancements
 
-- [x] Basic table with issue key, type, summary, status, priority, assignee, updated
+- [x] Basic table with issue key, type, summary, status, priority, assignee, updated — *BDD tests: `App.test.tsx` (11 scenarios)*
 - [ ] Column sorting (click header to sort by field)
 - [ ] Filter dropdowns (status, type, assignee)
 - [ ] Pagination (offset-based, next/previous controls)
