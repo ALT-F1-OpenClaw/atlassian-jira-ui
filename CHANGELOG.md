@@ -1,3 +1,8 @@
+## [1.14.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.13.0...v1.14.0) (2026-03-10)
+
+### Features
+
+* use mock data for screenshots, never production data ([35c824c](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/35c824ce32ff87b351b41085fb5cc37b37f0746b))
 ## [1.13.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.12.0...v1.13.0) (2026-03-10)
 ## [1.12.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.11.0...v1.12.0) (2026-03-10)
 ## [1.11.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.10.0...v1.11.0) (2026-03-10)
