@@ -133,9 +133,12 @@ function FilterBar({
   );
 }
 
+const PAGE_SIZE = 50;
+
 function ListView({ project, filters, onIssuesLoaded }: { project: string; filters: Filters; onIssuesLoaded?: (issues: Issue[]) => void }) {
   const [sortBy, setSortBy] = useState<SortField>("updated");
   const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
+  const [page, setPage] = useState(0);
 
   const handleSort = (field: SortField) => {
     if (field === sortBy) {
@@ -144,12 +147,15 @@ function ListView({ project, filters, onIssuesLoaded }: { project: string; filte
       setSortBy(field);
       setSortOrder("ASC");
     }
+    setPage(0);
   };
 
+  const startAt = page * PAGE_SIZE;
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["issues", project, sortBy, sortOrder, filters.status, filters.type, filters.assignee],
+    queryKey: ["issues", project, sortBy, sortOrder, filters.status, filters.type, filters.assignee, page],
     queryFn: async () => {
-      const params = new URLSearchParams({ max_results: "50", sort_by: sortBy, sort_order: sortOrder });
+      const params = new URLSearchParams({ max_results: String(PAGE_SIZE), start_at: String(startAt), sort_by: sortBy, sort_order: sortOrder });
       if (project) params.set("project", project);
       if (filters.status) params.set("status", filters.status);
       if (filters.type) params.set("type", filters.type);
@@ -159,6 +165,10 @@ function ListView({ project, filters, onIssuesLoaded }: { project: string; filte
       return res.json() as Promise<{ issues: Issue[]; total: number }>;
     },
   });
+
+  useEffect(() => {
+    setPage(0);
+  }, [project, filters.status, filters.type, filters.assignee]);
 
   useEffect(() => {
     if (data?.issues) onIssuesLoaded?.(data.issues);
@@ -217,8 +227,26 @@ function ListView({ project, filters, onIssuesLoaded }: { project: string; filte
           ))}
         </tbody>
       </table>
-      <div className="px-4 py-3 text-sm text-zinc-500">
-        {data?.issues.length} of {data?.total} issues
+      <div className="flex items-center justify-between px-4 py-3 text-sm text-zinc-500">
+        <span>
+          {startAt + 1}–{Math.min(startAt + (data?.issues.length || 0), data?.total || 0)} of {data?.total} issues
+        </span>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            disabled={page === 0}
+            className="rounded-md border border-zinc-700 px-3 py-1 text-sm transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Previous
+          </button>
+          <button
+            onClick={() => setPage((p) => p + 1)}
+            disabled={startAt + PAGE_SIZE >= (data?.total || 0)}
+            className="rounded-md border border-zinc-700 px-3 py-1 text-sm transition-colors hover:bg-zinc-800 disabled:cursor-not-allowed disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
       </div>
     </div>
   );

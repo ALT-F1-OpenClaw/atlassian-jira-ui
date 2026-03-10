@@ -87,6 +87,7 @@ async def list_issues(
     type: str | None = None,
     sort_by: str = Query(default="updated"),
     sort_order: str = Query(default="DESC"),
+    start_at: int = Query(default=0, ge=0),
     max_results: int = Query(default=50, le=100),
 ):
     """List issues with optional filters."""
@@ -111,7 +112,7 @@ async def list_issues(
     data = await jira_request(
         "GET",
         "/search/jql",
-        params={"jql": jql, "maxResults": max_results, "fields": fields},
+        params={"jql": jql, "startAt": start_at, "maxResults": max_results, "fields": fields},
     )
 
     issues = [_format_issue(i) for i in (data or {}).get("issues", [])]

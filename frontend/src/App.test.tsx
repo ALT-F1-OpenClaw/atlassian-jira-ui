@@ -210,10 +210,10 @@ describe("Feature: List view displays issues in a table", () => {
   });
 
   describe("Scenario: Issue count is displayed", () => {
-    it("Given 3 issues out of 3 total, then '3 of 3 issues' should be shown", async () => {
+    it("Given 3 issues out of 3 total, then '1–3 of 3 issues' should be shown", async () => {
       render(<App />, { wrapper: createWrapper() });
 
-      expect(await screen.findByText("3 of 3 issues")).toBeInTheDocument();
+      expect(await screen.findByText("1–3 of 3 issues")).toBeInTheDocument();
     });
   });
 });
@@ -414,6 +414,111 @@ describe("Feature: Filter dropdowns", () => {
 
       await screen.findByText("PROJ-1");
       expect(screen.queryByText("Clear filters")).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Pagination", () => {
+  describe("Scenario: Previous and Next buttons are displayed", () => {
+    it("Given the list view is displayed, then Previous and Next buttons should be visible", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      expect(screen.getByText("Previous")).toBeInTheDocument();
+      expect(screen.getByText("Next")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Previous button is disabled on the first page", () => {
+    it("Given the user is on page 1, then the Previous button should be disabled", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      expect(screen.getByText("Previous")).toBeDisabled();
+    });
+  });
+
+  describe("Scenario: Next button is disabled when all issues fit on one page", () => {
+    it("Given 3 issues with a page size of 50, then the Next button should be disabled", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      expect(screen.getByText("Next")).toBeDisabled();
+    });
+  });
+
+  describe("Scenario: Range indicator shows current page range", () => {
+    it("Given 3 issues on page 1, then '1–3 of 3 issues' should be displayed", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      expect(await screen.findByText("1–3 of 3 issues")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: API is called with start_at parameter", () => {
+    it("Given the first page loads, then the API should be called with start_at=0", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const issueCall = calls.find((c: unknown[]) => (c[0] as string).includes("/api/issues"));
+      const url = issueCall![0] as string;
+      expect(url).toContain("start_at=0");
+    });
+  });
+
+  describe("Scenario: Next button is enabled when there are more pages", () => {
+    it("Given total exceeds page size, when issues load, then the Next button should be enabled", async () => {
+      const manyIssues = {
+        issues: mockIssues.issues,
+        total: 100,
+      };
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(manyIssues) } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      expect(screen.getByText("Next")).not.toBeDisabled();
+    });
+  });
+
+  describe("Scenario: Clicking Next increments the page offset", () => {
+    it("Given total exceeds page size, when clicking Next, then the API should be called with start_at=50", async () => {
+      const user = userEvent.setup();
+      const manyIssues = {
+        issues: mockIssues.issues,
+        total: 100,
+      };
+      (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(manyIssues) } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      await user.click(screen.getByText("Next"));
+
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const issuesCalls = calls.filter((c: unknown[]) => (c[0] as string).includes("/api/issues"));
+      const lastCall = issuesCalls[issuesCalls.length - 1];
+      const url = lastCall[0] as string;
+      expect(url).toContain("start_at=50");
     });
   });
 });
