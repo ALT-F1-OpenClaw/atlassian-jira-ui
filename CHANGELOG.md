@@ -1,3 +1,8 @@
+## [1.7.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.6.1...v1.7.0) (2026-03-10)
+
+### Features
+
+* add offset-based pagination with next/previous controls (task 1.4) ([4db462e](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/4db462e2a67b3854d4631e26ca79d3901758a64b))
 ## [1.6.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.6.0...v1.6.1) (2026-03-10)
 
 ### Bug Fixes
