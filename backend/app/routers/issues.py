@@ -115,9 +115,12 @@ async def list_issues(
     )
 
     issues = [_format_issue(i) for i in (data or {}).get("issues", [])]
+    total = (data or {}).get("total", None)
+    if total is None:
+        total = len(issues)
     return {
         "issues": issues,
-        "total": (data or {}).get("total", 0),
+        "total": total,
     }
 
 
