@@ -1,7 +1,7 @@
 {
   "name": "atlassian-jira-ui",
   "private": true,
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Modern alternative UI for Atlassian Jira Cloud",
   "scripts": {
     "patch": "node scripts/bump-version.mjs patch",
