@@ -135,9 +135,10 @@ describe("Feature: List view displays issues in a table", () => {
       render(<App />, { wrapper: createWrapper() });
 
       await screen.findByText("PROJ-1");
-      expect(screen.getByText("Story")).toBeInTheDocument();
-      expect(screen.getByText("Bug")).toBeInTheDocument();
-      expect(screen.getByText("Task")).toBeInTheDocument();
+      const tbody = screen.getAllByRole("rowgroup")[1];
+      expect(within(tbody).getByText("Story")).toBeInTheDocument();
+      expect(within(tbody).getByText("Bug")).toBeInTheDocument();
+      expect(within(tbody).getByText("Task")).toBeInTheDocument();
     });
   });
 
@@ -159,9 +160,11 @@ describe("Feature: List view displays issues in a table", () => {
     it("Given issues with statuses 'In Progress', 'To Do', and 'Done', then each status badge should be visible", async () => {
       render(<App />, { wrapper: createWrapper() });
 
-      expect(await screen.findByText("In Progress")).toBeInTheDocument();
-      expect(screen.getByText("To Do")).toBeInTheDocument();
-      expect(screen.getByText("Done")).toBeInTheDocument();
+      await screen.findByText("PROJ-1");
+      const tbody = screen.getAllByRole("rowgroup")[1];
+      expect(within(tbody).getByText("In Progress")).toBeInTheDocument();
+      expect(within(tbody).getByText("To Do")).toBeInTheDocument();
+      expect(within(tbody).getByText("Done")).toBeInTheDocument();
     });
   });
 
@@ -180,8 +183,10 @@ describe("Feature: List view displays issues in a table", () => {
     it("Given an issue assigned to 'Alice Martin', then 'Alice Martin' should appear in the Assignee column", async () => {
       render(<App />, { wrapper: createWrapper() });
 
-      expect(await screen.findByText("Alice Martin")).toBeInTheDocument();
-      expect(screen.getByText("Bob Chen")).toBeInTheDocument();
+      await screen.findByText("PROJ-1");
+      const tbody = screen.getAllByRole("rowgroup")[1];
+      expect(within(tbody).getByText("Alice Martin")).toBeInTheDocument();
+      expect(within(tbody).getByText("Bob Chen")).toBeInTheDocument();
     });
 
     it("Given an unassigned issue, then a dash should appear in the Assignee column", async () => {
@@ -288,6 +293,127 @@ describe("Feature: Column sorting", () => {
       for (const header of headers) {
         expect(header.className).toContain("cursor-pointer");
       }
+    });
+  });
+});
+
+describe("Feature: Filter dropdowns", () => {
+  describe("Scenario: Filter bar is displayed with three dropdowns", () => {
+    it("Given the list view is displayed, then filter dropdowns for status, type, and assignee should be visible", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      expect(await screen.findByLabelText("Filter by status")).toBeInTheDocument();
+      expect(screen.getByLabelText("Filter by type")).toBeInTheDocument();
+      expect(screen.getByLabelText("Filter by assignee")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Status filter dropdown shows unique statuses from data", () => {
+    it("Given 3 issues with statuses 'In Progress', 'To Do', 'Done', then the status dropdown should list all three", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      const statusSelect = screen.getByLabelText("Filter by status");
+      const options = within(statusSelect).getAllByRole("option");
+      const optionTexts = options.map((o) => o.textContent);
+      expect(optionTexts).toContain("All Statuses");
+      expect(optionTexts).toContain("In Progress");
+      expect(optionTexts).toContain("To Do");
+      expect(optionTexts).toContain("Done");
+    });
+  });
+
+  describe("Scenario: Type filter dropdown shows unique types from data", () => {
+    it("Given issues of type Story, Bug, Task, then the type dropdown should list all three", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      const typeSelect = screen.getByLabelText("Filter by type");
+      const options = within(typeSelect).getAllByRole("option");
+      const optionTexts = options.map((o) => o.textContent);
+      expect(optionTexts).toContain("All Types");
+      expect(optionTexts).toContain("Story");
+      expect(optionTexts).toContain("Bug");
+      expect(optionTexts).toContain("Task");
+    });
+  });
+
+  describe("Scenario: Assignee filter dropdown shows unique assignees from data", () => {
+    it("Given issues assigned to 'Alice Martin' and 'Bob Chen', then the assignee dropdown should list both", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      const assigneeSelect = screen.getByLabelText("Filter by assignee");
+      const options = within(assigneeSelect).getAllByRole("option");
+      const optionTexts = options.map((o) => o.textContent);
+      expect(optionTexts).toContain("All Assignees");
+      expect(optionTexts).toContain("Alice Martin");
+      expect(optionTexts).toContain("Bob Chen");
+    });
+  });
+
+  describe("Scenario: Selecting a status filter sends the filter to the API", () => {
+    it("Given the user selects 'Done' status, then the API should be called with status=Done", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      const statusSelect = screen.getByLabelText("Filter by status");
+      await user.selectOptions(statusSelect, "Done");
+
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const issuesCalls = calls.filter((c: unknown[]) => (c[0] as string).includes("/api/issues"));
+      const lastCall = issuesCalls[issuesCalls.length - 1];
+      const url = lastCall[0] as string;
+      expect(url).toContain("status=Done");
+    });
+  });
+
+  describe("Scenario: Selecting a type filter sends the filter to the API", () => {
+    it("Given the user selects 'Bug' type, then the API should be called with type=Bug", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      const typeSelect = screen.getByLabelText("Filter by type");
+      await user.selectOptions(typeSelect, "Bug");
+
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const issuesCalls = calls.filter((c: unknown[]) => (c[0] as string).includes("/api/issues"));
+      const lastCall = issuesCalls[issuesCalls.length - 1];
+      const url = lastCall[0] as string;
+      expect(url).toContain("type=Bug");
+    });
+  });
+
+  describe("Scenario: Clear filters button resets all filters", () => {
+    it("Given a status filter is active, when clicking 'Clear filters', then no filter params should be sent", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      const statusSelect = screen.getByLabelText("Filter by status");
+      await user.selectOptions(statusSelect, "Done");
+
+      const clearBtn = screen.getByText("Clear filters");
+      await user.click(clearBtn);
+
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const issuesCalls = calls.filter((c: unknown[]) => (c[0] as string).includes("/api/issues"));
+      const lastCall = issuesCalls[issuesCalls.length - 1];
+      const url = lastCall[0] as string;
+      expect(url).not.toContain("status=");
+      expect(url).not.toContain("type=");
+      expect(url).not.toContain("assignee=");
+    });
+  });
+
+  describe("Scenario: Clear filters button is hidden when no filters are active", () => {
+    it("Given no filters are selected, then the 'Clear filters' button should not be visible", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      expect(screen.queryByText("Clear filters")).not.toBeInTheDocument();
     });
   });
 });

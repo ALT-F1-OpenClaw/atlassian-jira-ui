@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 
 const API = import.meta.env.VITE_API_URL || "";
@@ -62,7 +62,78 @@ function SortIndicator({ field, sortBy, sortOrder }: { field: SortField; sortBy:
   return <span className="ml-1">{sortOrder === "ASC" ? "↑" : "↓"}</span>;
 }
 
-function ListView({ project }: { project: string }) {
+interface Filters {
+  status: string;
+  type: string;
+  assignee: string;
+}
+
+const FILTER_SELECT_CLASS =
+  "rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none";
+
+function FilterBar({
+  filters,
+  onChange,
+  issues,
+}: {
+  filters: Filters;
+  onChange: (f: Filters) => void;
+  issues: Issue[];
+}) {
+  const statuses = [...new Set(issues.map((i) => i.status?.name).filter(Boolean))].sort();
+  const types = [...new Set(issues.map((i) => i.type?.name).filter(Boolean))].sort();
+  const assignees = [...new Set(issues.map((i) => i.assignee?.displayName).filter(Boolean))].sort() as string[];
+
+  const hasFilters = filters.status || filters.type || filters.assignee;
+
+  return (
+    <>
+      <select
+        aria-label="Filter by type"
+        value={filters.type}
+        onChange={(e) => onChange({ ...filters, type: e.target.value })}
+        className={FILTER_SELECT_CLASS}
+      >
+        <option value="">All Types</option>
+        {types.map((t) => (
+          <option key={t} value={t}>{t}</option>
+        ))}
+      </select>
+      <select
+        aria-label="Filter by status"
+        value={filters.status}
+        onChange={(e) => onChange({ ...filters, status: e.target.value })}
+        className={FILTER_SELECT_CLASS}
+      >
+        <option value="">All Statuses</option>
+        {statuses.map((s) => (
+          <option key={s} value={s}>{s}</option>
+        ))}
+      </select>
+      <select
+        aria-label="Filter by assignee"
+        value={filters.assignee}
+        onChange={(e) => onChange({ ...filters, assignee: e.target.value })}
+        className={FILTER_SELECT_CLASS}
+      >
+        <option value="">All Assignees</option>
+        {assignees.map((a) => (
+          <option key={a} value={a}>{a}</option>
+        ))}
+      </select>
+      {hasFilters && (
+        <button
+          onClick={() => onChange({ status: "", type: "", assignee: "" })}
+          className="rounded-md px-2 py-1 text-xs text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200"
+        >
+          Clear filters
+        </button>
+      )}
+    </>
+  );
+}
+
+function ListView({ project, filters, onIssuesLoaded }: { project: string; filters: Filters; onIssuesLoaded?: (issues: Issue[]) => void }) {
   const [sortBy, setSortBy] = useState<SortField>("updated");
   const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
 
@@ -76,15 +147,22 @@ function ListView({ project }: { project: string }) {
   };
 
   const { data, isLoading, error } = useQuery({
-    queryKey: ["issues", project, sortBy, sortOrder],
+    queryKey: ["issues", project, sortBy, sortOrder, filters.status, filters.type, filters.assignee],
     queryFn: async () => {
       const params = new URLSearchParams({ max_results: "50", sort_by: sortBy, sort_order: sortOrder });
       if (project) params.set("project", project);
+      if (filters.status) params.set("status", filters.status);
+      if (filters.type) params.set("type", filters.type);
+      if (filters.assignee) params.set("assignee", filters.assignee);
       const res = await fetch(`${API}/api/issues?${params}`);
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<{ issues: Issue[]; total: number }>;
     },
   });
+
+  useEffect(() => {
+    if (data?.issues) onIssuesLoaded?.(data.issues);
+  }, [data?.issues, onIssuesLoaded]);
 
   if (isLoading)
     return <div className="p-8 text-zinc-500">Loading issues...</div>;
@@ -149,6 +227,8 @@ function ListView({ project }: { project: string }) {
 export default function App() {
   const [view, setView] = useState<View>("list");
   const [project, setProject] = useState("");
+  const [filters, setFilters] = useState<Filters>({ status: "", type: "", assignee: "" });
+  const [issuesForFilters, setIssuesForFilters] = useState<Issue[]>([]);
 
   const { data: projects } = useQuery({
     queryKey: ["projects"],
@@ -182,6 +262,7 @@ export default function App() {
               </option>
             ))}
           </select>
+          <FilterBar filters={filters} onChange={setFilters} issues={issuesForFilters} />
         </div>
         <nav className="flex gap-1">
           {(["board", "list"] as View[]).map((v) => (
@@ -202,7 +283,7 @@ export default function App() {
 
       {/* Main */}
       <main className="flex-1 overflow-auto">
-        {view === "list" && <ListView project={project} />}
+        {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} />}
         {view === "board" && (
           <div className="p-8 text-zinc-500">
             Board view — coming in Phase 1

@@ -6,7 +6,7 @@
 
 - [x] **1.1** Basic table with issue key, type, summary, status, priority, assignee, updated — *BDD tests: `App.test.tsx` (11 scenarios)*
 - [x] **1.2** Column sorting (click header to sort by field) — *BDD tests: `App.test.tsx` (6 scenarios)*
-- [ ] **1.3** Filter dropdowns (status, type, assignee)
+- [x] **1.3** Filter dropdowns (status, type, assignee) — *BDD tests: `App.test.tsx` (8 scenarios)*
 - [ ] **1.4** Pagination (offset-based, next/previous controls)
 
 **Tech**: React state for sort/filter params, `useQuery` queryKey updates. Backend already supports `status`, `assignee`, `type` query params on `GET /api/issues`.
