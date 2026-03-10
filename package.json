@@ -4,6 +4,10 @@
   "version": "1.0.0",
   "description": "Modern alternative UI for Atlassian Jira Cloud",
   "scripts": {
+    "patch": "node scripts/bump-version.mjs patch",
+    "minor": "node scripts/bump-version.mjs minor",
+    "major": "node scripts/bump-version.mjs major",
+    "push": "git push && git push --tags",
     "changelog": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s",
     "changelog:init": "conventional-changelog -p conventionalcommits -i CHANGELOG.md -s -r 0",
     "version:bump": "node scripts/bump-version.mjs"
