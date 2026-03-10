@@ -1,3 +1,8 @@
+## [1.8.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.7.0...v1.8.0) (2026-03-10)
+
+### Features
+
+* add Playwright screenshot capture script ([796e688](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/796e68826c1352245983e3a58219a0d08d0e9e8d))
 ## [1.7.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.6.1...v1.7.0) (2026-03-10)
 
 ### Features
