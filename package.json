@@ -3,6 +3,14 @@
   "private": true,
   "version": "1.11.0",
   "description": "Modern alternative UI for Atlassian Jira Cloud",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui.git"
+  },
+  "homepage": "https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui#readme",
+  "bugs": {
+    "url": "https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues"
+  },
   "scripts": {
     "patch": "node scripts/bump-version.mjs patch",
     "minor": "node scripts/bump-version.mjs minor",
