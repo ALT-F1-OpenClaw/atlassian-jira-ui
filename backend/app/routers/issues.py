@@ -68,12 +68,25 @@ def _format_user(user: dict | None) -> dict | None:
     }
 
 
+SORT_FIELD_MAP = {
+    "key": "key",
+    "type": "issuetype",
+    "summary": "summary",
+    "status": "status",
+    "priority": "priority",
+    "assignee": "assignee",
+    "updated": "updated",
+}
+
+
 @router.get("")
 async def list_issues(
     project: str | None = None,
     status: str | None = None,
     assignee: str | None = None,
     type: str | None = None,
+    sort_by: str = Query(default="updated"),
+    sort_order: str = Query(default="DESC"),
     max_results: int = Query(default=50, le=100),
 ):
     """List issues with optional filters."""
@@ -90,7 +103,9 @@ async def list_issues(
         jql_parts.append(f'issuetype = "{type}"')
 
     jql = " AND ".join(jql_parts) if jql_parts else "created IS NOT EMPTY"
-    jql += " ORDER BY updated DESC"
+    jql_field = SORT_FIELD_MAP.get(sort_by, "updated")
+    order = "ASC" if sort_order.upper() == "ASC" else "DESC"
+    jql += f" ORDER BY {jql_field} {order}"
 
     fields = "summary,description,status,priority,issuetype,assignee,reporter,project,labels,created,updated,duedate"
     data = await jira_request(

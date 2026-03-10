@@ -44,11 +44,41 @@ function PriorityIcon({ priority }: { priority: string }) {
   return <span title={priority}>{icons[priority] || "⚪"}</span>;
 }
 
+type SortField = "key" | "type" | "summary" | "status" | "priority" | "assignee" | "updated";
+type SortOrder = "ASC" | "DESC";
+
+const COLUMNS: { label: string; field: SortField }[] = [
+  { label: "Key", field: "key" },
+  { label: "Type", field: "type" },
+  { label: "Summary", field: "summary" },
+  { label: "Status", field: "status" },
+  { label: "Priority", field: "priority" },
+  { label: "Assignee", field: "assignee" },
+  { label: "Updated", field: "updated" },
+];
+
+function SortIndicator({ field, sortBy, sortOrder }: { field: SortField; sortBy: SortField; sortOrder: SortOrder }) {
+  if (field !== sortBy) return <span className="ml-1 text-zinc-600">↕</span>;
+  return <span className="ml-1">{sortOrder === "ASC" ? "↑" : "↓"}</span>;
+}
+
 function ListView({ project }: { project: string }) {
+  const [sortBy, setSortBy] = useState<SortField>("updated");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
+
+  const handleSort = (field: SortField) => {
+    if (field === sortBy) {
+      setSortOrder((prev) => (prev === "ASC" ? "DESC" : "ASC"));
+    } else {
+      setSortBy(field);
+      setSortOrder("ASC");
+    }
+  };
+
   const { data, isLoading, error } = useQuery({
-    queryKey: ["issues", project],
+    queryKey: ["issues", project, sortBy, sortOrder],
     queryFn: async () => {
-      const params = new URLSearchParams({ max_results: "50" });
+      const params = new URLSearchParams({ max_results: "50", sort_by: sortBy, sort_order: sortOrder });
       if (project) params.set("project", project);
       const res = await fetch(`${API}/api/issues?${params}`);
       if (!res.ok) throw new Error(`${res.status}`);
@@ -70,13 +100,16 @@ function ListView({ project }: { project: string }) {
       <table className="w-full text-left text-sm">
         <thead className="border-b border-zinc-800 text-zinc-400">
           <tr>
-            <th className="px-4 py-3 font-medium">Key</th>
-            <th className="px-4 py-3 font-medium">Type</th>
-            <th className="px-4 py-3 font-medium">Summary</th>
-            <th className="px-4 py-3 font-medium">Status</th>
-            <th className="px-4 py-3 font-medium">Priority</th>
-            <th className="px-4 py-3 font-medium">Assignee</th>
-            <th className="px-4 py-3 font-medium">Updated</th>
+            {COLUMNS.map((col) => (
+              <th
+                key={col.field}
+                className="cursor-pointer select-none px-4 py-3 font-medium transition-colors hover:text-zinc-200"
+                onClick={() => handleSort(col.field)}
+              >
+                {col.label}
+                <SortIndicator field={col.field} sortBy={sortBy} sortOrder={sortOrder} />
+              </th>
+            ))}
           </tr>
         </thead>
         <tbody>

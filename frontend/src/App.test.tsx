@@ -1,4 +1,5 @@
 import { render, screen, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import App from "./App";
@@ -101,7 +102,7 @@ describe("Feature: List view displays issues in a table", () => {
 
       for (const column of expectedColumns) {
         expect(
-          await screen.findByRole("columnheader", { name: column })
+          await screen.findByRole("columnheader", { name: new RegExp(column) })
         ).toBeInTheDocument();
       }
     });
@@ -208,6 +209,85 @@ describe("Feature: List view displays issues in a table", () => {
       render(<App />, { wrapper: createWrapper() });
 
       expect(await screen.findByText("3 of 3 issues")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Column sorting", () => {
+  describe("Scenario: Default sort is by Updated descending", () => {
+    it("Given the list view loads, then the Updated column should show a descending indicator", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      const updatedHeader = await screen.findByRole("columnheader", { name: /Updated/ });
+      expect(updatedHeader).toHaveTextContent("↓");
+    });
+
+    it("Given the list view loads, then the API should be called with sort_by=updated and sort_order=DESC", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const issueCall = calls.find((c: unknown[]) => (c[0] as string).includes("/api/issues"));
+      expect(issueCall).toBeDefined();
+      const url = issueCall![0] as string;
+      expect(url).toContain("sort_by=updated");
+      expect(url).toContain("sort_order=DESC");
+    });
+  });
+
+  describe("Scenario: Non-active columns show neutral sort indicator", () => {
+    it("Given the default sort is Updated, then the Key column should show a neutral ↕ indicator", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      const keyHeader = await screen.findByRole("columnheader", { name: /Key/ });
+      expect(keyHeader).toHaveTextContent("↕");
+    });
+  });
+
+  describe("Scenario: Clicking a column sorts ascending", () => {
+    it("Given the list view is displayed, when clicking the Key column header, then the API should be called with sort_by=key and sort_order=ASC", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const keyHeader = await screen.findByRole("columnheader", { name: /Key/ });
+      await user.click(keyHeader);
+
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const issuesCalls = calls.filter((c: unknown[]) => (c[0] as string).includes("/api/issues"));
+      const lastCall = issuesCalls[issuesCalls.length - 1];
+      const url = lastCall[0] as string;
+      expect(url).toContain("sort_by=key");
+      expect(url).toContain("sort_order=ASC");
+    });
+  });
+
+  describe("Scenario: Clicking the active column toggles sort order", () => {
+    it("Given Updated is sorted DESC, when clicking Updated again, then the sort order should toggle to ASC", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const updatedHeader = await screen.findByRole("columnheader", { name: /Updated/ });
+      await user.click(updatedHeader);
+
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const issuesCalls = calls.filter((c: unknown[]) => (c[0] as string).includes("/api/issues"));
+      const lastCall = issuesCalls[issuesCalls.length - 1];
+      const url = lastCall[0] as string;
+      expect(url).toContain("sort_by=updated");
+      expect(url).toContain("sort_order=ASC");
+    });
+  });
+
+  describe("Scenario: All column headers are clickable", () => {
+    it("Given the list view is displayed, then all 7 column headers should be clickable", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      const headers = screen.getAllByRole("columnheader");
+      expect(headers).toHaveLength(7);
+      for (const header of headers) {
+        expect(header.className).toContain("cursor-pointer");
+      }
     });
   });
 });
