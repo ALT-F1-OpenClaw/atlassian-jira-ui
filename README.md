@@ -99,6 +99,8 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **TanStack Query** — data fetching + caching
 - **dnd-kit** — drag & drop for board
 - **cmdk** — command palette
+- **Vitest** — fast unit testing
+- **Testing Library** — BDD-style component tests
 
 ## Quick Start
 
@@ -251,6 +253,30 @@ atlassian-jira-ui/
 | GET | `/api/boards/{id}/sprint` | Active sprint |
 | GET | `/api/search` | JQL search |
 | GET | `/api/search/quick` | Fuzzy text search |
+
+## Testing
+
+```bash
+cd frontend
+
+# Run all tests once
+npm test
+
+# Run tests in watch mode (re-runs on file changes)
+npm run test:watch
+```
+
+Tests use [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) with BDD-style scenarios (`describe`/`it` blocks following Given/When/Then).
+
+### Test structure
+
+```text
+frontend/src/
+├── App.test.tsx              # List view BDD tests
+├── test/
+│   └── setup.ts              # Testing Library + jest-dom setup
+└── vitest.config.ts          # Vitest configuration
+```
 
 ## Releasing a New Version
 
