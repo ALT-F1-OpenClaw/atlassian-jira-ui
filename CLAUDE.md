@@ -1,0 +1,90 @@
+# CLAUDE.md
+
+## Project
+
+Modern alternative frontend for Atlassian Jira Cloud. Full-stack: FastAPI backend + React frontend.
+
+## Tech Stack
+
+- **Backend**: Python 3.13, FastAPI, httpx (async Jira client), uvicorn — port 35400
+- **Frontend**: React 19, Vite 6, TypeScript 5.7 (strict), Tailwind CSS 4, TanStack Query — port 5173
+- **Testing**: Vitest 4 + @testing-library/react + @testing-library/user-event (BDD style)
+- **Screenshots**: Playwright headless Chromium (`scripts/screenshots.mjs`)
+
+## Directory Layout
+
+```
+backend/           → FastAPI app
+  app/main.py      → App setup, CORS, router registration
+  app/config.py    → Pydantic Settings (env vars)
+  app/jira_client.py → Async Jira API client with rate-limit retry
+  app/version.py   → Single version source (synced by bump script)
+  app/routers/     → projects, issues, boards, search
+  start.sh         → Start backend with venv + uvicorn --reload
+frontend/          → React SPA
+  src/App.tsx       → Main component (list view, filters, pagination)
+  src/App.test.tsx  → 32 BDD test scenarios
+  vite.config.ts   → Proxy /api → localhost:35400
+scripts/
+  bump-version.mjs  → Sync version across package.json, frontend/package.json, backend/app/version.py
+  screenshots.mjs   → Capture app screenshots with Playwright
+```
+
+## Commands
+
+```bash
+# Backend
+cd backend && bash start.sh          # Start backend (activates .venv, uvicorn on :35400)
+
+# Frontend
+cd frontend && npm run dev           # Vite dev server on :5173 (proxies /api to backend)
+cd frontend && npm run build         # TypeScript check + production build
+cd frontend && npm test -- --run     # Run all tests (32 BDD scenarios)
+cd frontend && npm run test:watch    # Watch mode
+
+# Versioning (from root)
+node scripts/bump-version.mjs patch  # 1.9.0 → 1.9.1 (bug fixes)
+node scripts/bump-version.mjs minor  # 1.9.0 → 1.10.0 (new features)
+node scripts/bump-version.mjs major  # 1.9.0 → 2.0.0 (breaking changes)
+
+# Screenshots (requires both servers running)
+node scripts/screenshots.mjs
+```
+
+## Conventions
+
+### Commits
+- Use conventional commits: `feat:`, `fix:`, `chore:`, `docs:`
+- **Never** include `Co-Authored-By` lines
+- Commit message via HEREDOC for clean formatting
+- After committing a feature/fix, run `node scripts/bump-version.mjs <level>` — it generates CHANGELOG, commits, and tags
+
+### Code Style
+- Frontend: single App.tsx file (no component splitting yet), Tailwind utility classes, dark theme
+- Backend: async endpoints, JQL query construction, `_format_issue()` normalizes Jira responses
+- Tests: BDD naming (`Given ... then ...`), use `within()` to scope assertions, `userEvent` for interactions
+- Filter dropdown order matches table column order: Type → Status → Assignee
+
+### Workflow
+- Roadmap is in `ROADMAP.md` with numbered task IDs (e.g., `1.2`, `3.3`) — reference by ID
+- Each completed task gets BDD tests noted in the roadmap checkbox
+- Page size is 50 (aligned with Jira API default, capped at 100)
+
+## Environment Variables
+
+```env
+# Backend
+JIRA_HOST=https://your-domain.atlassian.net
+JIRA_EMAIL=you@example.com
+JIRA_API_TOKEN=your-api-token
+CORS_ORIGINS=http://localhost:5173
+
+# Frontend
+VITE_API_URL=http://localhost:35400
+```
+
+## Current State
+
+Phase 1, Section 1 (List View) is complete: table, sorting, filters, pagination — all with BDD tests.
+Next up: Issue detail panel (task 2.1–2.5), then Board view and Command palette.
+See `ROADMAP.md` for full status.
