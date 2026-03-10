@@ -1,3 +1,8 @@
+## [1.5.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.4.0...v1.5.0) (2026-03-10)
+
+### Features
+
+* add column sorting to list view (task 1.2) ([7ab109e](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/7ab109e2c825cd6294cbcd5748783470607f80fa))
 ## [1.4.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.3.0...v1.4.0) (2026-03-10)
 ## [1.3.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.2.0...v1.3.0) (2026-03-10)
 
