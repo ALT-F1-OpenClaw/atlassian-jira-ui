@@ -1,3 +1,8 @@
+## [1.25.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.24.0...v1.25.0) (2026-03-11)
+
+### Features
+
+* Kanban board view with drag-and-drop and swimlanes (tasks 3.1-3.4) ([5a28547](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/5a28547d45e9b8e37dca59e9c4f191413a3df840))
 ## [1.24.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.23.0...v1.24.0) (2026-03-11)
 
 ### Features
