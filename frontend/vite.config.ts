@@ -7,9 +7,7 @@ import { readFileSync } from "fs";
 const pkg = JSON.parse(readFileSync("package.json", "utf-8"));
 
 export default defineConfig({
-  test: {
-    exclude: ["e2e/**", "node_modules/**"],
-  },
+
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
   },

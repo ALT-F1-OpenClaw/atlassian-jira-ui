@@ -226,6 +226,34 @@ Before going production-grade, re-enable these:
 | 28 | Auto-generated app screenshots (`docs/APP_SCREENSHOTS.md`) — 12 views | Complete |
 | 29 | HTTPS via Tailscale (PWA install) | Planned |
 
+### Phase 4b — CI Intelligence
+| # | Feature | Status |
+|---|---------|--------|
+| 42 | AI-powered CI auto-fix: agent monitors failures, diagnoses errors, opens fix PRs | Planned |
+| 43 | GitHub Actions `on: workflow_run` trigger on CI failure → notify AI agent | Planned |
+| 44 | Structured error log extraction (test output, build errors, lint warnings) | Planned |
+| 45 | Auto-fix PR with conventional commit, linked issue, and CI re-run | Planned |
+
+#### Phase 4b Details
+
+**Goal**: When CI fails, an AI agent automatically reads the error logs, diagnoses the issue, creates a fix, and opens a PR — no human intervention needed for common failures.
+
+**Architecture**:
+- New workflow `.github/workflows/ci-autofix.yml` triggered by `on: workflow_run` (when CI fails)
+- Extracts structured error output from the failed run via GitHub API (`gh run view --log-failed`)
+- Sends error context to an AI coding agent (OpenClaw/Codex/Claude Code) via webhook or cron job
+- Agent clones repo, reproduces failure, writes fix, runs tests locally
+- If tests pass, agent opens a PR with `fix:` conventional commit referencing a new auto-created issue
+- PR triggers normal CI — if it passes, ready for merge
+- Dashboard/Discord notification on auto-fix success or escalation to human
+
+**Common auto-fixable failures**:
+- Test runner picking up wrong files (e.g., Playwright specs in Vitest) ← today's bug
+- Dependency version mismatches after Dependabot updates
+- TypeScript type errors from upstream library changes
+- Linting/formatting issues
+- Import path changes after file moves
+
 ### Phase 5 — Multi-User Auth & Public SaaS
 | # | Feature | Status |
 |---|---------|--------|
