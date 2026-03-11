@@ -157,8 +157,9 @@
 - [x] **15.1** CI workflow — lint, typecheck, test (253 BDD), build on push/PR to main (Node 20+22, Python 3.11-3.13)
 - [x] **15.2** Release workflow — build + create GitHub Release with changelog on tag push
 - [x] **15.3** Docker workflow — build and verify Docker images on push/PR to main
+- [x] **15.4** Node.js 24 compatibility — upgraded to `checkout@v6`, `setup-node@v5`, `setup-python@v6`
 
-**Tech**: GitHub Actions, `ubuntu-latest` runners, npm/pip caching, matrix builds. Dummy env vars for CI backend validation.
+**Tech**: GitHub Actions, `ubuntu-latest` runners, npm/pip caching, matrix builds. Dummy env vars for CI backend validation. All actions Node.js 24 compatible.
 
 ---
 

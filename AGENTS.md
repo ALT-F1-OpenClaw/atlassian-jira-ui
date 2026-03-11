@@ -150,3 +150,5 @@ string[]
 - CI/CD: backend CI needs dummy env vars (JIRA_HOST, JIRA_EMAIL, JIRA_API_TOKEN, APP_SECRET_KEY) for import verification
 - CI/CD: Docker workflow creates a dummy backend/.env for docker-compose validation
 - CI/CD: backend/.env is gitignored — never commit real credentials
+- CI/CD: use latest GitHub Actions versions — `actions/checkout@v6`, `actions/setup-node@v5`, `actions/setup-python@v6` (Node.js 24 compatible)
+- CI/CD: `softprops/action-gh-release@v2` is latest for release workflow
