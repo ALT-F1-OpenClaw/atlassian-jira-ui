@@ -1,3 +1,8 @@
+## [1.40.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.39.2...v1.40.0) (2026-03-11)
+
+### Features
+
+* publish Docker images to GHCR with multi-arch support ([84e59da](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/84e59dab4c6d09545685adae696de9c671fac0ba))
 ## [1.39.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.39.1...v1.39.2) (2026-03-11)
 
 ### Bug Fixes
