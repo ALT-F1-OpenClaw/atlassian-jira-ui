@@ -1,3 +1,8 @@
+## [1.42.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.41.0...v1.42.0) (2026-03-11)
+
+### Features
+
+* loading spinner for all data-fetching views + wider command palette ([09e58e9](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/09e58e99c974757982e5a78e2e733518b4a004ff)), closes [#15](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/15) [#16](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/16)
 ## [1.41.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.40.0...v1.41.0) (2026-03-11)
 
 ### Features
