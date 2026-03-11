@@ -63,6 +63,20 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules")) {
+            if (id.includes("@tiptap") || id.includes("prosemirror")) return "vendor-tiptap";
+            if (id.includes("recharts") || id.includes("d3-")) return "vendor-charts";
+            if (id.includes("@dnd-kit")) return "vendor-dnd";
+            if (id.includes("@tanstack")) return "vendor-query";
+          }
+        },
+      },
+    },
+  },
   server: {
     port: 5173,
     allowedHosts: ["atlf1be-raspberry-pi-4.tail981e59.ts.net"],

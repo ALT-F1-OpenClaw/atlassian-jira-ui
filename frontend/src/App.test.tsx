@@ -4628,7 +4628,7 @@ describe("Feature: Empty states (13.5)", () => {
   });
 
   describe("Scenario: About page shows all features with version badges", () => {
-    it("Given the About page is displayed, then all 21 features are listed with version badges", async () => {
+    it("Given the About page is displayed, then all 23 features are listed with version badges", async () => {
       global.fetch = vi.fn((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
         if (urlStr.includes("/api/projects")) {
@@ -4654,7 +4654,7 @@ describe("Feature: Empty states (13.5)", () => {
 
       // Check all 21 feature cards are rendered
       const featureCards = screen.getAllByTestId("feature-card");
-      expect(featureCards).toHaveLength(21);
+      expect(featureCards).toHaveLength(23);
 
       // Check specific features and versions
       expect(screen.getByText("List View")).toBeInTheDocument();
@@ -4750,7 +4750,7 @@ describe("Feature: Empty states (13.5)", () => {
       expect(screen.getByText("TypeScript")).toBeInTheDocument();
 
       // Check features count header
-      expect(screen.getByText("Features (21)")).toBeInTheDocument();
+      expect(screen.getByText("Features (23)")).toBeInTheDocument();
     });
   });
 

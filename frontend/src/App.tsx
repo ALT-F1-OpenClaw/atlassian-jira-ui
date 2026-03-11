@@ -4565,6 +4565,8 @@ const FEATURES_LIST: { name: string; version: string; description: string }[] = 
   { name: "Offline Mode", version: "v1.35.0", description: "Mutation queue with auto-sync on reconnect and offline indicator" },
   { name: "Sprint CRUD", version: "v1.36.0", description: "Create, edit, start, complete, and delete sprints with scope management" },
   { name: "UI Navigation", version: "v1.37.0", description: "Sidebar navigation, breadcrumbs, dashboard, and empty states" },
+  { name: "Clickable Sprint Scope Issues", version: "v1.41.0", description: "Issue keys in sprint scope modal open the issue detail panel" },
+  { name: "Loading Spinner", version: "v1.42.0", description: "Animated spinner shown while waiting for backend API responses" },
 ];
 
 function AboutPage() {
