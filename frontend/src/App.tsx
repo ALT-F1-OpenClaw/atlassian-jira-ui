@@ -4609,7 +4609,7 @@ function AboutPage() {
             <span className="text-zinc-500">Links</span>
             <div className="flex gap-3">
               <a
-                href="https://github.com/anthropics/jira-ui"
+                href="https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-blue-400 hover:text-blue-300 transition-colors"
@@ -4618,7 +4618,7 @@ function AboutPage() {
                 GitHub
               </a>
               <a
-                href="https://github.com/anthropics/jira-ui/blob/main/CHANGELOG.md"
+                href="https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/blob/main/CHANGELOG.md"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="font-medium text-blue-400 hover:text-blue-300 transition-colors"
