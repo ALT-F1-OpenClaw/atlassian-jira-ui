@@ -99,8 +99,9 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **Date picker**: Native date widget for due date (add/clear)
 - **Editable labels**: Add/remove with autocomplete from Jira labels
 - **PWA**: Web app manifest, service worker, installable on mobile
-- **Board view / Kanban** (tasks 3.1–3.4): columns by status category, issue cards, drag-and-drop transitions, swimlanes
-- **Total: 97 BDD tests**
+- **Board view / Kanban** (tasks 3.1–3.4): columns by status category, issue cards, drag-and-drop transitions, swimlanes (assignee/priority)
+- **Mobile Kanban arrows**: ← → buttons on cards for status transitions (mobile only, sm:hidden)
+- **Total: 102 BDD tests**
 
-Next up: Command palette (tasks 4.1–4.4).
+Next up: Command palette (tasks 4.1–4.4) — last piece of Phase 1.
 See `ROADMAP.md` for full status.
