@@ -395,13 +395,29 @@ function IssueDetailPanel({
     },
   });
 
+  const [editingDescription, setEditingDescription] = useState(false);
+  const [descriptionDraft, setDescriptionDraft] = useState("");
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (editingDescription) {
+      setTimeout(() => descriptionRef.current?.focus(), 0);
+    }
+  }, [editingDescription]);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        if (editingDescription) {
+          setEditingDescription(false);
+        } else {
+          onClose();
+        }
+      }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose]);
+  }, [onClose, editingDescription]);
 
   if (isLoading) {
     return (
@@ -512,10 +528,61 @@ function IssueDetailPanel({
             </div>
           </div>
 
-          {/* Description (ADF or editable plain text) */}
+          {/* Description (ADF with edit toggle, or editable plain text) */}
           <div>
-            <label className="block text-xs text-zinc-500 mb-1">Description</label>
-            {issue.descriptionAdf ? (
+            <div className="flex items-center gap-2 mb-1">
+              <label className="block text-xs text-zinc-500">Description</label>
+              {issue.descriptionAdf && !editingDescription && (
+                <button
+                  onClick={() => {
+                    setDescriptionDraft(issue.description || "");
+                    setEditingDescription(true);
+                  }}
+                  className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
+                  aria-label="Edit description"
+                  title="Edit description"
+                >
+                  ✏️ Edit
+                </button>
+              )}
+            </div>
+            {editingDescription ? (
+              <div>
+                <textarea
+                  ref={descriptionRef}
+                  value={descriptionDraft}
+                  onChange={(e) => setDescriptionDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Escape") {
+                      e.stopPropagation();
+                      setEditingDescription(false);
+                    }
+                  }}
+                  aria-label="Edit description text"
+                  className="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none resize-y min-h-[80px]"
+                  rows={6}
+                />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    onClick={() => {
+                      if (descriptionDraft.trim() && descriptionDraft.trim() !== (issue.description || "")) {
+                        updateMutation.mutate({ description: descriptionDraft.trim() });
+                      }
+                      setEditingDescription(false);
+                    }}
+                    className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-500 transition-colors cursor-pointer"
+                  >
+                    Save
+                  </button>
+                  <button
+                    onClick={() => setEditingDescription(false)}
+                    className="rounded bg-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-600 transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            ) : issue.descriptionAdf ? (
               <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
                 <AdfRenderer node={issue.descriptionAdf} />
               </div>

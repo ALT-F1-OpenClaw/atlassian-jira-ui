@@ -745,6 +745,140 @@ describe("Feature: ADF description rendering", () => {
   });
 });
 
+describe("Feature: ADF description editing", () => {
+  describe("Scenario: Edit button is shown next to ADF description", () => {
+    it("Given the issue has an ADF description, then an Edit button should be visible", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(within(panel).getByLabelText("Edit description")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Clicking Edit shows a textarea with plain text", () => {
+    it("Given the ADF description is displayed, when clicking Edit, then a textarea pre-filled with plain text should appear", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Edit description"));
+
+      const textarea = within(panel).getByLabelText("Edit description text");
+      expect(textarea).toBeInTheDocument();
+      expect(textarea).toHaveValue("Build a login page with email and password fields.");
+    });
+  });
+
+  describe("Scenario: Saving description sends a PATCH request", () => {
+    it("Given the description textarea is open, when editing and clicking Save, then a PATCH request should be sent with the new text", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Edit description"));
+
+      const textarea = within(panel).getByLabelText("Edit description text");
+      await user.clear(textarea);
+      await user.type(textarea, "Updated description text");
+      await user.click(within(panel).getByText("Save"));
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+        );
+        expect(patchCall).toBeDefined();
+        const body = JSON.parse((patchCall![1] as RequestInit).body as string);
+        expect(body.description).toBe("Updated description text");
+      });
+    });
+  });
+
+  describe("Scenario: Cancelling description edit returns to ADF view", () => {
+    it("Given the description textarea is open, when clicking Cancel, then the ADF rendered view should return without saving", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Edit description"));
+
+      const textarea = within(panel).getByLabelText("Edit description text");
+      await user.clear(textarea);
+      await user.type(textarea, "Should not be saved");
+      await user.click(within(panel).getByText("Cancel"));
+
+      // Textarea should be gone, ADF rendered content should be back
+      expect(within(panel).queryByLabelText("Edit description text")).not.toBeInTheDocument();
+      expect(within(panel).getByText("login page")).toBeInTheDocument();
+
+      // No PATCH should have been sent
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const patchCall = calls.find(
+        (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+      );
+      expect(patchCall).toBeUndefined();
+    });
+  });
+
+  describe("Scenario: Pressing Escape cancels description editing", () => {
+    it("Given the description textarea is open, when pressing Escape, then editing should cancel without saving", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Edit description"));
+
+      const textarea = within(panel).getByLabelText("Edit description text");
+      await user.type(textarea, "extra text");
+      await user.keyboard("{Escape}");
+
+      expect(within(panel).queryByLabelText("Edit description text")).not.toBeInTheDocument();
+      expect(within(panel).getByText("login page")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: No Edit button when description is plain text only", () => {
+    it("Given the issue has no ADF description, then no Edit button should appear next to Description label", async () => {
+      setupFetchMock({
+        issueDetail: {
+          ...mockIssueDetail,
+          descriptionAdf: null,
+          description: "Plain text description",
+        },
+      });
+
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      // The ADF edit button should not exist; only the inline plain text editor should be present
+      const editButtons = within(panel).queryAllByRole("button").filter(
+        (btn) => btn.textContent?.includes("Edit") && btn.getAttribute("title") === "Edit description"
+      );
+      expect(editButtons).toHaveLength(0);
+    });
+  });
+});
+
 describe("Feature: Inline editing", () => {
   describe("Scenario: Summary can be edited inline", () => {
     it("Given the detail panel is open, when clicking the summary and changing it, then a PATCH request should be sent", async () => {
