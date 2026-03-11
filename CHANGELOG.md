@@ -1,3 +1,8 @@
+## [1.17.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.16.0...v1.17.0) (2026-03-11)
+
+### Features
+
+* make frontend fully responsive (mobile-first cards, stacked filters, adaptive pagination) ([82e935e](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/82e935e8a64513b104142e50c7ca4ed58dfeba41))
 ## [1.16.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.15.0...v1.16.0) (2026-03-11)
 
 ### Features
