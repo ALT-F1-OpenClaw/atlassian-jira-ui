@@ -21,7 +21,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 const API = import.meta.env.VITE_API_URL || "";
 const APP_VERSION = __APP_VERSION__;
 
-type View = "dashboard" | "board" | "list" | "detail" | "sprint";
+type View = "dashboard" | "board" | "list" | "detail" | "sprint" | "about";
 
 interface Issue {
   id: string;
@@ -4152,6 +4152,7 @@ function Sidebar({
     { id: "list", label: "List View", icon: "\u2630" },
     { id: "board", label: "Board View", icon: "\u25A6" },
     { id: "sprint", label: "Sprint Dashboard", icon: "\u23F1" },
+    { id: "about", label: "About", icon: "\u24D8" },
   ];
 
   if (!open) {
@@ -4274,6 +4275,7 @@ function Breadcrumbs({
     board: "Board View",
     sprint: "Sprint Dashboard",
     detail: "Detail",
+    about: "About",
   };
 
   const crumbs: { label: string; onClick?: () => void }[] = [];
@@ -4369,7 +4371,7 @@ function DashboardPage({
           className="flex flex-col items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 text-sm text-zinc-300 transition-colors hover:border-blue-600 hover:bg-blue-600/10 cursor-pointer"
           data-testid="quick-action-search"
         >
-          <span className="text-2xl">\uD83D\uDD0D</span>
+          <span className="text-2xl">🔍</span>
           <span>Search</span>
         </button>
         <button
@@ -4442,7 +4444,7 @@ function DashboardPage({
         <h3 className="mb-3 text-sm font-semibold text-zinc-300 uppercase tracking-wider">Recent Issues</h3>
         {(!recentIssues || recentIssues.issues.length === 0) ? (
           <div className="rounded-lg border border-dashed border-zinc-700 p-6 text-center" data-testid="empty-issues-dashboard">
-            <p className="text-3xl mb-2">{"\uD83D\uDCCB"}</p>
+            <p className="text-3xl mb-2">{"📋"}</p>
             <p className="text-sm text-zinc-400">No issues found</p>
             <button
               onClick={onCreateIssue}
@@ -4517,6 +4519,118 @@ function EmptyState({
           {actionLabel}
         </button>
       )}
+    </div>
+  );
+}
+
+/* ── About / Features Page (14.1–14.4) ── */
+
+const FEATURES_LIST: { name: string; version: string; description: string }[] = [
+  { name: "List View", version: "v1.15.0", description: "Table with sorting, filters, and pagination for browsing issues" },
+  { name: "Responsive Design", version: "v1.17.0", description: "Mobile-first layout that works on phone, tablet, and desktop" },
+  { name: "Issue Detail Panel", version: "v1.18.0", description: "Slide-in side panel with ADF rendering and inline editing" },
+  { name: "Rich Text Editor", version: "v1.20.0", description: "TipTap-based ADF editor with toolbar for rich text formatting" },
+  { name: "PWA", version: "v1.21.0", description: "Installable web app with offline support and home screen icon" },
+  { name: "Assignee & Priority Dropdowns", version: "v1.22.0", description: "Smart dropdowns populated from Jira project members and priorities" },
+  { name: "Due Date Picker", version: "v1.23.0", description: "Native date widget for setting and clearing issue due dates" },
+  { name: "Editable Labels with Autocomplete", version: "v1.24.0", description: "Add and remove labels with autocomplete from existing Jira labels" },
+  { name: "Kanban Board", version: "v1.25.0", description: "Drag-and-drop board with columns by status and swimlanes" },
+  { name: "Mobile Kanban Arrows", version: "v1.26.0", description: "Arrow buttons on mobile for status transitions without drag-and-drop" },
+  { name: "Command Palette", version: "v1.27.0", description: "Ctrl+K fuzzy search overlay for quick issue navigation" },
+  { name: "Keyboard Shortcuts", version: "v1.28.0", description: "j/k navigation, Enter to open, Escape to close, view switching" },
+  { name: "Quick Create Modal", version: "v1.29.0", description: "Press c to quickly create issues with project, type, and priority" },
+  { name: "Bulk Actions", version: "v1.30.0", description: "Select multiple issues for bulk transition, assign, or priority change" },
+  { name: "Saved Filters", version: "v1.31.0", description: "Save and reuse filter combinations with localStorage persistence" },
+  { name: "Sprint Dashboard", version: "v1.32.0", description: "Burndown chart, velocity chart, and sprint progress overview" },
+  { name: "Time Tracking", version: "v1.33.0", description: "Built-in timer, work logging, and time tracking progress bar" },
+  { name: "Dark/Light Mode Toggle", version: "v1.34.0", description: "Theme switching with system preference detection and persistence" },
+  { name: "Offline Mode", version: "v1.35.0", description: "Mutation queue with auto-sync on reconnect and offline indicator" },
+  { name: "Sprint CRUD", version: "v1.36.0", description: "Create, edit, start, complete, and delete sprints with scope management" },
+  { name: "UI Navigation", version: "v1.37.0", description: "Sidebar navigation, breadcrumbs, dashboard, and empty states" },
+];
+
+function AboutPage() {
+  const buildDate = "2026-03-11";
+
+  return (
+    <div className="mx-auto max-w-4xl px-4 sm:px-6 py-6 space-y-6" data-testid="about-page">
+      {/* App Info Card */}
+      <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-6">
+        <div className="flex items-center gap-3 mb-4">
+          <span className="text-3xl">⚡</span>
+          <div>
+            <h2 className="text-xl font-bold text-zinc-100">Jira UI</h2>
+            <p className="text-sm text-zinc-400">Modern alternative frontend for Atlassian Jira Cloud</p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+          <div>
+            <span className="text-zinc-500">Version</span>
+            <p className="font-medium text-zinc-200" data-testid="about-version">v{APP_VERSION}</p>
+          </div>
+          <div>
+            <span className="text-zinc-500">Build Date</span>
+            <p className="font-medium text-zinc-200" data-testid="about-build-date">{buildDate}</p>
+          </div>
+          <div>
+            <span className="text-zinc-500">Links</span>
+            <div className="flex gap-3">
+              <a
+                href="https://github.com/anthropics/jira-ui"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                data-testid="about-github-link"
+              >
+                GitHub
+              </a>
+              <a
+                href="https://github.com/anthropics/jira-ui/blob/main/CHANGELOG.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-blue-400 hover:text-blue-300 transition-colors"
+                data-testid="about-changelog-link"
+              >
+                Changelog
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Features List */}
+      <div>
+        <h3 className="mb-4 text-sm font-semibold text-zinc-300 uppercase tracking-wider">Features ({FEATURES_LIST.length})</h3>
+        <div className="grid gap-3 sm:grid-cols-2">
+          {FEATURES_LIST.map((feature) => (
+            <div
+              key={feature.version}
+              className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 transition-colors hover:border-zinc-600"
+              data-testid="feature-card"
+            >
+              <div className="flex items-start justify-between gap-2 mb-1">
+                <h4 className="font-medium text-zinc-200 text-sm">{feature.name}</h4>
+                <span className="shrink-0 rounded-full bg-blue-600/20 px-2 py-0.5 text-xs font-medium text-blue-400">
+                  {feature.version}
+                </span>
+              </div>
+              <p className="text-xs text-zinc-400 leading-relaxed">{feature.description}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Tech Stack */}
+      <div className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-6">
+        <h3 className="mb-3 text-sm font-semibold text-zinc-300 uppercase tracking-wider">Tech Stack</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+          {["React 19", "TypeScript", "Tailwind CSS", "FastAPI", "TanStack Query", "Recharts", "TipTap", "Vite"].map((tech) => (
+            <span key={tech} className="rounded-md bg-zinc-900 px-3 py-1.5 text-center text-zinc-300 border border-zinc-700 text-xs">
+              {tech}
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -4801,7 +4915,7 @@ export default function App() {
             </nav>
           </div>
         </div>
-        {view !== "dashboard" && (
+        {view !== "dashboard" && view !== "about" && (
           <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 lg:items-center">
             <select
               value={project}
@@ -4859,6 +4973,7 @@ export default function App() {
             <BoardView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} isOnline={isOnline} queueMutation={queueMutation} />
           )}
           {view === "sprint" && <SprintDashboard project={project} />}
+          {view === "about" && <AboutPage />}
         </main>
       </div>
 

@@ -4566,4 +4566,194 @@ describe("Feature: Empty states (13.5)", () => {
       expect(screen.getByText("Create your first issue")).toBeInTheDocument();
     });
   });
+
+  // ── About / Features Page (14.1–14.4) ──
+
+  describe("Scenario: About page is accessible from sidebar", () => {
+    it("Given the app is loaded, when user opens sidebar and clicks About, then the About page is displayed", async () => {
+      global.fetch = vi.fn((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockIssues) } as Response);
+        }
+        if (urlStr.includes("/api/priorities")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockPriorities) } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      // Open sidebar
+      await user.click(screen.getByRole("button", { name: /Toggle sidebar/ }));
+      // Click About link
+      await user.click(await screen.findByText("About"));
+
+      expect(await screen.findByTestId("about-page")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: About page shows all features with version badges", () => {
+    it("Given the About page is displayed, then all 21 features are listed with version badges", async () => {
+      global.fetch = vi.fn((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockIssues) } as Response);
+        }
+        if (urlStr.includes("/api/priorities")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockPriorities) } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("button", { name: /Toggle sidebar/ }));
+      await user.click(await screen.findByText("About"));
+
+      await screen.findByTestId("about-page");
+
+      // Check all 21 feature cards are rendered
+      const featureCards = screen.getAllByTestId("feature-card");
+      expect(featureCards).toHaveLength(21);
+
+      // Check specific features and versions
+      expect(screen.getByText("List View")).toBeInTheDocument();
+      expect(screen.getByText("v1.15.0")).toBeInTheDocument();
+      expect(screen.getByText("Kanban Board")).toBeInTheDocument();
+      expect(screen.getByText("v1.25.0")).toBeInTheDocument();
+      expect(screen.getByText("Sprint CRUD")).toBeInTheDocument();
+      expect(screen.getByText("v1.36.0")).toBeInTheDocument();
+      expect(screen.getByText("UI Navigation")).toBeInTheDocument();
+      expect(screen.getByText("v1.37.0")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: About page shows app version, build date, and links", () => {
+    it("Given the About page is displayed, then the current version, build date, GitHub link, and changelog link are shown", async () => {
+      global.fetch = vi.fn((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockIssues) } as Response);
+        }
+        if (urlStr.includes("/api/priorities")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockPriorities) } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("button", { name: /Toggle sidebar/ }));
+      await user.click(await screen.findByText("About"));
+
+      await screen.findByTestId("about-page");
+
+      // Version (shows v{APP_VERSION})
+      const versionEl = screen.getByTestId("about-version");
+      expect(versionEl).toBeInTheDocument();
+      expect(versionEl.textContent).toMatch(/^v/);
+
+      // Build date
+      expect(screen.getByTestId("about-build-date")).toBeInTheDocument();
+
+      // GitHub link
+      const githubLink = screen.getByTestId("about-github-link");
+      expect(githubLink).toBeInTheDocument();
+      expect(githubLink).toHaveAttribute("href", "https://github.com/anthropics/jira-ui");
+      expect(githubLink).toHaveAttribute("target", "_blank");
+
+      // Changelog link
+      const changelogLink = screen.getByTestId("about-changelog-link");
+      expect(changelogLink).toBeInTheDocument();
+      expect(changelogLink).toHaveAttribute("href", "https://github.com/anthropics/jira-ui/blob/main/CHANGELOG.md");
+    });
+  });
+
+  describe("Scenario: About page has responsive feature grid layout", () => {
+    it("Given the About page is displayed, then features are rendered in a grid with descriptions", async () => {
+      global.fetch = vi.fn((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockIssues) } as Response);
+        }
+        if (urlStr.includes("/api/priorities")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockPriorities) } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("button", { name: /Toggle sidebar/ }));
+      await user.click(await screen.findByText("About"));
+
+      await screen.findByTestId("about-page");
+
+      // Check feature descriptions are present
+      expect(screen.getByText(/Table with sorting, filters, and pagination/)).toBeInTheDocument();
+      expect(screen.getByText(/Drag-and-drop board with columns/)).toBeInTheDocument();
+
+      // Check tech stack section
+      expect(screen.getByText("Tech Stack")).toBeInTheDocument();
+      expect(screen.getByText("React 19")).toBeInTheDocument();
+      expect(screen.getByText("FastAPI")).toBeInTheDocument();
+      expect(screen.getByText("TypeScript")).toBeInTheDocument();
+
+      // Check features count header
+      expect(screen.getByText("Features (21)")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: About page shows in breadcrumbs", () => {
+    it("Given the About page is active, then breadcrumbs show Home / About", async () => {
+      global.fetch = vi.fn((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockIssues) } as Response);
+        }
+        if (urlStr.includes("/api/priorities")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockPriorities) } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("button", { name: /Toggle sidebar/ }));
+      await user.click(await screen.findByText("About"));
+
+      await screen.findByTestId("about-page");
+
+      // Check breadcrumbs
+      const breadcrumb = screen.getByRole("navigation", { name: /Breadcrumb/ });
+      expect(within(breadcrumb).getByText(/Home/)).toBeInTheDocument();
+      expect(within(breadcrumb).getByText("About")).toBeInTheDocument();
+    });
+  });
 });

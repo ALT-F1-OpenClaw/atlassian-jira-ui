@@ -145,10 +145,10 @@
 
 ### 14. About / Features page
 
-- [ ] **14.1** Dedicated "About" page accessible from header (? or info icon)
-- [ ] **14.2** List all features with their corresponding release versions (e.g. "Kanban Board — v1.25.0")
-- [ ] **14.3** Show current app version, build date, and link to GitHub repo/changelog
-- [ ] **14.4** Responsive layout, dark themed
+- [x] **14.1** Dedicated "About" page accessible from sidebar navigation — *BDD tests: `App.test.tsx` (1 scenario)*
+- [x] **14.2** List all features with their corresponding release versions (e.g. "Kanban Board — v1.25.0") — *BDD tests: `App.test.tsx` (1 scenario)*
+- [x] **14.3** Show current app version, build date, and link to GitHub repo/changelog — *BDD tests: `App.test.tsx` (1 scenario)*
+- [x] **14.4** Responsive layout, works in dark and light modes — *BDD tests: `App.test.tsx` (2 scenarios)*
 
 **Tech**: Static data derived from CHANGELOG.md / hardcoded feature-version map. No API needed.
 
@@ -172,4 +172,4 @@
 | 11 | Dark/light mode toggle | 3 | Complete |
 | 12 | Offline mode | 3 | Complete |
 | 13 | UI visibility & navigation | 3 | Complete |
-| 14 | About / Features page | 3 | Not started |
+| 14 | About / Features page | 3 | Complete |
