@@ -1,3 +1,8 @@
+## [1.48.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.47.1...v1.48.0) (2026-03-11)
+
+### Features
+
+* CI auto-fix workflow — auto-detect failures, extract logs, create issues ([783a288](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/783a2889069f8a8ac6e037d480f13bd7d93e8f30)), closes [#FF6B6B](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/FF6B6B)
 ## [1.47.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.47.0...v1.47.1) (2026-03-11)
 
 ### Bug Fixes
