@@ -117,4 +117,7 @@ Phase 1, Sections 1–2 complete + enhancements:
 
 Phase 1 complete. Phase 2 complete. Phase 3 complete — Sprint dashboard, sprint CRUD, time tracking, dark/light mode, offline mode, UI navigation, and about page done.
 CI/CD: GitHub Actions (CI, release, Docker build, CodeQL, Dependabot). Docker images published to GHCR on tag push (multi-arch amd64+arm64).
+
+**Bug fix workflow**: Every fix must have a GitHub issue (label: `bug`) created BEFORE the fix. Commit message references the issue (`fixes #N`). This ensures full traceability of what broke, why, and when it was fixed.
+
 See `ROADMAP.md` for full status.

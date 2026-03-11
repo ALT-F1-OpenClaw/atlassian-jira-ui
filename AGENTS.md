@@ -145,6 +145,9 @@ string[]
 - Page size is 50 (Jira API default) — do not change without discussion
 - Always run tests before marking a task complete
 - Do not push to remote — let the user decide when to push
+- **Bug fix workflow**: create a GitHub issue first (label: `bug`), then fix, reference the issue in the commit (`fixes #N`), issue gets closed automatically on merge
+- **All fixes must have a GitHub issue** — this provides traceability (what broke, root cause, fix, version)
+- Issue template: title starts with `fix:`, body includes Bug description, Root cause, Fix description, Fixed in version
 - After code changes: update README.md to reflect new features, endpoints, test counts, and project structure
 - When adding a new feature: update the About / Features page (task 14) with the feature name and its release version
 - CI/CD: backend CI needs dummy env vars (JIRA_HOST, JIRA_EMAIL, JIRA_API_TOKEN, APP_SECRET_KEY) for import verification
