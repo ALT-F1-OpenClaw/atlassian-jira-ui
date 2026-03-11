@@ -1,3 +1,8 @@
+## [1.44.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.43.1...v1.44.0) (2026-03-11)
+
+### Features
+
+* smart data caching — tiered staleTime for all queries ([3583f4b](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/3583f4b37e3e5863426b7e1eeac95f981d09be1f)), closes [#19](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/19)
 ## [1.43.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.43.0...v1.43.1) (2026-03-11)
 
 ### Bug Fixes
