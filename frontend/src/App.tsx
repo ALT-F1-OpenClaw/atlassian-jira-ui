@@ -1229,10 +1229,12 @@ function DraggableCard({
   issue,
   onSelect,
   isDragOverlay,
+  onMoveToCategory,
 }: {
   issue: Issue;
   onSelect?: (key: string) => void;
   isDragOverlay?: boolean;
+  onMoveToCategory?: (issueKey: string, targetCategory: StatusCategory) => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: issue.key,
@@ -1291,6 +1293,29 @@ function DraggableCard({
           )
         ) : null}
       </div>
+      {/* Quick-action arrows for mobile */}
+      {onMoveToCategory && !isDragOverlay && (
+        <div className="mt-2 flex items-center justify-between sm:hidden" role="group" aria-label={`Move ${issue.key}`}>
+          {(issue.status?.category as StatusCategory) !== "new" ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); const idx = CATEGORY_ORDER.indexOf(issue.status.category as StatusCategory); if (idx > 0) onMoveToCategory(issue.key, CATEGORY_ORDER[idx - 1]); }}
+              className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 transition-colors"
+              aria-label={`Move ${issue.key} left`}
+            >
+              ←
+            </button>
+          ) : <span />}
+          {(issue.status?.category as StatusCategory) !== "done" ? (
+            <button
+              onClick={(e) => { e.stopPropagation(); const idx = CATEGORY_ORDER.indexOf(issue.status.category as StatusCategory); if (idx < CATEGORY_ORDER.length - 1) onMoveToCategory(issue.key, CATEGORY_ORDER[idx + 1]); }}
+              className="rounded bg-zinc-800 px-2 py-1 text-xs text-zinc-400 hover:bg-zinc-700 hover:text-zinc-200 transition-colors"
+              aria-label={`Move ${issue.key} right`}
+            >
+              →
+            </button>
+          ) : <span />}
+        </div>
+      )}
     </div>
   );
 }
@@ -1300,11 +1325,13 @@ function DroppableColumn({
   issues,
   swimlane,
   onSelectIssue,
+  onMoveToCategory,
 }: {
   category: StatusCategory;
   issues: Issue[];
   swimlane: SwimlaneSetting;
   onSelectIssue?: (key: string) => void;
+  onMoveToCategory?: (issueKey: string, targetCategory: StatusCategory) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `column-${category}`,
@@ -1313,7 +1340,7 @@ function DroppableColumn({
 
   const renderCards = (cardIssues: Issue[]) =>
     cardIssues.map((issue) => (
-      <DraggableCard key={issue.key} issue={issue} onSelect={onSelectIssue} />
+      <DraggableCard key={issue.key} issue={issue} onSelect={onSelectIssue} onMoveToCategory={onMoveToCategory} />
     ));
 
   const renderSwimlanes = () => {
@@ -1342,7 +1369,7 @@ function DroppableColumn({
     });
 
     return sortedKeys.map((key) => (
-      <SwimlaneGroup key={key} label={key} issues={groups.get(key)!} onSelectIssue={onSelectIssue} />
+      <SwimlaneGroup key={key} label={key} issues={groups.get(key)!} onSelectIssue={onSelectIssue} onMoveToCategory={onMoveToCategory} />
     ));
   };
 
@@ -1373,10 +1400,12 @@ function SwimlaneGroup({
   label,
   issues,
   onSelectIssue,
+  onMoveToCategory,
 }: {
   label: string;
   issues: Issue[];
   onSelectIssue?: (key: string) => void;
+  onMoveToCategory?: (issueKey: string, targetCategory: StatusCategory) => void;
 }) {
   const [collapsed, setCollapsed] = useState(false);
 
@@ -1395,7 +1424,7 @@ function SwimlaneGroup({
       {!collapsed && (
         <div className="mt-1 space-y-2">
           {issues.map((issue) => (
-            <DraggableCard key={issue.key} issue={issue} onSelect={onSelectIssue} />
+            <DraggableCard key={issue.key} issue={issue} onSelect={onSelectIssue} onMoveToCategory={onMoveToCategory} />
           ))}
         </div>
       )}
@@ -1516,6 +1545,50 @@ function BoardView({
     }
   };
 
+  const handleMoveToCategory = async (issueKey: string, targetCategory: StatusCategory) => {
+    const issueInData = data?.issues.find((i) => i.key === issueKey);
+    if (!issueInData) return;
+    const currentCategory = issueInData.status.category as StatusCategory;
+    if (targetCategory === currentCategory) return;
+
+    try {
+      const res = await fetch(`${API}/api/issues/${issueKey}`);
+      if (!res.ok) return;
+      const detail = (await res.json()) as IssueDetail;
+
+      const categoryTransitionNames: Record<StatusCategory, string[]> = {
+        new: ["to do", "backlog", "open", "reopen", "reopened"],
+        indeterminate: ["in progress", "in review", "start progress", "start", "review"],
+        done: ["done", "close", "closed", "resolve", "resolved", "complete"],
+      };
+
+      const targetNames = categoryTransitionNames[targetCategory];
+      const transition = detail.transitions.find((t) =>
+        targetNames.some((name) => t.name.toLowerCase().includes(name)),
+      ) || detail.transitions[0];
+
+      if (transition) {
+        queryClient.setQueryData(
+          ["issues", project, "updated", "DESC", filters.status, filters.type, filters.assignee, "board"],
+          (old: { issues: Issue[]; total: number } | undefined) => {
+            if (!old) return old;
+            return {
+              ...old,
+              issues: old.issues.map((i) =>
+                i.key === issueKey
+                  ? { ...i, status: { ...i.status, category: targetCategory, name: CATEGORY_LABELS[targetCategory] } }
+                  : i,
+              ),
+            };
+          },
+        );
+        transitionMutation.mutate({ issueKey, transitionId: transition.id });
+      }
+    } catch {
+      // Ignore transition errors silently
+    }
+  };
+
   if (isLoading) return <div className="p-8 text-zinc-500">Loading board...</div>;
   if (error) return <div className="p-8 text-red-400">Error: {(error as Error).message}</div>;
 
@@ -1559,6 +1632,7 @@ function BoardView({
               issues={columns[cat]}
               swimlane={swimlane}
               onSelectIssue={onSelectIssue}
+              onMoveToCategory={handleMoveToCategory}
             />
           ))}
         </div>

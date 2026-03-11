@@ -1896,3 +1896,84 @@ describe("Feature: Board view drag-and-drop triggers status transition", () => {
     });
   });
 });
+
+describe("Feature: Board view quick-action arrows for mobile", () => {
+  describe("Scenario: Arrow buttons appear on board cards", () => {
+    it("Given PROJ-1 is In Progress, then it should have both left and right arrow buttons", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
+      expect(within(card).getByRole("button", { name: /Move PROJ-1 left/ })).toBeInTheDocument();
+      expect(within(card).getByRole("button", { name: /Move PROJ-1 right/ })).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Left arrow hidden on To Do cards", () => {
+    it("Given PROJ-2 is in To Do, then it should not have a left arrow button", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-2/ });
+      expect(within(card).queryByRole("button", { name: /Move PROJ-2 left/ })).not.toBeInTheDocument();
+      expect(within(card).getByRole("button", { name: /Move PROJ-2 right/ })).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Right arrow hidden on Done cards", () => {
+    it("Given PROJ-3 is in Done, then it should not have a right arrow button", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-3/ });
+      expect(within(card).getByRole("button", { name: /Move PROJ-3 left/ })).toBeInTheDocument();
+      expect(within(card).queryByRole("button", { name: /Move PROJ-3 right/ })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Tapping right arrow transitions issue to next category", () => {
+    it("Given PROJ-1 is In Progress, when right arrow is tapped, then it should fetch transitions and POST the Done transition", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
+      await user.click(within(card).getByRole("button", { name: /Move PROJ-1 right/ }));
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        // Should have fetched issue detail for transitions
+        const detailCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && !(c[1] as RequestInit)?.method
+        );
+        expect(detailCall).toBeDefined();
+        // Should have posted the transition
+        const transitionCall = calls.find(
+          (c: unknown[]) => (c[0] as string).includes("/api/issues/PROJ-1/transition") && (c[1] as RequestInit)?.method === "POST"
+        );
+        expect(transitionCall).toBeDefined();
+        const body = JSON.parse((transitionCall![1] as RequestInit).body as string);
+        expect(body.transition_id).toBe("31"); // "Done" transition
+      });
+    });
+  });
+
+  describe("Scenario: Arrow buttons have accessible group labels", () => {
+    it("Given PROJ-1 is on the board, then its arrow buttons should be in a group labeled 'Move PROJ-1'", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
+      expect(within(card).getByRole("group", { name: /Move PROJ-1/ })).toBeInTheDocument();
+    });
+  });
+});
