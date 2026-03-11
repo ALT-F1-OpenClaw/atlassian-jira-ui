@@ -3829,6 +3829,22 @@ describe("Feature: Manage sprint scope (9b.5)", () => {
         expect(removeCall).toBeTruthy();
       });
     });
+
+    it("Given the scope modal shows issues, when user clicks an issue key, then the scope modal closes and the issue detail panel opens", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("manage-scope-btn"));
+      await screen.findByTestId("manage-scope-modal");
+      const issueLink = await screen.findByTestId("scope-issue-link-PROJ-1");
+      expect(issueLink).toHaveTextContent("PROJ-1");
+      await user.click(issueLink);
+      await waitFor(() => {
+        expect(screen.queryByTestId("manage-scope-modal")).not.toBeInTheDocument();
+      });
+      expect(await screen.findByRole("dialog", { name: /Issue detail/ })).toBeInTheDocument();
+    });
   });
 });
 

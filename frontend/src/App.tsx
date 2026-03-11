@@ -3673,7 +3673,7 @@ function ConfirmDialog({ title, message, confirmLabel, confirmColor, onConfirm, 
   );
 }
 
-function ManageSprintScopeModal({ sprintId, currentIssues, onClose }: { sprintId: number; currentIssues: SprintIssue[]; onClose: () => void }) {
+function ManageSprintScopeModal({ sprintId, currentIssues, onClose, onSelectIssue }: { sprintId: number; currentIssues: SprintIssue[]; onClose: () => void; onSelectIssue?: (key: string) => void }) {
   const queryClient = useQueryClient();
   const [issueKey, setIssueKey] = useState("");
   const [error, setError] = useState("");
@@ -3720,7 +3720,7 @@ function ManageSprintScopeModal({ sprintId, currentIssues, onClose }: { sprintId
             <p className="text-sm text-zinc-500 text-center py-4">No issues in sprint</p>
           ) : currentIssues.map((issue) => (
             <div key={issue.key} className="flex items-center gap-2 text-sm rounded-md bg-zinc-800 px-3 py-2">
-              <span className="font-mono text-xs text-blue-400">{issue.key}</span>
+              <button onClick={() => { if (onSelectIssue) { onSelectIssue(issue.key); onClose(); } }} className="font-mono text-xs text-blue-400 hover:text-blue-300 hover:underline cursor-pointer" data-testid={`scope-issue-link-${issue.key}`}>{issue.key}</button>
               <span className="text-zinc-300 truncate flex-1">{issue.summary}</span>
               <StatusBadge status={issue.status} />
               <button onClick={() => removeMutation.mutate(issue.key)} disabled={removeMutation.isPending} className="text-red-400 hover:text-red-300 text-xs cursor-pointer" aria-label={`Remove ${issue.key}`} data-testid={`remove-issue-${issue.key}`}>
@@ -3737,7 +3737,7 @@ function ManageSprintScopeModal({ sprintId, currentIssues, onClose }: { sprintId
   );
 }
 
-function SprintDashboard({ project }: { project: string }) {
+function SprintDashboard({ project, onSelectIssue }: { project: string; onSelectIssue?: (key: string) => void }) {
   const queryClient = useQueryClient();
   const [selectedSprintId, setSelectedSprintId] = useState<number | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -4071,7 +4071,7 @@ function SprintDashboard({ project }: { project: string }) {
             <div className="space-y-2 max-h-[230px] overflow-y-auto">
               {scopeChanges.map((issue) => (
                 <div key={issue.key} className="flex items-center gap-2 text-sm rounded-md bg-zinc-800 px-3 py-2">
-                  <span className="font-mono text-xs text-blue-400">{issue.key}</span>
+                  <button onClick={() => onSelectIssue?.(issue.key)} className="font-mono text-xs text-blue-400 hover:text-blue-300 hover:underline cursor-pointer">{issue.key}</button>
                   <span className="text-zinc-300 truncate flex-1">{issue.summary}</span>
                   <StatusBadge status={issue.status} />
                 </div>
@@ -4088,7 +4088,7 @@ function SprintDashboard({ project }: { project: string }) {
       {/* Modals */}
       {showCreateModal && boardId && <CreateSprintModal boardId={boardId} onClose={() => setShowCreateModal(false)} />}
       {showEditModal && activeSprint && <EditSprintModal sprint={activeSprint} onClose={() => setShowEditModal(false)} />}
-      {showScopeModal && sprintId && <ManageSprintScopeModal sprintId={sprintId} currentIssues={issuesData?.issues || []} onClose={() => setShowScopeModal(false)} />}
+      {showScopeModal && sprintId && <ManageSprintScopeModal sprintId={sprintId} currentIssues={issuesData?.issues || []} onClose={() => setShowScopeModal(false)} onSelectIssue={onSelectIssue} />}
       {confirmAction === "start" && (
         <ConfirmDialog title="Start Sprint" message={`Start "${activeSprint.name}"? This will make the sprint active.`} confirmLabel="Start Sprint" confirmColor="bg-green-700 hover:bg-green-600" onConfirm={() => startMutation.mutate()} onCancel={() => setConfirmAction(null)} isPending={startMutation.isPending} />
       )}
@@ -4972,7 +4972,7 @@ export default function App() {
           {view === "board" && (
             <BoardView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} isOnline={isOnline} queueMutation={queueMutation} />
           )}
-          {view === "sprint" && <SprintDashboard project={project} />}
+          {view === "sprint" && <SprintDashboard project={project} onSelectIssue={setSelectedIssueKey} />}
           {view === "about" && <AboutPage />}
         </main>
       </div>
