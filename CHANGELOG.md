@@ -1,3 +1,8 @@
+## [1.24.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.23.0...v1.24.0) (2026-03-11)
+
+### Features
+
+* editable labels with autocomplete and add/remove ([7c3c4f2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/7c3c4f23b4b87456e2d1b70dc98a0a01f3b7b883))
 ## [1.23.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.22.0...v1.23.0) (2026-03-11)
 
 ### Features
