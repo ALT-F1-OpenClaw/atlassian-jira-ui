@@ -1,3 +1,8 @@
+## [1.38.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.37.0...v1.38.0) (2026-03-11)
+
+### Features
+
+* About/Features page with version history (tasks 14.1-14.4) ([3ce5a76](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/3ce5a760007b8da0c8b103773cef87b88facef7f))
 ## [1.37.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.36.0...v1.37.0) (2026-03-11)
 
 ### Features
