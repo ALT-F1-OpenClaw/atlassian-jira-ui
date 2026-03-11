@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 
 const API = import.meta.env.VITE_API_URL || "";
 const APP_VERSION = __APP_VERSION__;
@@ -15,6 +15,26 @@ interface Issue {
   assignee: { accountId: string; displayName: string; avatarUrl: string } | null;
   type: { name: string; iconUrl: string };
   updated: string;
+}
+
+interface IssueDetail extends Issue {
+  description: string;
+  descriptionAdf: AdfNode | null;
+  reporter: { accountId: string; displayName: string; avatarUrl: string } | null;
+  project: { key: string; name: string };
+  labels: string[];
+  created: string;
+  dueDate: string | null;
+  transitions: { id: string; name: string }[];
+}
+
+interface AdfNode {
+  type: string;
+  version?: number;
+  content?: AdfNode[];
+  text?: string;
+  attrs?: Record<string, unknown>;
+  marks?: { type: string; attrs?: Record<string, unknown> }[];
 }
 
 function StatusBadge({ status }: { status: string }) {
@@ -133,9 +153,453 @@ function FilterBar({
   );
 }
 
+/* ── ADF Renderer ── */
+
+function AdfRenderer({ node }: { node: AdfNode }) {
+  if (!node) return null;
+
+  if (node.type === "text") {
+    let element: React.ReactNode = node.text || "";
+    if (node.marks) {
+      for (const mark of node.marks) {
+        if (mark.type === "strong") element = <strong>{element}</strong>;
+        else if (mark.type === "em") element = <em>{element}</em>;
+        else if (mark.type === "code") element = <code className="rounded bg-zinc-800 px-1 py-0.5 text-sm font-mono text-pink-400">{element}</code>;
+        else if (mark.type === "link" && mark.attrs?.href) {
+          element = <a href={mark.attrs.href as string} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline hover:text-blue-300">{element}</a>;
+        }
+        else if (mark.type === "strike") element = <s>{element}</s>;
+      }
+    }
+    return <>{element}</>;
+  }
+
+  const children = (node.content || []).map((child, i) => <AdfRenderer key={i} node={child} />);
+
+  switch (node.type) {
+    case "doc":
+      return <div className="adf-content space-y-3">{children}</div>;
+    case "paragraph":
+      return <p className="text-zinc-300 leading-relaxed">{children}</p>;
+    case "heading": {
+      const level = (node.attrs?.level as number) || 1;
+      const cls = level === 1 ? "text-xl font-bold text-zinc-100" : level === 2 ? "text-lg font-semibold text-zinc-100" : "text-base font-semibold text-zinc-200";
+      return <div className={cls} role="heading" aria-level={level}>{children}</div>;
+    }
+    case "bulletList":
+      return <ul className="list-disc pl-5 space-y-1 text-zinc-300">{children}</ul>;
+    case "orderedList":
+      return <ol className="list-decimal pl-5 space-y-1 text-zinc-300">{children}</ol>;
+    case "listItem":
+      return <li>{children}</li>;
+    case "codeBlock":
+      return (
+        <pre className="rounded-lg bg-zinc-900 border border-zinc-800 p-3 text-sm font-mono text-zinc-300 overflow-x-auto">
+          <code>{children}</code>
+        </pre>
+      );
+    case "blockquote":
+      return <blockquote className="border-l-4 border-zinc-700 pl-4 text-zinc-400 italic">{children}</blockquote>;
+    case "hardBreak":
+      return <br />;
+    default:
+      return <>{children}</>;
+  }
+}
+
+/* ── Inline Edit Components ── */
+
+function InlineEditText({
+  value,
+  onSave,
+  label,
+  multiline,
+}: {
+  value: string;
+  onSave: (v: string) => void;
+  label: string;
+  multiline?: boolean;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(value);
+  const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
+
+  useEffect(() => {
+    if (editing) {
+      setDraft(value);
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [editing, value]);
+
+  const save = () => {
+    if (draft.trim() && draft !== value) onSave(draft.trim());
+    setEditing(false);
+  };
+
+  const cancel = () => {
+    setDraft(value);
+    setEditing(false);
+  };
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => setEditing(true)}
+        className="w-full text-left rounded px-1 -mx-1 hover:bg-zinc-800 transition-colors cursor-pointer"
+        aria-label={`Edit ${label}`}
+        title={`Click to edit ${label}`}
+      >
+        {value || <span className="text-zinc-600 italic">None</span>}
+      </button>
+    );
+  }
+
+  if (multiline) {
+    return (
+      <textarea
+        ref={inputRef as React.RefObject<HTMLTextAreaElement>}
+        value={draft}
+        onChange={(e) => setDraft(e.target.value)}
+        onBlur={save}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") cancel();
+        }}
+        aria-label={label}
+        className="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none resize-y min-h-[80px]"
+        rows={4}
+      />
+    );
+  }
+
+  return (
+    <input
+      ref={inputRef as React.RefObject<HTMLInputElement>}
+      value={draft}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={save}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") save();
+        if (e.key === "Escape") cancel();
+      }}
+      aria-label={label}
+      className="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
+    />
+  );
+}
+
+function InlineEditSelect({
+  value,
+  options,
+  onSave,
+  label,
+}: {
+  value: string;
+  options: string[];
+  onSave: (v: string) => void;
+  label: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const selectRef = useRef<HTMLSelectElement>(null);
+
+  useEffect(() => {
+    if (editing) setTimeout(() => selectRef.current?.focus(), 0);
+  }, [editing]);
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => setEditing(true)}
+        className="w-full text-left rounded px-1 -mx-1 hover:bg-zinc-800 transition-colors cursor-pointer"
+        aria-label={`Edit ${label}`}
+        title={`Click to edit ${label}`}
+      >
+        {value || <span className="text-zinc-600 italic">None</span>}
+      </button>
+    );
+  }
+
+  return (
+    <select
+      ref={selectRef}
+      value={value}
+      onChange={(e) => {
+        onSave(e.target.value);
+        setEditing(false);
+      }}
+      onBlur={() => setEditing(false)}
+      onKeyDown={(e) => {
+        if (e.key === "Escape") setEditing(false);
+      }}
+      aria-label={label}
+      className={FILTER_SELECT_CLASS}
+    >
+      {options.map((o) => (
+        <option key={o} value={o}>{o}</option>
+      ))}
+    </select>
+  );
+}
+
+/* ── Issue Detail Panel ── */
+
+const PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest"];
+
+function IssueDetailPanel({
+  issueKey,
+  onClose,
+}: {
+  issueKey: string;
+  onClose: () => void;
+}) {
+  const queryClient = useQueryClient();
+
+  const { data: issue, isLoading, error } = useQuery({
+    queryKey: ["issue", issueKey],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/issues/${issueKey}`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<IssueDetail>;
+    },
+    enabled: !!issueKey,
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async (fields: { summary?: string; description?: string; priority?: string; assignee?: string }) => {
+      const res = await fetch(`${API}/api/issues/${issueKey}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(fields),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["issue", issueKey] });
+      queryClient.invalidateQueries({ queryKey: ["issues"] });
+    },
+  });
+
+  const transitionMutation = useMutation({
+    mutationFn: async (transitionId: string) => {
+      const res = await fetch(`${API}/api/issues/${issueKey}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transition_id: transitionId }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["issue", issueKey] });
+      queryClient.invalidateQueries({ queryKey: ["issues"] });
+    },
+  });
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  if (isLoading) {
+    return (
+      <div className="fixed inset-0 z-50 flex" role="dialog" aria-label="Issue detail">
+        <div className="hidden md:block flex-1 bg-black/50" onClick={onClose} />
+        <div className="w-full md:w-[600px] lg:w-[720px] bg-zinc-950 border-l border-zinc-800 p-6 overflow-y-auto">
+          <p className="text-zinc-500">Loading issue...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !issue) {
+    return (
+      <div className="fixed inset-0 z-50 flex" role="dialog" aria-label="Issue detail">
+        <div className="hidden md:block flex-1 bg-black/50" onClick={onClose} />
+        <div className="w-full md:w-[600px] lg:w-[720px] bg-zinc-950 border-l border-zinc-800 p-6 overflow-y-auto">
+          <p className="text-red-400">Error loading issue.</p>
+          <button onClick={onClose} className="mt-4 text-zinc-400 hover:text-zinc-200 text-sm">Close</button>
+        </div>
+      </div>
+    );
+  }
+
+  const formatDate = (d: string | null) => {
+    if (!d) return "—";
+    return d.substring(0, 10);
+  };
+
+  const formatDateTime = (d: string | null) => {
+    if (!d) return "—";
+    try {
+      return new Date(d).toLocaleString();
+    } catch {
+      return d;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex" role="dialog" aria-label="Issue detail">
+      <div className="hidden md:block flex-1 bg-black/50" onClick={onClose} aria-hidden="true" />
+      <div className="w-full md:w-[600px] lg:w-[720px] bg-zinc-950 border-l border-zinc-800 overflow-y-auto flex flex-col">
+        {/* Panel header */}
+        <div className="flex items-center justify-between border-b border-zinc-800 px-4 sm:px-6 py-3 shrink-0">
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-zinc-500">{issue.type?.name}</span>
+            <span className="font-mono text-blue-400 font-semibold">{issue.key}</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+            aria-label="Close detail panel"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Panel body */}
+        <div className="flex-1 px-4 sm:px-6 py-4 space-y-6">
+          {/* Summary (editable) */}
+          <div>
+            <h2 className="text-lg sm:text-xl font-bold text-zinc-100">
+              <InlineEditText
+                value={issue.summary}
+                onSave={(v) => updateMutation.mutate({ summary: v })}
+                label="summary"
+              />
+            </h2>
+          </div>
+
+          {/* Status + Priority row */}
+          <div className="flex flex-wrap gap-4 items-start">
+            {/* Status transition */}
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">Status</label>
+              {issue.transitions?.length > 0 ? (
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value) transitionMutation.mutate(e.target.value);
+                  }}
+                  aria-label="Transition status"
+                  className={FILTER_SELECT_CLASS}
+                >
+                  <option value="" disabled>{issue.status?.name}</option>
+                  {issue.transitions.map((t) => (
+                    <option key={t.id} value={t.id}>{t.name}</option>
+                  ))}
+                </select>
+              ) : (
+                <StatusBadge status={issue.status?.name} />
+              )}
+              {transitionMutation.isPending && <span className="text-xs text-zinc-500 ml-2">Saving...</span>}
+            </div>
+
+            {/* Priority (editable) */}
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">Priority</label>
+              <div className="flex items-center gap-1.5">
+                <PriorityIcon priority={issue.priority?.name} />
+                <InlineEditSelect
+                  value={issue.priority?.name}
+                  options={PRIORITIES}
+                  onSave={(v) => updateMutation.mutate({ priority: v })}
+                  label="priority"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Description (ADF or editable plain text) */}
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">Description</label>
+            {issue.descriptionAdf ? (
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+                <AdfRenderer node={issue.descriptionAdf} />
+              </div>
+            ) : (
+              <InlineEditText
+                value={issue.description || ""}
+                onSave={(v) => updateMutation.mutate({ description: v })}
+                label="description"
+                multiline
+              />
+            )}
+          </div>
+
+          {/* Metadata grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
+            {/* Assignee (editable) */}
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">Assignee</label>
+              <div className="flex items-center gap-2 text-zinc-200">
+                {issue.assignee?.avatarUrl && (
+                  <img src={issue.assignee.avatarUrl} alt="" className="w-5 h-5 rounded-full" />
+                )}
+                <InlineEditText
+                  value={issue.assignee?.displayName || ""}
+                  onSave={(v) => updateMutation.mutate({ assignee: v })}
+                  label="assignee"
+                />
+              </div>
+            </div>
+
+            {/* Reporter */}
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">Reporter</label>
+              <div className="flex items-center gap-2 text-zinc-300">
+                {issue.reporter?.avatarUrl && (
+                  <img src={issue.reporter.avatarUrl} alt="" className="w-5 h-5 rounded-full" />
+                )}
+                <span>{issue.reporter?.displayName || "—"}</span>
+              </div>
+            </div>
+
+            {/* Labels */}
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">Labels</label>
+              <div className="flex flex-wrap gap-1">
+                {issue.labels?.length > 0 ? issue.labels.map((l) => (
+                  <span key={l} className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300">{l}</span>
+                )) : <span className="text-zinc-600">None</span>}
+              </div>
+            </div>
+
+            {/* Due Date */}
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">Due Date</label>
+              <span className="text-zinc-300">{formatDate(issue.dueDate)}</span>
+            </div>
+
+            {/* Created */}
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">Created</label>
+              <span className="text-zinc-400 text-xs">{formatDateTime(issue.created)}</span>
+            </div>
+
+            {/* Updated */}
+            <div>
+              <label className="block text-xs text-zinc-500 mb-1">Updated</label>
+              <span className="text-zinc-400 text-xs">{formatDateTime(issue.updated)}</span>
+            </div>
+          </div>
+
+          {/* Mutation feedback */}
+          {updateMutation.isPending && <p className="text-xs text-zinc-500">Saving changes...</p>}
+          {updateMutation.isError && <p className="text-xs text-red-400">Failed to save changes.</p>}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ── List View ── */
+
 const PAGE_SIZE = 50;
 
-function ListView({ project, filters, onIssuesLoaded }: { project: string; filters: Filters; onIssuesLoaded?: (issues: Issue[]) => void }) {
+function ListView({ project, filters, onIssuesLoaded, onSelectIssue }: { project: string; filters: Filters; onIssuesLoaded?: (issues: Issue[]) => void; onSelectIssue?: (key: string) => void }) {
   const [sortBy, setSortBy] = useState<SortField>("updated");
   const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
   const [page, setPage] = useState(0);
@@ -204,7 +668,8 @@ function ListView({ project, filters, onIssuesLoaded }: { project: string; filte
           {data?.issues.map((issue) => (
             <tr
               key={issue.id}
-              className="flex flex-wrap sm:table-row items-center gap-x-3 gap-y-0.5 sm:gap-0 border-b border-zinc-800 sm:border-zinc-900 px-4 sm:px-0 py-3 sm:py-0 transition-colors hover:bg-zinc-900/50"
+              className="flex flex-wrap sm:table-row items-center gap-x-3 gap-y-0.5 sm:gap-0 border-b border-zinc-800 sm:border-zinc-900 px-4 sm:px-0 py-3 sm:py-0 transition-colors hover:bg-zinc-900/50 cursor-pointer"
+              onClick={() => onSelectIssue?.(issue.key)}
             >
               <td className="w-full sm:w-auto sm:table-cell sm:px-4 sm:py-3 font-mono text-blue-400 text-base sm:text-sm order-1 sm:order-none">
                 {issue.key}
@@ -257,6 +722,9 @@ export default function App() {
   const [project, setProject] = useState("");
   const [filters, setFilters] = useState<Filters>({ status: "", type: "", assignee: "" });
   const [issuesForFilters, setIssuesForFilters] = useState<Issue[]>([]);
+  const [selectedIssueKey, setSelectedIssueKey] = useState<string | null>(null);
+
+  const handleCloseDetail = useCallback(() => setSelectedIssueKey(null), []);
 
   const { data: projects } = useQuery({
     queryKey: ["projects"],
@@ -313,13 +781,18 @@ export default function App() {
 
       {/* Main */}
       <main className="flex-1 overflow-auto">
-        {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} />}
+        {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} />}
         {view === "board" && (
           <div className="p-8 text-zinc-500">
             Board view — coming in Phase 1
           </div>
         )}
       </main>
+
+      {/* Issue Detail Panel */}
+      {selectedIssueKey && (
+        <IssueDetailPanel issueKey={selectedIssueKey} onClose={handleCloseDetail} />
+      )}
     </div>
   );
 }

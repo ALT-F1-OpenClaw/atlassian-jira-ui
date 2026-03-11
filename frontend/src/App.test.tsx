@@ -1,4 +1,4 @@
-import { render, screen, within } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -61,14 +61,103 @@ const mockProjects = [
   { key: "PROJ", name: "My Project", id: "1" },
 ];
 
-beforeEach(() => {
-  vi.restoreAllMocks();
-  global.fetch = vi.fn((url: string | URL | Request) => {
+const mockIssueDetail = {
+  id: "10001",
+  key: "PROJ-1",
+  summary: "Implement login page",
+  description: "Build a login page with email and password fields.",
+  descriptionAdf: {
+    type: "doc",
+    version: 1,
+    content: [
+      {
+        type: "paragraph",
+        content: [
+          { type: "text", text: "Build a " },
+          { type: "text", text: "login page", marks: [{ type: "strong" }] },
+          { type: "text", text: " with email and password fields." },
+        ],
+      },
+      {
+        type: "heading",
+        attrs: { level: 2 },
+        content: [{ type: "text", text: "Requirements" }],
+      },
+      {
+        type: "bulletList",
+        content: [
+          { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Email validation" }] }] },
+          { type: "listItem", content: [{ type: "paragraph", content: [{ type: "text", text: "Password strength meter" }] }] },
+        ],
+      },
+      {
+        type: "codeBlock",
+        content: [{ type: "text", text: "const login = () => {};" }],
+      },
+      {
+        type: "paragraph",
+        content: [
+          { type: "text", text: "See " },
+          { type: "text", text: "docs", marks: [{ type: "link", attrs: { href: "https://example.com" } }] },
+          { type: "text", text: " for details." },
+        ],
+      },
+    ],
+  },
+  status: { name: "In Progress", category: "indeterminate" },
+  priority: { name: "High", iconUrl: "" },
+  assignee: {
+    accountId: "abc123",
+    displayName: "Alice Martin",
+    avatarUrl: "",
+  },
+  reporter: {
+    accountId: "xyz789",
+    displayName: "Carol Davis",
+    avatarUrl: "",
+  },
+  type: { name: "Story", iconUrl: "" },
+  project: { key: "PROJ", name: "My Project" },
+  labels: ["frontend", "auth"],
+  created: "2026-03-01T09:00:00.000Z",
+  updated: "2026-03-09T14:30:00.000Z",
+  dueDate: "2026-03-15",
+  transitions: [
+    { id: "21", name: "To Do" },
+    { id: "31", name: "Done" },
+  ],
+};
+
+function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: object; transitionResponse?: object }) {
+  const detail = overrides?.issueDetail || mockIssueDetail;
+  const patchRes = overrides?.patchResponse || { status: "ok", key: "PROJ-1" };
+  const transitionRes = overrides?.transitionResponse || { status: "ok", key: "PROJ-1" };
+
+  global.fetch = vi.fn((url: string | URL | Request, init?: RequestInit) => {
     const urlStr = typeof url === "string" ? url : url.toString();
     if (urlStr.includes("/api/projects")) {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockProjects),
+      } as Response);
+    }
+    // Issue detail: /api/issues/PROJ-1 (not /api/issues?...)
+    if (urlStr.match(/\/api\/issues\/[A-Z]+-\d+\/transition/) && init?.method === "POST") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(transitionRes),
+      } as Response);
+    }
+    if (urlStr.match(/\/api\/issues\/[A-Z]+-\d+$/) && init?.method === "PATCH") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(patchRes),
+      } as Response);
+    }
+    if (urlStr.match(/\/api\/issues\/[A-Z]+-\d+$/)) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(detail),
       } as Response);
     }
     if (urlStr.includes("/api/issues")) {
@@ -83,6 +172,11 @@ beforeEach(() => {
       json: () => Promise.resolve({}),
     } as Response);
   });
+}
+
+beforeEach(() => {
+  vi.restoreAllMocks();
+  setupFetchMock();
 });
 
 describe("Feature: List view displays issues in a table", () => {
@@ -519,6 +613,348 @@ describe("Feature: Pagination", () => {
       const lastCall = issuesCalls[issuesCalls.length - 1];
       const url = lastCall[0] as string;
       expect(url).toContain("start_at=50");
+    });
+  });
+});
+
+/* ── Issue Detail Panel Tests ── */
+
+describe("Feature: Issue detail panel opens on row click", () => {
+  describe("Scenario: Clicking an issue row opens the detail panel", () => {
+    it("Given the list view shows PROJ-1, when clicking the PROJ-1 row, then the detail panel should open and fetch issue details", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      await screen.findByText("PROJ-1");
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(panel).toBeInTheDocument();
+
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const detailCall = calls.find((c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/));
+      expect(detailCall).toBeDefined();
+    });
+  });
+
+  describe("Scenario: Detail panel shows the issue key and type", () => {
+    it("Given the detail panel is open for PROJ-1, then the issue key and type should be displayed", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(within(panel).getByText("PROJ-1")).toBeInTheDocument();
+      expect(within(panel).getByText("Story")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Detail panel has a close button", () => {
+    it("Given the detail panel is open, when clicking the close button, then the panel should close", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const closeBtn = within(panel).getByLabelText("Close detail panel");
+      await user.click(closeBtn);
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /Issue detail/ })).not.toBeInTheDocument();
+      });
+    });
+  });
+});
+
+describe("Feature: ADF description rendering", () => {
+  describe("Scenario: Paragraphs with bold text are rendered", () => {
+    it("Given the issue has an ADF description with bold text, then the bold text should render with <strong>", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const strong = within(panel).getByText("login page");
+      expect(strong.tagName).toBe("STRONG");
+    });
+  });
+
+  describe("Scenario: Headings are rendered", () => {
+    it("Given the ADF has a level 2 heading 'Requirements', then it should render as a heading", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const headings = within(panel).getAllByRole("heading", { level: 2 });
+      const requirementsHeading = headings.find((h) => h.textContent === "Requirements");
+      expect(requirementsHeading).toBeTruthy();
+    });
+  });
+
+  describe("Scenario: Bullet lists are rendered", () => {
+    it("Given the ADF has a bullet list, then the list items should render", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(within(panel).getByText("Email validation")).toBeInTheDocument();
+      expect(within(panel).getByText("Password strength meter")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Code blocks are rendered", () => {
+    it("Given the ADF has a code block, then it should render in a <pre> element", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const codeText = within(panel).getByText("const login = () => {};");
+      expect(codeText.closest("pre")).toBeTruthy();
+    });
+  });
+
+  describe("Scenario: Links are rendered", () => {
+    it("Given the ADF has a link mark, then it should render as an anchor tag", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const link = within(panel).getByText("docs");
+      expect(link.tagName).toBe("A");
+      expect(link).toHaveAttribute("href", "https://example.com");
+    });
+  });
+});
+
+describe("Feature: Inline editing", () => {
+  describe("Scenario: Summary can be edited inline", () => {
+    it("Given the detail panel is open, when clicking the summary and changing it, then a PATCH request should be sent", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const editBtn = within(panel).getByLabelText("Edit summary");
+      await user.click(editBtn);
+
+      const input = within(panel).getByLabelText("summary");
+      await user.clear(input);
+      await user.type(input, "Updated login page");
+      await user.keyboard("{Enter}");
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+        );
+        expect(patchCall).toBeDefined();
+        const body = JSON.parse((patchCall![1] as RequestInit).body as string);
+        expect(body.summary).toBe("Updated login page");
+      });
+    });
+  });
+
+  describe("Scenario: Editing summary can be cancelled with Escape", () => {
+    it("Given the summary is being edited, when pressing Escape, then editing should cancel without saving", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const editBtn = within(panel).getByLabelText("Edit summary");
+      await user.click(editBtn);
+
+      const input = within(panel).getByLabelText("summary");
+      await user.clear(input);
+      await user.type(input, "Should not save");
+      await user.keyboard("{Escape}");
+
+      expect(within(panel).queryByLabelText("summary")).not.toBeInTheDocument();
+      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+      const patchCall = calls.find(
+        (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+      );
+      expect(patchCall).toBeUndefined();
+    });
+  });
+
+  describe("Scenario: Priority can be changed via dropdown", () => {
+    it("Given the detail panel is open, when editing priority and selecting 'Medium', then a PATCH request should be sent with priority=Medium", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const editBtn = within(panel).getByLabelText("Edit priority");
+      await user.click(editBtn);
+
+      const select = within(panel).getByLabelText("priority");
+      await user.selectOptions(select, "Medium");
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+        );
+        expect(patchCall).toBeDefined();
+        const body = JSON.parse((patchCall![1] as RequestInit).body as string);
+        expect(body.priority).toBe("Medium");
+      });
+    });
+  });
+});
+
+describe("Feature: Status transitions", () => {
+  describe("Scenario: Transition dropdown shows available transitions", () => {
+    it("Given the issue has transitions 'To Do' and 'Done', then the status dropdown should list them", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const transitionSelect = within(panel).getByLabelText("Transition status");
+      const options = within(transitionSelect).getAllByRole("option");
+      const optionTexts = options.map((o) => o.textContent);
+      expect(optionTexts).toContain("To Do");
+      expect(optionTexts).toContain("Done");
+    });
+  });
+
+  describe("Scenario: Selecting a transition sends a POST request", () => {
+    it("Given the transition dropdown shows 'Done', when selecting it, then a POST should be sent with transition_id", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const transitionSelect = within(panel).getByLabelText("Transition status");
+      await user.selectOptions(transitionSelect, "31");
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const transitionCall = calls.find(
+          (c: unknown[]) => (c[0] as string).includes("/api/issues/PROJ-1/transition") && (c[1] as RequestInit)?.method === "POST"
+        );
+        expect(transitionCall).toBeDefined();
+        const body = JSON.parse((transitionCall![1] as RequestInit).body as string);
+        expect(body.transition_id).toBe("31");
+      });
+    });
+  });
+});
+
+describe("Feature: Issue metadata display", () => {
+  describe("Scenario: Labels are displayed", () => {
+    it("Given the issue has labels 'frontend' and 'auth', then both labels should be visible", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(within(panel).getByText("frontend")).toBeInTheDocument();
+      expect(within(panel).getByText("auth")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Reporter is displayed", () => {
+    it("Given the issue reporter is 'Carol Davis', then the reporter name should be visible", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(within(panel).getByText("Carol Davis")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Due date is displayed", () => {
+    it("Given the issue has due date '2026-03-15', then '2026-03-15' should be visible", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(within(panel).getByText("2026-03-15")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Created and updated timestamps are displayed", () => {
+    it("Given the issue was created and updated, then both timestamps should be visible in the panel", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const createdLabel = within(panel).getByText("Created");
+      expect(createdLabel).toBeInTheDocument();
+      const updatedLabel = within(panel).getByText("Updated");
+      expect(updatedLabel).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Assignee is displayed", () => {
+    it("Given the issue is assigned to 'Alice Martin', then the assignee should be visible in the detail panel", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const editBtn = within(panel).getByLabelText("Edit assignee");
+      expect(editBtn).toHaveTextContent("Alice Martin");
+    });
+  });
+
+  describe("Scenario: Issue with no labels shows 'None'", () => {
+    it("Given the issue has no labels, then 'None' should be displayed", async () => {
+      const user = userEvent.setup();
+      setupFetchMock({ issueDetail: { ...mockIssueDetail, labels: [] } });
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(within(panel).getByText("None")).toBeInTheDocument();
     });
   });
 });

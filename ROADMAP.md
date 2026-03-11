@@ -13,11 +13,11 @@
 
 ### 2. Issue detail panel
 
-- [ ] **2.1** Side panel or full-page view showing all issue fields
-- [ ] **2.2** ADF (Atlassian Document Format) description rendering
-- [ ] **2.3** Inline editing: summary, description, assignee, priority
-- [ ] **2.4** Status transitions via dropdown (using available transitions)
-- [ ] **2.5** Display labels, reporter, due date, created/updated timestamps
+- [x] **2.1** Side panel or full-page view showing all issue fields — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **2.2** ADF (Atlassian Document Format) description rendering — *BDD tests: `App.test.tsx` (5 scenarios)*
+- [x] **2.3** Inline editing: summary, description, assignee, priority — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **2.4** Status transitions via dropdown (using available transitions) — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **2.5** Display labels, reporter, due date, created/updated timestamps — *BDD tests: `App.test.tsx` (6 scenarios)*
 
 **Tech**: Backend `GET /api/issues/{key}`, `PATCH /api/issues/{key}`, `POST /api/issues/{key}/transition` — all exist. TanStack Query `useMutation` for updates. ADF-to-React renderer for description.
 
@@ -130,7 +130,7 @@
 | # | Feature | Phase | Status |
 |---|---------|-------|--------|
 | 1 | List view enhancements | 1 | Partial |
-| 2 | Issue detail panel | 1 | Not started |
+| 2 | Issue detail panel | 1 | Complete |
 | 3 | Quick search / Command palette | 1 | Not started |
 | 4 | Board view (Kanban) | 1 | Not started |
 | 5 | Quick create modal | 2 | Not started |
