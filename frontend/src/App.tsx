@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import Link from "@tiptap/extension-link";
+import Placeholder from "@tiptap/extension-placeholder";
 
 const API = import.meta.env.VITE_API_URL || "";
 const APP_VERSION = __APP_VERSION__;
@@ -207,6 +211,273 @@ function AdfRenderer({ node }: { node: AdfNode }) {
   }
 }
 
+/* ── ADF ↔ TipTap Conversion ── */
+
+const ADF_TO_TIPTAP_MARKS: Record<string, string> = {
+  strong: "bold",
+  em: "italic",
+  strike: "strike",
+  code: "code",
+  link: "link",
+};
+
+const TIPTAP_TO_ADF_MARKS: Record<string, string> = {
+  bold: "strong",
+  italic: "em",
+  strike: "strike",
+  code: "code",
+  link: "link",
+};
+
+function adfToTiptap(node: AdfNode): Record<string, unknown> {
+  if (node.type === "text") {
+    const result: Record<string, unknown> = { type: "text", text: node.text || "" };
+    if (node.marks?.length) {
+      result.marks = node.marks.map((m) => ({
+        type: ADF_TO_TIPTAP_MARKS[m.type] || m.type,
+        ...(m.attrs ? { attrs: m.attrs } : {}),
+      }));
+    }
+    return result;
+  }
+
+  const result: Record<string, unknown> = { type: node.type };
+
+  if (node.attrs) {
+    result.attrs = node.attrs;
+  }
+
+  if (node.content?.length) {
+    result.content = node.content.map(adfToTiptap);
+  }
+
+  return result;
+}
+
+function tiptapToAdf(node: Record<string, unknown>): AdfNode {
+  if (node.type === "text") {
+    const result: AdfNode = { type: "text", text: (node.text as string) || "" };
+    if (node.marks && Array.isArray(node.marks) && node.marks.length) {
+      result.marks = node.marks.map((m: { type: string; attrs?: Record<string, unknown> }) => ({
+        type: TIPTAP_TO_ADF_MARKS[m.type] || m.type,
+        ...(m.attrs ? { attrs: m.attrs } : {}),
+      }));
+    }
+    return result;
+  }
+
+  const result: AdfNode = { type: node.type as string };
+
+  if (node.type === "doc") {
+    result.version = 1;
+  }
+
+  if (node.attrs) {
+    result.attrs = node.attrs as Record<string, unknown>;
+  }
+
+  if (node.content && Array.isArray(node.content) && node.content.length) {
+    result.content = node.content.map(tiptapToAdf);
+  }
+
+  return result;
+}
+
+/* ── Rich Text Editor ── */
+
+const TOOLBAR_BTN =
+  "rounded px-1.5 py-1 text-xs transition-colors cursor-pointer";
+const TOOLBAR_BTN_ACTIVE = "bg-zinc-700 text-zinc-100";
+const TOOLBAR_BTN_INACTIVE = "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200";
+
+function RichTextEditor({
+  initialAdf,
+  onSave,
+  onCancel,
+}: {
+  initialAdf: AdfNode | null;
+  onSave: (adf: AdfNode) => void;
+  onCancel: () => void;
+}) {
+  const editor = useEditor({
+    extensions: [
+      StarterKit.configure({
+        heading: { levels: [1, 2, 3] },
+      }),
+      Link.configure({
+        openOnClick: false,
+        HTMLAttributes: { class: "text-blue-400 underline" },
+      }),
+      Placeholder.configure({ placeholder: "Write a description..." }),
+    ],
+    content: initialAdf ? adfToTiptap(initialAdf) : undefined,
+    editorProps: {
+      attributes: {
+        class:
+          "prose prose-invert prose-sm max-w-none min-h-[120px] px-3 py-2 focus:outline-none text-zinc-200",
+      },
+    },
+  });
+
+  const handleSave = () => {
+    if (!editor) return;
+    const json = editor.getJSON();
+    const adf = tiptapToAdf(json);
+    onSave(adf);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      e.stopPropagation();
+      onCancel();
+    }
+  };
+
+  const addLink = () => {
+    if (!editor) return;
+    const url = window.prompt("Enter URL:");
+    if (url) {
+      editor.chain().focus().setLink({ href: url }).run();
+    }
+  };
+
+  if (!editor) return null;
+
+  return (
+    <div onKeyDown={handleKeyDown} role="textbox" aria-label="Rich text editor">
+      {/* Toolbar */}
+      <div
+        className="flex flex-wrap gap-0.5 border border-zinc-700 border-b-0 rounded-t bg-zinc-900 px-1.5 py-1"
+        role="toolbar"
+        aria-label="Formatting toolbar"
+      >
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBold().run()}
+          className={`${TOOLBAR_BTN} ${editor.isActive("bold") ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE} font-bold`}
+          aria-label="Bold"
+          title="Bold"
+        >
+          B
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleItalic().run()}
+          className={`${TOOLBAR_BTN} ${editor.isActive("italic") ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE} italic`}
+          aria-label="Italic"
+          title="Italic"
+        >
+          I
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleStrike().run()}
+          className={`${TOOLBAR_BTN} ${editor.isActive("strike") ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE} line-through`}
+          aria-label="Strikethrough"
+          title="Strikethrough"
+        >
+          S
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleCode().run()}
+          className={`${TOOLBAR_BTN} ${editor.isActive("code") ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE} font-mono`}
+          aria-label="Code"
+          title="Code"
+        >
+          {"<>"}
+        </button>
+        <span className="w-px bg-zinc-700 mx-1" />
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
+          className={`${TOOLBAR_BTN} ${editor.isActive("heading", { level: 1 }) ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE}`}
+          aria-label="Heading 1"
+          title="Heading 1"
+        >
+          H1
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}
+          className={`${TOOLBAR_BTN} ${editor.isActive("heading", { level: 2 }) ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE}`}
+          aria-label="Heading 2"
+          title="Heading 2"
+        >
+          H2
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}
+          className={`${TOOLBAR_BTN} ${editor.isActive("heading", { level: 3 }) ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE}`}
+          aria-label="Heading 3"
+          title="Heading 3"
+        >
+          H3
+        </button>
+        <span className="w-px bg-zinc-700 mx-1" />
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleBulletList().run()}
+          className={`${TOOLBAR_BTN} ${editor.isActive("bulletList") ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE}`}
+          aria-label="Bullet list"
+          title="Bullet list"
+        >
+          •
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleOrderedList().run()}
+          className={`${TOOLBAR_BTN} ${editor.isActive("orderedList") ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE}`}
+          aria-label="Ordered list"
+          title="Ordered list"
+        >
+          1.
+        </button>
+        <button
+          type="button"
+          onClick={addLink}
+          className={`${TOOLBAR_BTN} ${editor.isActive("link") ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE}`}
+          aria-label="Link"
+          title="Link"
+        >
+          🔗
+        </button>
+        <button
+          type="button"
+          onClick={() => editor.chain().focus().toggleCodeBlock().run()}
+          className={`${TOOLBAR_BTN} ${editor.isActive("codeBlock") ? TOOLBAR_BTN_ACTIVE : TOOLBAR_BTN_INACTIVE} font-mono`}
+          aria-label="Code block"
+          title="Code block"
+        >
+          {"{ }"}
+        </button>
+      </div>
+
+      {/* Editor */}
+      <div className="rounded-b border border-zinc-700 bg-zinc-900 overflow-y-auto max-h-[400px]">
+        <EditorContent editor={editor} />
+      </div>
+
+      {/* Actions */}
+      <div className="flex gap-2 mt-2">
+        <button
+          onClick={handleSave}
+          className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-500 transition-colors cursor-pointer"
+        >
+          Save
+        </button>
+        <button
+          onClick={onCancel}
+          className="rounded bg-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-600 transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+  );
+}
+
 /* ── Inline Edit Components ── */
 
 function InlineEditText({
@@ -364,7 +635,7 @@ function IssueDetailPanel({
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (fields: { summary?: string; description?: string; priority?: string; assignee?: string }) => {
+    mutationFn: async (fields: { summary?: string; description?: string; description_adf?: AdfNode; priority?: string; assignee?: string }) => {
       const res = await fetch(`${API}/api/issues/${issueKey}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -396,14 +667,6 @@ function IssueDetailPanel({
   });
 
   const [editingDescription, setEditingDescription] = useState(false);
-  const [descriptionDraft, setDescriptionDraft] = useState("");
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
-
-  useEffect(() => {
-    if (editingDescription) {
-      setTimeout(() => descriptionRef.current?.focus(), 0);
-    }
-  }, [editingDescription]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -528,16 +791,13 @@ function IssueDetailPanel({
             </div>
           </div>
 
-          {/* Description (ADF with edit toggle, or editable plain text) */}
+          {/* Description (ADF with rich text edit, or editable plain text) */}
           <div>
             <div className="flex items-center gap-2 mb-1">
               <label className="block text-xs text-zinc-500">Description</label>
               {issue.descriptionAdf && !editingDescription && (
                 <button
-                  onClick={() => {
-                    setDescriptionDraft(issue.description || "");
-                    setEditingDescription(true);
-                  }}
+                  onClick={() => setEditingDescription(true)}
                   className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
                   aria-label="Edit description"
                   title="Edit description"
@@ -547,41 +807,14 @@ function IssueDetailPanel({
               )}
             </div>
             {editingDescription ? (
-              <div>
-                <textarea
-                  ref={descriptionRef}
-                  value={descriptionDraft}
-                  onChange={(e) => setDescriptionDraft(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Escape") {
-                      e.stopPropagation();
-                      setEditingDescription(false);
-                    }
-                  }}
-                  aria-label="Edit description text"
-                  className="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none resize-y min-h-[80px]"
-                  rows={6}
-                />
-                <div className="flex gap-2 mt-2">
-                  <button
-                    onClick={() => {
-                      if (descriptionDraft.trim() && descriptionDraft.trim() !== (issue.description || "")) {
-                        updateMutation.mutate({ description: descriptionDraft.trim() });
-                      }
-                      setEditingDescription(false);
-                    }}
-                    className="rounded bg-blue-600 px-3 py-1 text-xs text-white hover:bg-blue-500 transition-colors cursor-pointer"
-                  >
-                    Save
-                  </button>
-                  <button
-                    onClick={() => setEditingDescription(false)}
-                    className="rounded bg-zinc-700 px-3 py-1 text-xs text-zinc-300 hover:bg-zinc-600 transition-colors cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </div>
+              <RichTextEditor
+                initialAdf={issue.descriptionAdf}
+                onSave={(adf) => {
+                  updateMutation.mutate({ description_adf: adf });
+                  setEditingDescription(false);
+                }}
+                onCancel={() => setEditingDescription(false)}
+              />
             ) : issue.descriptionAdf ? (
               <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
                 <AdfRenderer node={issue.descriptionAdf} />

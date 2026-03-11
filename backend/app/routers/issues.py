@@ -178,6 +178,7 @@ async def create_issue(req: CreateIssueRequest):
 class UpdateIssueRequest(BaseModel):
     summary: str | None = None
     description: str | None = None
+    description_adf: dict | None = None
     priority: str | None = None
     assignee: str | None = None
 
@@ -188,7 +189,9 @@ async def update_issue(key: str, req: UpdateIssueRequest):
     fields = {}
     if req.summary:
         fields["summary"] = req.summary
-    if req.description is not None:
+    if req.description_adf is not None:
+        fields["description"] = req.description_adf
+    elif req.description is not None:
         fields["description"] = {
             "type": "doc",
             "version": 1,

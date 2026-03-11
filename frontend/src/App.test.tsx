@@ -745,7 +745,7 @@ describe("Feature: ADF description rendering", () => {
   });
 });
 
-describe("Feature: ADF description editing", () => {
+describe("Feature: Rich text description editing", () => {
   describe("Scenario: Edit button is shown next to ADF description", () => {
     it("Given the issue has an ADF description, then an Edit button should be visible", async () => {
       const user = userEvent.setup();
@@ -759,8 +759,8 @@ describe("Feature: ADF description editing", () => {
     });
   });
 
-  describe("Scenario: Clicking Edit shows a textarea with plain text", () => {
-    it("Given the ADF description is displayed, when clicking Edit, then a textarea pre-filled with plain text should appear", async () => {
+  describe("Scenario: Clicking Edit shows a rich text editor with toolbar", () => {
+    it("Given the ADF description is displayed, when clicking Edit, then a rich text editor with formatting toolbar should appear", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
 
@@ -770,14 +770,28 @@ describe("Feature: ADF description editing", () => {
       const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
       await user.click(within(panel).getByLabelText("Edit description"));
 
-      const textarea = within(panel).getByLabelText("Edit description text");
-      expect(textarea).toBeInTheDocument();
-      expect(textarea).toHaveValue("Build a login page with email and password fields.");
+      const editor = within(panel).getByLabelText("Rich text editor");
+      expect(editor).toBeInTheDocument();
+
+      // Toolbar should be present with formatting buttons
+      const toolbar = within(panel).getByRole("toolbar", { name: /Formatting toolbar/ });
+      expect(toolbar).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Bold")).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Italic")).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Strikethrough")).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Code")).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Heading 1")).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Heading 2")).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Heading 3")).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Bullet list")).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Ordered list")).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Link")).toBeInTheDocument();
+      expect(within(toolbar).getByLabelText("Code block")).toBeInTheDocument();
     });
   });
 
-  describe("Scenario: Saving description sends a PATCH request", () => {
-    it("Given the description textarea is open, when editing and clicking Save, then a PATCH request should be sent with the new text", async () => {
+  describe("Scenario: Rich text editor pre-fills with existing ADF content", () => {
+    it("Given the issue has an ADF description with bold text, when clicking Edit, then the editor should contain the text content", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
 
@@ -787,9 +801,23 @@ describe("Feature: ADF description editing", () => {
       const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
       await user.click(within(panel).getByLabelText("Edit description"));
 
-      const textarea = within(panel).getByLabelText("Edit description text");
-      await user.clear(textarea);
-      await user.type(textarea, "Updated description text");
+      // The TipTap editor renders content in a contenteditable div
+      const editorArea = within(panel).getByLabelText("Rich text editor");
+      expect(editorArea).toHaveTextContent(/Build a/);
+      expect(editorArea).toHaveTextContent(/login page/);
+    });
+  });
+
+  describe("Scenario: Saving description sends ADF via PATCH request", () => {
+    it("Given the rich text editor is open, when clicking Save, then a PATCH request should be sent with description_adf", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Edit description"));
       await user.click(within(panel).getByText("Save"));
 
       await waitFor(() => {
@@ -799,13 +827,16 @@ describe("Feature: ADF description editing", () => {
         );
         expect(patchCall).toBeDefined();
         const body = JSON.parse((patchCall![1] as RequestInit).body as string);
-        expect(body.description).toBe("Updated description text");
+        expect(body.description_adf).toBeDefined();
+        expect(body.description_adf.type).toBe("doc");
+        expect(body.description_adf.version).toBe(1);
+        expect(body.description_adf.content).toBeInstanceOf(Array);
       });
     });
   });
 
-  describe("Scenario: Cancelling description edit returns to ADF view", () => {
-    it("Given the description textarea is open, when clicking Cancel, then the ADF rendered view should return without saving", async () => {
+  describe("Scenario: Cancelling rich text edit returns to ADF view", () => {
+    it("Given the rich text editor is open, when clicking Cancel, then the ADF rendered view should return without saving", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
 
@@ -815,13 +846,13 @@ describe("Feature: ADF description editing", () => {
       const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
       await user.click(within(panel).getByLabelText("Edit description"));
 
-      const textarea = within(panel).getByLabelText("Edit description text");
-      await user.clear(textarea);
-      await user.type(textarea, "Should not be saved");
+      // Editor should be present
+      expect(within(panel).getByLabelText("Rich text editor")).toBeInTheDocument();
+
       await user.click(within(panel).getByText("Cancel"));
 
-      // Textarea should be gone, ADF rendered content should be back
-      expect(within(panel).queryByLabelText("Edit description text")).not.toBeInTheDocument();
+      // Editor should be gone, ADF rendered content should be back
+      expect(within(panel).queryByLabelText("Rich text editor")).not.toBeInTheDocument();
       expect(within(panel).getByText("login page")).toBeInTheDocument();
 
       // No PATCH should have been sent
@@ -833,8 +864,8 @@ describe("Feature: ADF description editing", () => {
     });
   });
 
-  describe("Scenario: Pressing Escape cancels description editing", () => {
-    it("Given the description textarea is open, when pressing Escape, then editing should cancel without saving", async () => {
+  describe("Scenario: Pressing Escape cancels rich text editing", () => {
+    it("Given the rich text editor is open, when pressing Escape, then editing should cancel without saving", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
 
@@ -844,11 +875,20 @@ describe("Feature: ADF description editing", () => {
       const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
       await user.click(within(panel).getByLabelText("Edit description"));
 
-      const textarea = within(panel).getByLabelText("Edit description text");
-      await user.type(textarea, "extra text");
-      await user.keyboard("{Escape}");
+      const editorWrapper = within(panel).getByLabelText("Rich text editor");
+      expect(editorWrapper).toBeInTheDocument();
 
-      expect(within(panel).queryByLabelText("Edit description text")).not.toBeInTheDocument();
+      // Press Escape within the editor area
+      const editableDiv = editorWrapper.querySelector("[contenteditable]");
+      if (editableDiv) {
+        editableDiv.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true }));
+      } else {
+        await user.keyboard("{Escape}");
+      }
+
+      await waitFor(() => {
+        expect(within(panel).queryByLabelText("Rich text editor")).not.toBeInTheDocument();
+      });
       expect(within(panel).getByText("login page")).toBeInTheDocument();
     });
   });
@@ -870,11 +910,43 @@ describe("Feature: ADF description editing", () => {
       await user.click(issueKey.closest("tr")!);
 
       const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
-      // The ADF edit button should not exist; only the inline plain text editor should be present
       const editButtons = within(panel).queryAllByRole("button").filter(
         (btn) => btn.textContent?.includes("Edit") && btn.getAttribute("title") === "Edit description"
       );
       expect(editButtons).toHaveLength(0);
+    });
+  });
+
+  describe("Scenario: ADF marks are preserved in round-trip conversion", () => {
+    it("Given the issue has bold text in ADF, when saving from the editor, then the ADF should preserve strong marks", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Edit description"));
+
+      // Save without changes — ADF should round-trip with strong marks preserved
+      await user.click(within(panel).getByText("Save"));
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+        );
+        expect(patchCall).toBeDefined();
+        const body = JSON.parse((patchCall![1] as RequestInit).body as string);
+        const adf = body.description_adf;
+        // Find the paragraph with bold text
+        const paragraph = adf.content?.find((n: { type: string }) => n.type === "paragraph");
+        expect(paragraph).toBeDefined();
+        const boldNode = paragraph.content?.find(
+          (n: { marks?: { type: string }[] }) => n.marks?.some((m: { type: string }) => m.type === "strong")
+        );
+        expect(boldNode).toBeDefined();
+      });
     });
   });
 });
