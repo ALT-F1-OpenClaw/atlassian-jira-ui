@@ -80,7 +80,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - [x] **Sprint dashboard** — Active sprint overview, burndown chart, velocity chart, scope change tracking
 - [x] **Time tracking** — Built-in timer per issue, log work modal, progress bar, worklog history
 - [x] **Dark/Light mode** — Toggle in header (sun/moon), CSS variable theme switching, localStorage persistence, system preference detection
-- [ ] **Offline mode** — Cache + sync when back online
+- [x] **Offline mode** — Service worker caching, IndexedDB mutation queue, auto-sync on reconnect, offline indicator
 
 ### Additional Features
 - **Responsive design** — Mobile-first layout, stacked filters, adaptive pagination, works on phone/tablet/desktop
@@ -90,7 +90,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **Editable labels** — Add/remove with autocomplete from Jira labels
 - **Mobile Kanban arrows** — Arrow buttons on cards for status transitions (mobile only)
 - **PWA** — Web app manifest, service worker, installable on mobile
-- **208 BDD tests** — Comprehensive test coverage with Vitest + Testing Library
+- **214 BDD tests** — Comprehensive test coverage with Vitest + Testing Library
 
 ## Tech Stack
 
@@ -111,7 +111,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **dnd-kit** — drag & drop for board
 - **cmdk** — command palette
 - **Vitest** — fast unit testing
-- **Testing Library** — BDD-style component tests (208 scenarios)
+- **Testing Library** — BDD-style component tests (214 scenarios)
 
 ## Quick Start
 
@@ -234,7 +234,7 @@ atlassian-jira-ui/
 ├── frontend/
 │   ├── src/
 │   │   ├── App.tsx              # Single-file UI (all views)
-│   │   └── App.test.tsx         # 208 BDD test scenarios
+│   │   └── App.test.tsx         # 214 BDD test scenarios
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── .env.example
@@ -283,7 +283,7 @@ npm test
 npm run test:watch
 ```
 
-208 BDD test scenarios using [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) with `describe`/`it` blocks following Given/When/Then naming.
+214 BDD test scenarios using [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) with `describe`/`it` blocks following Given/When/Then naming.
 
 ### Test structure
 

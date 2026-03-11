@@ -3831,3 +3831,108 @@ describe("Feature: Dark/Light mode toggle", () => {
     });
   });
 });
+
+// ─── 12. Offline Mode ───────────────────────────────────────────────
+describe("Feature: Offline mode", () => {
+  beforeEach(() => {
+    // Reset online status before each test
+    Object.defineProperty(navigator, "onLine", { value: true, writable: true, configurable: true });
+    setupFetchMock();
+    document.documentElement.classList.add("dark");
+    localStorage.clear();
+  });
+
+  describe("Scenario: Offline indicator appears when offline", () => {
+    it("Given the browser goes offline, then an offline banner is displayed", async () => {
+      // Start online
+      Object.defineProperty(navigator, "onLine", { value: true, writable: true, configurable: true });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      // Go offline
+      Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
+      window.dispatchEvent(new Event("offline"));
+
+      expect(await screen.findByRole("alert", { name: "Offline mode" })).toBeInTheDocument();
+      expect(screen.getByText(/You are offline/)).toBeInTheDocument();
+    });
+
+    it("Given the browser is offline, then an offline dot appears in the header", async () => {
+      Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
+      render(<App />, { wrapper: createWrapper() });
+      // When offline, TanStack Query pauses fetches, so wait for header instead of data
+      await screen.findByText("Jira UI");
+
+      expect(screen.getByLabelText("Offline status indicator")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Offline banner can be dismissed", () => {
+    it("Given the offline banner is visible, when the user clicks dismiss, then the banner is hidden", async () => {
+      Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      expect(screen.getByRole("alert", { name: "Offline mode" })).toBeInTheDocument();
+
+      const user = userEvent.setup();
+      await user.click(screen.getByLabelText("Dismiss offline banner"));
+
+      expect(screen.queryByRole("alert", { name: "Offline mode" })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Offline banner reappears after reconnect and disconnect", () => {
+    it("Given the banner was dismissed, when going online then offline again, then the banner reappears", async () => {
+      Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByLabelText("Dismiss offline banner"));
+      expect(screen.queryByRole("alert", { name: "Offline mode" })).not.toBeInTheDocument();
+
+      // Go online and wait for state to settle
+      Object.defineProperty(navigator, "onLine", { value: true, writable: true, configurable: true });
+      window.dispatchEvent(new Event("online"));
+      await waitFor(() => {
+        expect(screen.queryByRole("alert", { name: "Offline mode" })).not.toBeInTheDocument();
+      });
+
+      // Go offline again
+      Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
+      window.dispatchEvent(new Event("offline"));
+
+      expect(await screen.findByRole("alert", { name: "Offline mode" })).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: No offline indicator when online", () => {
+    it("Given the browser is online, then no offline banner or dot is shown", async () => {
+      Object.defineProperty(navigator, "onLine", { value: true, writable: true, configurable: true });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      expect(screen.queryByRole("alert", { name: "Offline mode" })).not.toBeInTheDocument();
+      expect(screen.queryByLabelText("Offline status indicator")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Online status restores after reconnect", () => {
+    it("Given the browser was offline, when going back online, then the offline banner disappears", async () => {
+      Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      expect(screen.getByRole("alert", { name: "Offline mode" })).toBeInTheDocument();
+
+      // Go online
+      Object.defineProperty(navigator, "onLine", { value: true, writable: true, configurable: true });
+      window.dispatchEvent(new Event("online"));
+
+      await waitFor(() => {
+        expect(screen.queryByRole("alert", { name: "Offline mode" })).not.toBeInTheDocument();
+      });
+    });
+  });
+});

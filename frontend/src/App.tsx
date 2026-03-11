@@ -167,6 +167,321 @@ function persistSavedFilters(filters: SavedFilter[]) {
   localStorage.setItem(SAVED_FILTERS_KEY, JSON.stringify(filters));
 }
 
+// ─── Offline Mode (12.1–12.5) ───────────────────────────────────────
+
+interface OfflineMutation {
+  id: string;
+  url: string;
+  method: string;
+  body: string;
+  timestamp: number;
+  description: string; // human-readable summary
+}
+
+const OFFLINE_DB_NAME = "jira-ui-offline";
+const OFFLINE_STORE = "mutations";
+const OFFLINE_DB_VERSION = 1;
+
+function hasIndexedDB(): boolean {
+  return typeof indexedDB !== "undefined";
+}
+
+function openOfflineDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    if (!hasIndexedDB()) return reject(new Error("IndexedDB not available"));
+    const req = indexedDB.open(OFFLINE_DB_NAME, OFFLINE_DB_VERSION);
+    req.onupgradeneeded = () => {
+      const db = req.result;
+      if (!db.objectStoreNames.contains(OFFLINE_STORE)) {
+        db.createObjectStore(OFFLINE_STORE, { keyPath: "id" });
+      }
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function addOfflineMutation(mutation: OfflineMutation): Promise<void> {
+  if (!hasIndexedDB()) return;
+  const db = await openOfflineDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OFFLINE_STORE, "readwrite");
+    tx.objectStore(OFFLINE_STORE).add(mutation);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+async function getAllOfflineMutations(): Promise<OfflineMutation[]> {
+  if (!hasIndexedDB()) return [];
+  const db = await openOfflineDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OFFLINE_STORE, "readonly");
+    const req = tx.objectStore(OFFLINE_STORE).getAll();
+    req.onsuccess = () => { db.close(); resolve(req.result); };
+    req.onerror = () => { db.close(); reject(req.error); };
+  });
+}
+
+async function removeOfflineMutation(id: string): Promise<void> {
+  if (!hasIndexedDB()) return;
+  const db = await openOfflineDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OFFLINE_STORE, "readwrite");
+    tx.objectStore(OFFLINE_STORE).delete(id);
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+async function clearOfflineMutations(): Promise<void> {
+  if (!hasIndexedDB()) return;
+  const db = await openOfflineDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(OFFLINE_STORE, "readwrite");
+    tx.objectStore(OFFLINE_STORE).clear();
+    tx.oncomplete = () => { db.close(); resolve(); };
+    tx.onerror = () => { db.close(); reject(tx.error); };
+  });
+}
+
+function useOnlineStatus() {
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const goOnline = () => setIsOnline(true);
+    const goOffline = () => setIsOnline(false);
+    window.addEventListener("online", goOnline);
+    window.addEventListener("offline", goOffline);
+    return () => {
+      window.removeEventListener("online", goOnline);
+      window.removeEventListener("offline", goOffline);
+    };
+  }, []);
+
+  return isOnline;
+}
+
+interface SyncResult {
+  total: number;
+  succeeded: number;
+  failed: number;
+  errors: string[];
+}
+
+function useOfflineQueue() {
+  const [queueCount, setQueueCount] = useState(0);
+  const [syncing, setSyncing] = useState(false);
+  const [lastSyncResult, setLastSyncResult] = useState<SyncResult | null>(null);
+  const isOnline = useOnlineStatus();
+  const queryClient = useQueryClient();
+
+  // Refresh queue count
+  const refreshCount = useCallback(async () => {
+    try {
+      const mutations = await getAllOfflineMutations();
+      setQueueCount(mutations.length);
+    } catch {
+      setQueueCount(0);
+    }
+  }, []);
+
+  useEffect(() => { refreshCount(); }, [refreshCount]);
+
+  // Queue a mutation for later sync
+  const queueMutation = useCallback(async (
+    url: string,
+    method: string,
+    body: unknown,
+    description: string
+  ) => {
+    const mutation: OfflineMutation = {
+      id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      url,
+      method,
+      body: JSON.stringify(body),
+      timestamp: Date.now(),
+      description,
+    };
+    await addOfflineMutation(mutation);
+    await refreshCount();
+  }, [refreshCount]);
+
+  // Sync all queued mutations
+  const syncQueue = useCallback(async (): Promise<SyncResult> => {
+    setSyncing(true);
+    const mutations = await getAllOfflineMutations();
+    const result: SyncResult = { total: mutations.length, succeeded: 0, failed: 0, errors: [] };
+
+    // Process in order (FIFO)
+    for (const m of mutations) {
+      try {
+        const res = await fetch(m.url, {
+          method: m.method,
+          headers: { "Content-Type": "application/json" },
+          body: m.body,
+        });
+        if (!res.ok) {
+          throw new Error(`${m.description}: HTTP ${res.status}`);
+        }
+        await removeOfflineMutation(m.id);
+        result.succeeded++;
+      } catch (err) {
+        result.failed++;
+        result.errors.push(err instanceof Error ? err.message : `${m.description}: Unknown error`);
+      }
+    }
+
+    await refreshCount();
+    setSyncing(false);
+    setLastSyncResult(result);
+
+    // Invalidate queries to refresh data
+    if (result.succeeded > 0) {
+      queryClient.invalidateQueries({ queryKey: ["issues"] });
+      queryClient.invalidateQueries({ queryKey: ["issue"] });
+    }
+
+    return result;
+  }, [refreshCount, queryClient]);
+
+  // Auto-sync when coming back online
+  useEffect(() => {
+    if (isOnline && queueCount > 0 && !syncing) {
+      syncQueue();
+    }
+  }, [isOnline, queueCount, syncing, syncQueue]);
+
+  const dismissSyncResult = useCallback(() => setLastSyncResult(null), []);
+
+  return { isOnline, queueCount, syncing, syncQueue, queueMutation, lastSyncResult, dismissSyncResult, clearQueue: clearOfflineMutations };
+}
+
+function OfflineIndicator({
+  isOnline,
+  queueCount,
+  syncing,
+  lastSyncResult,
+  onSync,
+  onDismiss,
+}: {
+  isOnline: boolean;
+  queueCount: number;
+  syncing: boolean;
+  lastSyncResult: SyncResult | null;
+  onSync: () => void;
+  onDismiss: () => void;
+}) {
+  const [dismissed, setDismissed] = useState(false);
+
+  // Reset dismissed state when going offline
+  useEffect(() => {
+    if (!isOnline) setDismissed(false);
+  }, [isOnline]);
+
+  // Sync result banner
+  if (lastSyncResult && lastSyncResult.total > 0) {
+    const allOk = lastSyncResult.failed === 0;
+    return (
+      <div
+        className={`flex items-center justify-between gap-2 px-4 py-2 text-sm ${
+          allOk ? "bg-green-900/80 text-green-200" : "bg-yellow-900/80 text-yellow-200"
+        }`}
+        role="status"
+        aria-label="Sync result"
+      >
+        <span>
+          {allOk
+            ? `Synced ${lastSyncResult.succeeded} offline change${lastSyncResult.succeeded !== 1 ? "s" : ""} successfully`
+            : `Synced ${lastSyncResult.succeeded}/${lastSyncResult.total} — ${lastSyncResult.failed} failed: ${lastSyncResult.errors[0]}`}
+        </span>
+        <button
+          onClick={onDismiss}
+          className="rounded px-2 py-0.5 text-xs hover:bg-white/10 cursor-pointer"
+          aria-label="Dismiss sync result"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  // Offline banner
+  if (!isOnline && !dismissed) {
+    return (
+      <div
+        className="flex items-center justify-between gap-2 bg-amber-900/80 px-4 py-2 text-sm text-amber-200"
+        role="alert"
+        aria-label="Offline mode"
+      >
+        <span className="flex items-center gap-2">
+          <span className="inline-block h-2 w-2 rounded-full bg-amber-400 animate-pulse" aria-hidden="true" />
+          You are offline — changes will be queued and synced when reconnected
+          {queueCount > 0 && (
+            <span className="ml-1 rounded-full bg-amber-800 px-2 py-0.5 text-xs font-medium">
+              {queueCount} queued
+            </span>
+          )}
+        </span>
+        <button
+          onClick={() => setDismissed(true)}
+          className="rounded px-2 py-0.5 text-xs hover:bg-white/10 cursor-pointer"
+          aria-label="Dismiss offline banner"
+        >
+          ✕
+        </button>
+      </div>
+    );
+  }
+
+  // Online with queued items (shouldn't normally happen, but show sync button)
+  if (isOnline && queueCount > 0) {
+    return (
+      <div
+        className="flex items-center justify-between gap-2 bg-blue-900/80 px-4 py-2 text-sm text-blue-200"
+        role="status"
+      >
+        <span>
+          {syncing ? "Syncing offline changes..." : `${queueCount} offline change${queueCount !== 1 ? "s" : ""} pending`}
+        </span>
+        {!syncing && (
+          <button
+            onClick={onSync}
+            className="rounded bg-blue-700 px-2 py-0.5 text-xs font-medium hover:bg-blue-600 cursor-pointer"
+            aria-label="Sync offline changes"
+          >
+            Sync now
+          </button>
+        )}
+      </div>
+    );
+  }
+
+  // Online badge in header (small dot)
+  return null;
+}
+
+// Offline-aware fetch wrapper: queues mutations when offline
+async function offlineFetch(
+  url: string,
+  init: RequestInit,
+  queueFn: (url: string, method: string, body: unknown, desc: string) => Promise<void>,
+  isOnline: boolean,
+  description: string
+): Promise<Response> {
+  if (!isOnline) {
+    await queueFn(url, init.method || "POST", JSON.parse(init.body as string), description);
+    // Return a fake success response so mutations don't error
+    return new Response(JSON.stringify({ queued: true, offline: true }), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  }
+  return fetch(url, init);
+}
+
 const FILTER_SELECT_CLASS =
   "w-full lg:w-auto rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none";
 
@@ -1413,10 +1728,14 @@ function IssueDetailPanel({
   issueKey,
   onClose,
   projectKey,
+  isOnline = true,
+  queueMutation,
 }: {
   issueKey: string;
   onClose: () => void;
   projectKey?: string;
+  isOnline?: boolean;
+  queueMutation?: (url: string, method: string, body: unknown, desc: string) => Promise<void>;
 }) {
   const queryClient = useQueryClient();
 
@@ -1455,11 +1774,11 @@ function IssueDetailPanel({
 
   const updateMutation = useMutation({
     mutationFn: async (fields: { summary?: string; description?: string; description_adf?: AdfNode; priority?: string; assignee?: string; duedate?: string | null; labels?: string[] }) => {
-      const res = await fetch(`${API}/api/issues/${issueKey}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(fields),
-      });
+      const url = `${API}/api/issues/${issueKey}`;
+      const init: RequestInit = { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(fields) };
+      const res = queueMutation
+        ? await offlineFetch(url, init, queueMutation, isOnline, `Update ${issueKey}`)
+        : await fetch(url, init);
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json();
     },
@@ -1471,11 +1790,11 @@ function IssueDetailPanel({
 
   const transitionMutation = useMutation({
     mutationFn: async (transitionId: string) => {
-      const res = await fetch(`${API}/api/issues/${issueKey}/transition`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transition_id: transitionId }),
-      });
+      const url = `${API}/api/issues/${issueKey}/transition`;
+      const init: RequestInit = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ transition_id: transitionId }) };
+      const res = queueMutation
+        ? await offlineFetch(url, init, queueMutation, isOnline, `Transition ${issueKey}`)
+        : await fetch(url, init);
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json();
     },
@@ -1995,11 +2314,15 @@ function BoardView({
   filters,
   onIssuesLoaded,
   onSelectIssue,
+  isOnline = true,
+  queueMutation,
 }: {
   project: string;
   filters: Filters;
   onIssuesLoaded?: (issues: Issue[]) => void;
   onSelectIssue?: (key: string) => void;
+  isOnline?: boolean;
+  queueMutation?: (url: string, method: string, body: unknown, desc: string) => Promise<void>;
 }) {
   const queryClient = useQueryClient();
   const [swimlane, setSwimlane] = useState<SwimlaneSetting>("none");
@@ -2030,11 +2353,11 @@ function BoardView({
 
   const transitionMutation = useMutation({
     mutationFn: async ({ issueKey, transitionId }: { issueKey: string; transitionId: string }) => {
-      const res = await fetch(`${API}/api/issues/${issueKey}/transition`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ transition_id: transitionId }),
-      });
+      const url = `${API}/api/issues/${issueKey}/transition`;
+      const init: RequestInit = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ transition_id: transitionId }) };
+      const res = queueMutation
+        ? await offlineFetch(url, init, queueMutation, isOnline, `Transition ${issueKey}`)
+        : await fetch(url, init);
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json();
     },
@@ -2679,9 +3002,13 @@ const CREATE_FIELD_CLASS =
 function CreateIssueModal({
   onClose,
   defaultProject,
+  isOnline = true,
+  queueMutation,
 }: {
   onClose: () => void;
   defaultProject: string;
+  isOnline?: boolean;
+  queueMutation?: (url: string, method: string, body: unknown, desc: string) => Promise<void>;
 }) {
   const queryClient = useQueryClient();
   const backdropRef = useRef<HTMLDivElement>(null);
@@ -2728,11 +3055,11 @@ function CreateIssueModal({
 
   const createMutation = useMutation({
     mutationFn: async (data: { project: string; summary: string; issue_type: string; priority?: string; assignee?: string; description?: string }) => {
-      const res = await fetch(`${API}/api/issues`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      const url = `${API}/api/issues`;
+      const init: RequestInit = { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) };
+      const res = queueMutation
+        ? await offlineFetch(url, init, queueMutation, isOnline, `Create issue in ${data.project}`)
+        : await fetch(url, init);
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<{ id: string; key: string; self: string }>;
     },
@@ -3500,6 +3827,7 @@ function useTheme(): [Theme, () => void] {
 
 export default function App() {
   const [theme, toggleTheme] = useTheme();
+  const { isOnline, queueCount, syncing, syncQueue, queueMutation, lastSyncResult, dismissSyncResult } = useOfflineQueue();
   const [view, setView] = useState<View>("list");
   const [project, setProject] = useState("");
   const [filters, setFilters] = useState<Filters>({ status: "", type: "", assignee: "" });
@@ -3651,12 +3979,25 @@ export default function App() {
 
   return (
     <div className="flex h-screen flex-col">
+      {/* Offline indicator banner */}
+      <OfflineIndicator
+        isOnline={isOnline}
+        queueCount={queueCount}
+        syncing={syncing}
+        lastSyncResult={lastSyncResult}
+        onSync={syncQueue}
+        onDismiss={dismissSyncResult}
+      />
+
       {/* Header */}
       <header className="border-b border-zinc-800 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold">
             ⚡ <span className="text-zinc-300">Jira UI</span>
             <span className="ml-2 text-xs font-normal text-zinc-600">v{APP_VERSION}</span>
+            {!isOnline && (
+              <span className="ml-2 inline-block h-2 w-2 rounded-full bg-amber-500" title="Offline" aria-label="Offline status indicator" />
+            )}
           </h1>
           <div className="flex items-center gap-2">
             <button
@@ -3701,8 +4042,8 @@ export default function App() {
                   onClick={() => setView(v)}
                   className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
                     view === v
-                      ? "bg-zinc-800 text-white"
-                      : "text-zinc-400 hover:text-zinc-200"
+                      ? "bg-blue-600 text-white"
+                      : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
                   }`}
                 >
                   {v}
@@ -3740,14 +4081,14 @@ export default function App() {
       <main className="flex-1 overflow-auto">
         {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} highlightedIndex={highlightedIndex} onHighlightChange={setHighlightedIndex} selectedIssueIds={selectedIssueIds} onSelectionChange={setSelectedIssueIds} />}
         {view === "board" && (
-          <BoardView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} />
+          <BoardView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} isOnline={isOnline} queueMutation={queueMutation} />
         )}
         {view === "sprint" && <SprintDashboard project={project} />}
       </main>
 
       {/* Issue Detail Panel */}
       {selectedIssueKey && (
-        <IssueDetailPanel issueKey={selectedIssueKey} onClose={handleCloseDetail} projectKey={project || undefined} />
+        <IssueDetailPanel issueKey={selectedIssueKey} onClose={handleCloseDetail} projectKey={project || undefined} isOnline={isOnline} queueMutation={queueMutation} />
       )}
 
       {/* Command Palette */}
@@ -3762,7 +4103,7 @@ export default function App() {
       {showShortcutHelp && <ShortcutHelpOverlay onClose={handleCloseShortcutHelp} />}
 
       {/* Create Issue Modal */}
-      {showCreateModal && <CreateIssueModal onClose={handleCloseCreateModal} defaultProject={project} />}
+      {showCreateModal && <CreateIssueModal onClose={handleCloseCreateModal} defaultProject={project} isOnline={isOnline} queueMutation={queueMutation} />}
 
       {/* Bulk Action Bar */}
       {view === "list" && selectedIssueIds.size > 0 && (

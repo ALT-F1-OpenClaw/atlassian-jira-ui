@@ -125,11 +125,11 @@
 
 ### 12. Offline mode
 
-- [ ] **12.1** Service worker for static asset caching
-- [ ] **12.2** Cache API responses for offline reading
-- [ ] **12.3** Queue mutations (create, update, transition) when offline
-- [ ] **12.4** Sync queued changes on reconnect
-- [ ] **12.5** Offline indicator in header
+- [x] **12.1** Service worker for static asset caching — *BDD tests: `App.test.tsx` (1 scenario)*
+- [x] **12.2** Cache API responses for offline reading — *BDD tests: `App.test.tsx` (1 scenario)*
+- [x] **12.3** Queue mutations (create, update, transition) when offline — *BDD tests: `App.test.tsx` (1 scenario)*
+- [x] **12.4** Sync queued changes on reconnect — *BDD tests: `App.test.tsx` (1 scenario)*
+- [x] **12.5** Offline indicator in header — *BDD tests: `App.test.tsx` (2 scenarios)*
 
 **Tech**: `vite-plugin-pwa` (Workbox), IndexedDB for offline mutation queue, `navigator.onLine` event listeners.
 
@@ -170,6 +170,6 @@
 | 9b | Sprint CRUD | 3 | Not started |
 | 10 | Time tracking | 3 | Complete |
 | 11 | Dark/light mode toggle | 3 | Complete |
-| 12 | Offline mode | 3 | Not started |
+| 12 | Offline mode | 3 | Complete |
 | 13 | UI visibility & navigation | 3 | Not started |
 | 14 | About / Features page | 3 | Not started |
