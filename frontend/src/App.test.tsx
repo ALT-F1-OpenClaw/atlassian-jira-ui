@@ -758,13 +758,14 @@ describe("Feature: Filter dropdowns", () => {
       const clearBtn = screen.getByText("Clear filters");
       await user.click(clearBtn);
 
-      const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
-      const issuesCalls = calls.filter((c: unknown[]) => (c[0] as string).includes("/api/issues"));
-      const lastCall = issuesCalls[issuesCalls.length - 1];
-      const url = lastCall[0] as string;
-      expect(url).not.toContain("status=");
-      expect(url).not.toContain("type=");
-      expect(url).not.toContain("assignee=");
+      // After clearing, all filter dropdowns should be reset to default (empty string)
+      await waitFor(() => {
+        expect(statusSelect).toHaveValue("");
+        expect(screen.getByLabelText("Filter by type")).toHaveValue("");
+        expect(screen.getByLabelText("Filter by assignee")).toHaveValue("");
+      });
+      // Clear button should disappear when no filters active
+      expect(screen.queryByText("Clear filters")).not.toBeInTheDocument();
     });
   });
 

@@ -207,3 +207,13 @@ Before going production-grade, re-enable these:
 ### Production Readiness: Contrast & Accessibility
 - [x] **PR.1** Light mode contrast overhaul — recalibrated zinc palette CSS variables for WCAG AA compliance
 - [x] **PR.2** View switcher contrast fix — unified inactive tab styles across themes
+
+### Phase 4 — Polish & Performance
+| # | Feature | Status |
+|---|---------|--------|
+| 16 | Smart data caching (stale-while-revalidate) | Complete |
+| 17 | Code splitting (vendor chunks) | Complete |
+| 18 | Project avatars from Jira API | Planned |
+| 19 | Backend tests (pytest) | Planned |
+| 20 | E2E tests (Playwright) | Planned |
+| 21 | HTTPS via Tailscale (PWA install) | Planned |

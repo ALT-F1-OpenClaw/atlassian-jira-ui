@@ -7,8 +7,11 @@ import "./index.css";
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 30_000,
+      staleTime: 2 * 60_000, // 2 min default — lists stay fresh-ish
+      gcTime: 10 * 60_000, // 10 min garbage collection — keep cache around
       retry: 2,
+      refetchOnWindowFocus: "always", // refetch stale data on tab focus
+      refetchOnReconnect: "always",
     },
   },
 });

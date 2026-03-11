@@ -21,6 +21,11 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 const API = import.meta.env.VITE_API_URL || "";
 const APP_VERSION = __APP_VERSION__;
 
+// Cache durations (staleTime) — data is served from cache while stale, refetched in background
+const CACHE_STATIC = 30 * 60_000; // 30 min — priorities, labels, projects, members (rarely change)
+const CACHE_LIST = 2 * 60_000; // 2 min — issue lists, boards (change moderately)
+const CACHE_DETAIL = 60_000; // 1 min — single issue detail (may be edited)
+
 type View = "dashboard" | "board" | "list" | "detail" | "sprint" | "about";
 
 interface Issue {
@@ -1706,6 +1711,7 @@ function WorklogHistory({ issueKey }: { issueKey: string }) {
       return res.json() as Promise<{ worklogs: WorklogEntry[]; total: number }>;
     },
     enabled: !!issueKey,
+    staleTime: CACHE_STATIC,
   });
 
   if (isLoading) return <p className="text-xs text-zinc-500">Loading work logs...</p>;
@@ -1759,6 +1765,7 @@ function IssueDetailPanel({
       return res.json() as Promise<IssueDetail>;
     },
     enabled: !!issueKey,
+    staleTime: CACHE_DETAIL,
   });
 
   const resolvedProjectKey = projectKey || issue?.project?.key;
@@ -1770,7 +1777,7 @@ function IssueDetailPanel({
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<JiraPriority[]>;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: CACHE_STATIC,
   });
 
   const { data: members } = useQuery({
@@ -1781,7 +1788,7 @@ function IssueDetailPanel({
       return res.json() as Promise<ProjectMember[]>;
     },
     enabled: !!resolvedProjectKey,
-    staleTime: 5 * 60 * 1000,
+    staleTime: CACHE_STATIC,
   });
 
   const updateMutation = useMutation({
@@ -2352,6 +2359,7 @@ function BoardView({
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<{ issues: Issue[]; total: number }>;
     },
+    staleTime: CACHE_LIST,
   });
 
   useEffect(() => {
@@ -2583,6 +2591,7 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlighted
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<{ issues: Issue[]; total: number }>;
     },
+    staleTime: CACHE_LIST,
   });
 
   useEffect(() => {
@@ -3061,7 +3070,7 @@ function CreateIssueModal({
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<{ key: string; name: string; id: string }[]>;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: CACHE_STATIC,
   });
 
   const { data: priorities } = useQuery({
@@ -3071,7 +3080,7 @@ function CreateIssueModal({
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<JiraPriority[]>;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: CACHE_STATIC,
   });
 
   const { data: members } = useQuery({
@@ -3082,7 +3091,7 @@ function CreateIssueModal({
       return res.json() as Promise<ProjectMember[]>;
     },
     enabled: !!formProject,
-    staleTime: 5 * 60 * 1000,
+    staleTime: CACHE_STATIC,
   });
 
   const createMutation = useMutation({
@@ -3340,7 +3349,7 @@ function BulkActionBar({
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<JiraPriority[]>;
     },
-    staleTime: 5 * 60 * 1000,
+    staleTime: CACHE_STATIC,
   });
 
   const { data: members } = useQuery({
@@ -3351,7 +3360,7 @@ function BulkActionBar({
       return res.json() as Promise<ProjectMember[]>;
     },
     enabled: !!project,
-    staleTime: 5 * 60 * 1000,
+    staleTime: CACHE_STATIC,
   });
 
   const showResult = (r: BulkActionResult) => {
@@ -3770,6 +3779,7 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<{ sprints: SprintInfo[] }>;
     },
+    staleTime: CACHE_STATIC,
   });
 
   const sprints = sprintsData?.sprints || [];
@@ -3801,6 +3811,7 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
       }>;
     },
     enabled: !!sprintId,
+    staleTime: CACHE_LIST,
   });
 
   // Fetch burndown data
@@ -3812,6 +3823,7 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
       return res.json() as Promise<{ burndown: BurndownPoint[]; sprint: unknown }>;
     },
     enabled: !!sprintId && !!boardId,
+    staleTime: CACHE_STATIC,
   });
 
   // Fetch velocity data
@@ -3823,6 +3835,7 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
       return res.json() as Promise<{ velocity: VelocityEntry[] }>;
     },
     enabled: !!sprintId && !!boardId,
+    staleTime: CACHE_STATIC,
   });
 
   // Start sprint mutation
@@ -4841,6 +4854,7 @@ export default function App() {
         { key: string; name: string; id: string }[]
       >;
     },
+    staleTime: CACHE_STATIC,
   });
 
   return (
