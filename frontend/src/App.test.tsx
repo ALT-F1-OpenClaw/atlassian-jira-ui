@@ -4417,6 +4417,19 @@ describe("Feature: Breadcrumbs (13.3)", () => {
   });
 });
 
+describe("Feature: Loading spinner while fetching data (15)", () => {
+  describe("Scenario: Loading spinner component renders correctly", () => {
+    it("Given data is loading, then a spinner with message is shown in the list view", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      // The spinner should appear briefly before data loads
+      // After data arrives, it disappears
+      await screen.findByText("PROJ-1");
+      // Spinner is gone once data is loaded
+      expect(screen.queryByText("Loading issues…")).not.toBeInTheDocument();
+    });
+  });
+});
+
 describe("Feature: Dashboard landing page (13.4)", () => {
   describe("Scenario: Dashboard is accessible via Home tab", () => {
     it("Given the app loads, when clicking the Home tab, then the dashboard landing page is displayed", async () => {

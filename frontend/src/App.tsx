@@ -94,6 +94,18 @@ interface AdfNode {
   marks?: { type: string; attrs?: Record<string, unknown> }[];
 }
 
+function LoadingSpinner({ message = "Loading…" }: { message?: string }) {
+  return (
+    <div className="flex flex-col items-center justify-center py-12 gap-3" data-testid="loading-spinner">
+      <svg className="animate-spin h-8 w-8 text-blue-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+      </svg>
+      <span className="text-sm text-zinc-400">{message}</span>
+    </div>
+  );
+}
+
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
     "To Do": "bg-zinc-700 text-zinc-200",
@@ -1829,7 +1841,7 @@ function IssueDetailPanel({
       <div className="fixed inset-0 z-50 flex" role="dialog" aria-label="Issue detail">
         <div className="hidden md:block flex-1 bg-black/50" onClick={onClose} />
         <div className="w-full md:w-[600px] lg:w-[720px] bg-zinc-950 border-l border-zinc-800 p-6 overflow-y-auto">
-          <p className="text-zinc-500">Loading issue...</p>
+          <LoadingSpinner message="Loading issue…" />
         </div>
       </div>
     );
@@ -2465,7 +2477,7 @@ function BoardView({
     }
   };
 
-  if (isLoading) return <div className="p-8 text-zinc-500">Loading board...</div>;
+  if (isLoading) return <LoadingSpinner message="Loading board…" />;
   if (error) return <div className="p-8 text-red-400">Error: {(error as Error).message}</div>;
 
   const issues = data?.issues || [];
@@ -2594,7 +2606,7 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlighted
   }, [page, sortBy, sortOrder, filters.status, filters.type, filters.assignee]);
 
   if (isLoading)
-    return <div className="p-8 text-zinc-500">Loading issues...</div>;
+    return <LoadingSpinner message="Loading issues…" />;
   if (error)
     return (
       <div className="p-8 text-red-400">
@@ -2613,6 +2625,8 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlighted
       />
     );
   }
+
+  if (isLoading) return <LoadingSpinner message="Loading issues…" />;
 
   return (
     <div className="overflow-x-auto">
@@ -2851,7 +2865,7 @@ function CommandPalette({
       role="dialog"
       aria-label="Command palette"
     >
-      <div className="w-full max-w-lg mx-4 rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl overflow-hidden">
+      <div className="w-full max-w-lg md:max-w-2xl lg:max-w-3xl mx-4 rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl overflow-hidden">
         {/* Search input */}
         <div className="flex items-center gap-2 border-b border-zinc-700 px-4 py-3">
           <span className="text-zinc-500 text-sm">🔍</span>
@@ -3842,11 +3856,7 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
   });
 
   if (sprintsLoading) {
-    return (
-      <div className="flex items-center justify-center py-20 text-zinc-500" data-testid="sprint-loading">
-        Loading sprints…
-      </div>
-    );
+    return <LoadingSpinner message="Loading sprints…" />;
   }
 
   // Determine board ID for create (from first sprint or from boards query)
@@ -3992,7 +4002,7 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
         <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
           <h3 className="text-sm font-medium text-zinc-300 mb-3">Issues by Status</h3>
           {issuesLoading ? (
-            <div className="flex items-center justify-center h-48 text-zinc-500">Loading…</div>
+            <LoadingSpinner message="Loading chart…" />
           ) : statusCounts.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <PieChart>
@@ -4329,7 +4339,7 @@ function DashboardPage({
   onCreateIssue: () => void;
   onOpenSearch: () => void;
 }) {
-  const { data: sprintsData } = useQuery({
+  const { data: sprintsData, isLoading: sprintsLoading } = useQuery({
     queryKey: ["dashboard-sprints"],
     queryFn: async () => {
       const res = await fetch(`${API}/api/sprints?state=active`);
@@ -4338,7 +4348,7 @@ function DashboardPage({
     },
   });
 
-  const { data: recentIssues } = useQuery({
+  const { data: recentIssues, isLoading: issuesLoading } = useQuery({
     queryKey: ["dashboard-recent-issues"],
     queryFn: async () => {
       const res = await fetch(`${API}/api/issues?sort_by=updated&sort_order=DESC&max_results=5`);
@@ -4348,6 +4358,10 @@ function DashboardPage({
   });
 
   const activeSprints = sprintsData?.sprints?.filter((s) => s.state === "active") || [];
+
+  if (sprintsLoading && issuesLoading) {
+    return <LoadingSpinner message="Loading dashboard…" />;
+  }
 
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-6" data-testid="dashboard-page">
@@ -4395,7 +4409,9 @@ function DashboardPage({
       {/* Active Sprints */}
       <div>
         <h3 className="mb-3 text-sm font-semibold text-zinc-300 uppercase tracking-wider">Active Sprints</h3>
-        {activeSprints.length === 0 ? (
+        {sprintsLoading ? (
+          <LoadingSpinner message="Loading sprints…" />
+        ) : activeSprints.length === 0 ? (
           <div className="rounded-lg border border-dashed border-zinc-700 p-6 text-center" data-testid="empty-sprints-dashboard">
             <p className="text-3xl mb-2">{"\u23F1"}</p>
             <p className="text-sm text-zinc-400">No active sprints</p>
@@ -4442,7 +4458,9 @@ function DashboardPage({
       {/* Recent Issues */}
       <div>
         <h3 className="mb-3 text-sm font-semibold text-zinc-300 uppercase tracking-wider">Recent Issues</h3>
-        {(!recentIssues || recentIssues.issues.length === 0) ? (
+        {issuesLoading ? (
+          <LoadingSpinner message="Loading issues…" />
+        ) : (!recentIssues || recentIssues.issues.length === 0) ? (
           <div className="rounded-lg border border-dashed border-zinc-700 p-6 text-center" data-testid="empty-issues-dashboard">
             <p className="text-3xl mb-2">{"📋"}</p>
             <p className="text-sm text-zinc-400">No issues found</p>
