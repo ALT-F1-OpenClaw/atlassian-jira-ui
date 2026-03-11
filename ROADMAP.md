@@ -266,7 +266,8 @@ Before going production-grade, re-enable these:
   - 🇿🇦 POPIA (South Africa) — conditions for lawful processing, data subject participation
   - 🇦🇺 APPs (Australia) — collection, use, disclosure, cross-border transfer
 - **Cookie consent**: GDPR-compliant banner (opt-in for EU, informational for others)
-- **Data stored**: only OAuth tokens (encrypted) + session data — no Jira content is persisted
+- **Server-side data**: only OAuth tokens (encrypted) + session data — no Jira content is ever persisted on the server
+- **Client-side cache**: Jira data (issues, boards, sprints) is cached in the user's browser only (React Query in-memory cache, Workbox service worker cache in IndexedDB, localStorage for preferences). All cached data stays on the user's device, is never transmitted to third parties, and is cleared on logout or browser cache clear. Users must be informed of this in the Privacy Policy
 - **Footer**: "Built by [ALT-F1](https://www.alt-f1.be)" with company logo/link on every page
 - **About page**: credit ALT-F1 as project creator with link to www.alt-f1.be
 
