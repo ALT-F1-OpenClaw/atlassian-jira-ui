@@ -225,3 +225,38 @@ Before going production-grade, re-enable these:
 | 27 | E2E tests (Playwright) — 22 tests, full API mocking, PWA SW disabled | Complete |
 | 28 | Auto-generated app screenshots (`docs/APP_SCREENSHOTS.md`) — 12 views | Complete |
 | 29 | HTTPS via Tailscale (PWA install) | Planned |
+
+### Phase 5 — Multi-User Auth & Public SaaS
+| # | Feature | Status |
+|---|---------|--------|
+| 30 | Atlassian OAuth 2.0 (3LO) — "Login with Atlassian" SSO | Planned |
+| 31 | Per-user session management (encrypted token store, refresh rotation) | Planned |
+| 32 | Login/logout UI (landing page, auth state, user avatar in header) | Planned |
+| 33 | Per-user Jira site selection (accessible-resources API) | Planned |
+| 34 | HTTPS + custom domain (required for OAuth callbacks) | Planned |
+| 35 | Rate limiting & abuse protection (per-user request throttling) | Planned |
+| 36 | Multi-tenant data isolation (no cross-user token leakage) | Planned |
+| 37 | Terms of Service / Privacy Policy pages | Planned |
+| 38 | Production deployment (Docker + reverse proxy + TLS) | Planned |
+
+#### Phase 5 Details
+
+**Goal**: Transform from single-user self-hosted tool to a public SaaS where anyone can log in with their own Atlassian account and manage their Jira instance.
+
+**Architecture**:
+- Register an OAuth 2.0 (3LO) app at `developer.atlassian.com`
+- Backend: `/auth/login` redirects to Atlassian consent screen
+- Backend: `/auth/callback` exchanges code for access + refresh tokens
+- Tokens stored per-user in encrypted SQLite (or PostgreSQL for production)
+- Frontend: unauthenticated users see a landing/login page
+- Frontend: authenticated users get the full app, scoped to their Jira site
+- Each API call uses the logged-in user's token (not a shared API token)
+- Atlassian's `accessible-resources` API lets users pick which Jira site to connect
+
+**Security requirements for public SaaS**:
+- HTTPS mandatory (OAuth callback + token transport)
+- CSRF protection on all mutation endpoints
+- Secure cookie-based sessions (HttpOnly, SameSite=Strict, Secure)
+- Token encryption at rest (Fernet or similar)
+- Rate limiting per user/IP
+- No shared API tokens — each user brings their own Atlassian access
