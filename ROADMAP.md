@@ -123,6 +123,15 @@
 
 **Tech**: `vite-plugin-pwa` (Workbox), IndexedDB for offline mutation queue, `navigator.onLine` event listeners.
 
+### 13. About / Features page
+
+- [ ] **13.1** Dedicated "About" page accessible from header (? or info icon)
+- [ ] **13.2** List all features with their corresponding release versions (e.g. "Kanban Board — v1.25.0")
+- [ ] **13.3** Show current app version, build date, and link to GitHub repo/changelog
+- [ ] **13.4** Responsive layout, dark themed
+
+**Tech**: Static data derived from CHANGELOG.md / hardcoded feature-version map. No API needed.
+
 ---
 
 ## Build Order
@@ -141,3 +150,4 @@
 | 10 | Dark/light mode toggle | 3 | Partial |
 | 11 | Time tracking | 3 | Not started |
 | 12 | Offline mode | 3 | Not started |
+| 13 | About / Features page | 3 | Not started |

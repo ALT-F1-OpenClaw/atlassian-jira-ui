@@ -110,3 +110,4 @@ string[]
 - Always run tests before marking a task complete
 - Do not push to remote — let the user decide when to push
 - After code changes: update README.md to reflect new features, endpoints, test counts, and project structure
+- When adding a new feature: update the About / Features page (task 13) with the feature name and its release version
