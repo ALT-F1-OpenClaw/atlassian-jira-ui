@@ -4309,7 +4309,7 @@ function Breadcrumbs({
   }
 
   return (
-    <nav className="flex items-center gap-1 px-4 sm:px-6 py-1.5 text-xs text-zinc-500 border-b border-zinc-800 overflow-x-auto" aria-label="Breadcrumb">
+    <nav className="flex items-center gap-1 px-4 sm:px-6 py-1.5 text-xs text-zinc-400 border-b border-zinc-800 overflow-x-auto" aria-label="Breadcrumb">
       {crumbs.map((c, i) => (
         <span key={i} className="flex items-center gap-1 whitespace-nowrap">
           {i > 0 && <span className="text-zinc-600" aria-hidden="true">/</span>}
@@ -4925,7 +4925,7 @@ export default function App() {
                   className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
                     view === v.id
                       ? "bg-blue-600 text-white shadow-sm"
-                      : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800"
                   }`}
                 >
                   <span aria-hidden="true">{v.icon}</span>

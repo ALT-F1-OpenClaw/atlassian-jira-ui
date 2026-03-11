@@ -203,3 +203,7 @@ Before going production-grade, re-enable these:
 - [ ] **Rate limiting** — API rate limiting on backend endpoints
 - [ ] **Authentication** — user login / session management for multi-user deployment
 - [ ] **Audit logging** — track who changed what and when
+
+### Production Readiness: Contrast & Accessibility
+- [x] **PR.1** Light mode contrast overhaul — recalibrated zinc palette CSS variables for WCAG AA compliance
+- [x] **PR.2** View switcher contrast fix — unified inactive tab styles across themes

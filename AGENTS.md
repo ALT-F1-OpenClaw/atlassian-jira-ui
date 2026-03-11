@@ -32,6 +32,7 @@ Tasks are tracked in `ROADMAP.md` with numbered IDs (e.g., `2.1`, `3.3`). When a
 - Data fetching: TanStack Query `useQuery` / `useMutation`
 - Include all state variables in `queryKey` arrays for automatic refetch
 - Styling: Tailwind CSS utility classes, dark/light theme via CSS variable overrides (zinc palette remapped in `index.css`), **fully responsive** (mobile-first, must work on phone/tablet/desktop). Theme toggled via `.dark` class on `<html>`, `useTheme` hook in `App()`. Inline script in `index.html` prevents flash. Use `dark:` Tailwind variant only for non-zinc overrides (e.g. `dark:prose-invert`)
+- **Light mode contrast**: zinc-400 through zinc-100 are mapped to progressively darker values (#3f3f46 → #09090b) so text using zinc-400/zinc-300/zinc-200 stays readable on white/near-white backgrounds. Avoid `text-zinc-500`+ for important text — use `text-zinc-400` or darker. WCAG AA minimum: 4.5:1 contrast ratio
 - State that affects multiple components gets lifted to `App()` and passed as props
 - Reset pagination to page 0 when filters, sort, or project change
 - Board view uses `@dnd-kit/core` for drag-and-drop; mobile fallback uses ← → arrow buttons (`sm:hidden`)

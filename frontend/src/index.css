@@ -6,15 +6,15 @@
 /* Override zinc palette so existing dark-themed classes render as light */
 :root {
   --color-zinc-950: #ffffff;
-  --color-zinc-900: #f4f4f5;
+  --color-zinc-900: #f8f8f9;
   --color-zinc-800: #e4e4e7;
-  --color-zinc-700: #d4d4d8;
-  --color-zinc-600: #a1a1aa;
-  --color-zinc-500: #71717a;
-  --color-zinc-400: #52525b;
-  --color-zinc-300: #3f3f46;
-  --color-zinc-200: #27272a;
-  --color-zinc-100: #18181b;
+  --color-zinc-700: #c4c4cc;
+  --color-zinc-600: #71717a;
+  --color-zinc-500: #52525b;
+  --color-zinc-400: #3f3f46;
+  --color-zinc-300: #27272a;
+  --color-zinc-200: #18181b;
+  --color-zinc-100: #09090b;
   color-scheme: light;
 }
 
