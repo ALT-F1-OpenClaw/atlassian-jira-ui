@@ -1,3 +1,8 @@
+## [1.44.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.44.1...v1.44.2) (2026-03-11)
+
+### Features
+
+* add explanatory hints to sprint dashboard charts ([6fbc719](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/6fbc719574265962bed41ab52f296d05ba022439)), closes [#22](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/22)
 ## [1.44.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.44.0...v1.44.1) (2026-03-11)
 
 ### Bug Fixes
