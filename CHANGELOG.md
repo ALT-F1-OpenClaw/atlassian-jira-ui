@@ -1,3 +1,8 @@
+## [1.27.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.26.0...v1.27.0) (2026-03-11)
+
+### Features
+
+* command palette with fuzzy search, keyboard nav, recent history (tasks 4.1-4.4) ([f7578bb](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/f7578bb397f13bc3b68d0b20822a843e02f94595))
 ## [1.26.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.25.1...v1.26.0) (2026-03-11)
 
 ### Features
