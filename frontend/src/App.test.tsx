@@ -142,6 +142,8 @@ const mockIssueDetail = {
   ],
 };
 
+const mockLabels = ["frontend", "auth", "backend", "bug", "enhancement", "documentation"];
+
 function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: object; transitionResponse?: object }) {
   const detail = overrides?.issueDetail || mockIssueDetail;
   const patchRes = overrides?.patchResponse || { status: "ok", key: "PROJ-1" };
@@ -165,6 +167,12 @@ function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: obje
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockPriorities),
+      } as Response);
+    }
+    if (urlStr.includes("/api/labels")) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockLabels),
       } as Response);
     }
     // Issue detail: /api/issues/PROJ-1 (not /api/issues?...)
@@ -1433,6 +1441,207 @@ describe("Feature: Editable due date", () => {
       const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
       const editBtn = within(panel).getByLabelText("Edit due date");
       expect(editBtn).toHaveTextContent("—");
+    });
+  });
+
+  describe("Scenario: Labels are displayed with remove buttons", () => {
+    it("Given the issue has labels, then each label should have a remove button", async () => {
+      const user = userEvent.setup();
+      setupFetchMock();
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(within(panel).getByText("frontend")).toBeInTheDocument();
+      expect(within(panel).getByText("auth")).toBeInTheDocument();
+      expect(within(panel).getByLabelText("Remove label frontend")).toBeInTheDocument();
+      expect(within(panel).getByLabelText("Remove label auth")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Add label button is visible", () => {
+    it("Given the issue detail is open, then a + button should be visible to add labels", async () => {
+      const user = userEvent.setup();
+      setupFetchMock();
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(within(panel).getByLabelText("Add label")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Clicking + opens label input", () => {
+    it("Given the user clicks the add label button, then a text input should appear", async () => {
+      const user = userEvent.setup();
+      setupFetchMock();
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Add label"));
+
+      expect(within(panel).getByLabelText("Label input")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Remove a label sends PATCH with updated labels", () => {
+    it("Given the user clicks remove on 'frontend', then PATCH should be called without that label", async () => {
+      const user = userEvent.setup();
+      setupFetchMock();
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Remove label frontend"));
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+        );
+        expect(patchCall).toBeDefined();
+        const body = JSON.parse((patchCall![1] as RequestInit).body as string);
+        expect(body.labels).toEqual(["auth"]);
+      });
+    });
+  });
+
+  describe("Scenario: Add a new label by typing and pressing Enter", () => {
+    it("Given the user types a new label and presses Enter, then PATCH should be called with the new label added", async () => {
+      const user = userEvent.setup();
+      setupFetchMock();
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Add label"));
+
+      const input = within(panel).getByLabelText("Label input");
+      await user.type(input, "new-label{Enter}");
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+        );
+        expect(patchCall).toBeDefined();
+        const body = JSON.parse((patchCall![1] as RequestInit).body as string);
+        expect(body.labels).toEqual(["frontend", "auth", "new-label"]);
+      });
+    });
+  });
+
+  describe("Scenario: Label autocomplete shows suggestions", () => {
+    it("Given the user types in the label input, then matching suggestions should appear", async () => {
+      const user = userEvent.setup();
+      setupFetchMock();
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Add label"));
+
+      const input = within(panel).getByLabelText("Label input");
+      await user.type(input, "back");
+
+      await waitFor(() => {
+        const listbox = within(panel).getByRole("listbox", { name: /Label suggestions/ });
+        expect(within(listbox).getByText("backend")).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Scenario: Selecting a suggestion adds the label", () => {
+    it("Given suggestions are shown, when the user clicks one, then PATCH should be called with that label", async () => {
+      const user = userEvent.setup();
+      setupFetchMock();
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Add label"));
+
+      const input = within(panel).getByLabelText("Label input");
+      await user.type(input, "back");
+
+      await waitFor(() => {
+        expect(within(panel).getByRole("listbox", { name: /Label suggestions/ })).toBeInTheDocument();
+      });
+
+      await user.click(within(panel).getByText("backend"));
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+        );
+        expect(patchCall).toBeDefined();
+        const body = JSON.parse((patchCall![1] as RequestInit).body as string);
+        expect(body.labels).toEqual(["frontend", "auth", "backend"]);
+      });
+    });
+  });
+
+  describe("Scenario: Issue with no labels shows None and add button", () => {
+    it("Given the issue has no labels, then 'None' and the + button should be displayed", async () => {
+      const user = userEvent.setup();
+      setupFetchMock({ issueDetail: { ...mockIssueDetail, labels: [] } });
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(within(panel).getByText("None")).toBeInTheDocument();
+      expect(within(panel).getByLabelText("Add label")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Autocomplete excludes already-applied labels", () => {
+    it("Given the issue has 'frontend' label, then 'frontend' should not appear in suggestions", async () => {
+      const user = userEvent.setup();
+      setupFetchMock();
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Add label"));
+
+      const input = within(panel).getByLabelText("Label input");
+      await user.type(input, "front");
+
+      await waitFor(() => {
+        const listbox = within(panel).queryByRole("listbox", { name: /Label suggestions/ });
+        if (listbox) {
+          expect(within(listbox).queryByText("frontend")).not.toBeInTheDocument();
+        }
+      });
     });
   });
 });

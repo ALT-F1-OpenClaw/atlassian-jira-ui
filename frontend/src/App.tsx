@@ -716,6 +716,161 @@ function InlineEditDate({
   );
 }
 
+function InlineEditLabels({
+  labels,
+  onSave,
+}: {
+  labels: string[];
+  onSave: (labels: string[]) => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [input, setInput] = useState("");
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [highlightIdx, setHighlightIdx] = useState(-1);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const dropdownRef = useRef<HTMLUListElement>(null);
+  const allLabelsRef = useRef<string[]>([]);
+  const fetchedRef = useRef(false);
+
+  const fetchLabels = useCallback(async () => {
+    if (fetchedRef.current) return;
+    try {
+      const res = await fetch(`${API}/api/labels`);
+      if (res.ok) {
+        allLabelsRef.current = await res.json();
+        fetchedRef.current = true;
+      }
+    } catch { /* ignore */ }
+  }, []);
+
+  useEffect(() => {
+    if (adding) {
+      fetchLabels();
+      setTimeout(() => inputRef.current?.focus(), 0);
+    } else {
+      setInput("");
+      setSuggestions([]);
+      setHighlightIdx(-1);
+    }
+  }, [adding, fetchLabels]);
+
+  useEffect(() => {
+    if (!input.trim()) {
+      setSuggestions([]);
+      setHighlightIdx(-1);
+      return;
+    }
+    const q = input.toLowerCase();
+    const filtered = allLabelsRef.current
+      .filter((l) => l.toLowerCase().includes(q) && !labels.includes(l))
+      .slice(0, 8);
+    setSuggestions(filtered);
+    setHighlightIdx(-1);
+  }, [input, labels]);
+
+  const addLabel = (label: string) => {
+    const trimmed = label.trim();
+    if (!trimmed || labels.includes(trimmed)) return;
+    onSave([...labels, trimmed]);
+    setInput("");
+    setSuggestions([]);
+    setHighlightIdx(-1);
+    inputRef.current?.focus();
+  };
+
+  const removeLabel = (label: string) => {
+    onSave(labels.filter((l) => l !== label));
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Escape") {
+      setAdding(false);
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (highlightIdx >= 0 && highlightIdx < suggestions.length) {
+        addLabel(suggestions[highlightIdx]);
+      } else if (input.trim()) {
+        addLabel(input);
+      }
+    } else if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIdx((i) => Math.min(i + 1, suggestions.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIdx((i) => Math.max(i - 1, 0));
+    }
+  };
+
+  return (
+    <div>
+      <div className="flex flex-wrap gap-1 items-center">
+        {labels.length > 0 ? labels.map((l) => (
+          <span key={l} className="inline-flex items-center gap-0.5 rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300">
+            {l}
+            <button
+              onClick={() => removeLabel(l)}
+              className="ml-0.5 text-zinc-500 hover:text-zinc-200 transition-colors cursor-pointer"
+              aria-label={`Remove label ${l}`}
+              title={`Remove ${l}`}
+            >
+              ✕
+            </button>
+          </span>
+        )) : !adding && <span className="text-zinc-600">None</span>}
+        {!adding && (
+          <button
+            onClick={() => setAdding(true)}
+            className="rounded-full bg-zinc-800 hover:bg-zinc-700 px-1.5 py-0.5 text-xs text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            aria-label="Add label"
+            title="Add label"
+          >
+            +
+          </button>
+        )}
+      </div>
+      {adding && (
+        <div className="relative mt-1">
+          <input
+            ref={inputRef}
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={handleKeyDown}
+            onBlur={(e) => {
+              if (dropdownRef.current?.contains(e.relatedTarget as Node)) return;
+              setTimeout(() => setAdding(false), 150);
+            }}
+            placeholder="Type a label…"
+            aria-label="Label input"
+            className="w-full rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
+          />
+          {suggestions.length > 0 && (
+            <ul
+              ref={dropdownRef}
+              role="listbox"
+              aria-label="Label suggestions"
+              className="absolute z-50 mt-0.5 w-full max-h-40 overflow-auto rounded border border-zinc-700 bg-zinc-900 shadow-lg"
+            >
+              {suggestions.map((s, i) => (
+                <li
+                  key={s}
+                  role="option"
+                  aria-selected={i === highlightIdx}
+                  onMouseDown={(e) => e.preventDefault()}
+                  onClick={() => addLabel(s)}
+                  className={`cursor-pointer px-2 py-1 text-sm ${i === highlightIdx ? "bg-blue-600 text-white" : "text-zinc-300 hover:bg-zinc-800"}`}
+                >
+                  {s}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 /* ── Issue Detail Panel ── */
 
 const FALLBACK_PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest"];
@@ -765,7 +920,7 @@ function IssueDetailPanel({
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (fields: { summary?: string; description?: string; description_adf?: AdfNode; priority?: string; assignee?: string; duedate?: string | null }) => {
+    mutationFn: async (fields: { summary?: string; description?: string; description_adf?: AdfNode; priority?: string; assignee?: string; duedate?: string | null; labels?: string[] }) => {
       const res = await fetch(`${API}/api/issues/${issueKey}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -998,14 +1153,13 @@ function IssueDetailPanel({
               </div>
             </div>
 
-            {/* Labels */}
+            {/* Labels (editable) */}
             <div>
               <label className="block text-xs text-zinc-500 mb-1">Labels</label>
-              <div className="flex flex-wrap gap-1">
-                {issue.labels?.length > 0 ? issue.labels.map((l) => (
-                  <span key={l} className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-300">{l}</span>
-                )) : <span className="text-zinc-600">None</span>}
-              </div>
+              <InlineEditLabels
+                labels={issue.labels || []}
+                onSave={(newLabels) => updateMutation.mutate({ labels: newLabels })}
+              />
             </div>
 
             {/* Due Date (editable) */}
