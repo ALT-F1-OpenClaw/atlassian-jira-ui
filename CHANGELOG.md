@@ -1,3 +1,12 @@
+## [1.36.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.35.0...v1.36.0) (2026-03-11)
+
+### Features
+
+* sprint CRUD with create, edit, start, complete, delete, scope management (tasks 9b.1-9b.5) ([1df82dc](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/1df82dcd231b0345965c4fbd44d8e53f72b3e0a9))
+
+### Bug Fixes
+
+* handle kanban boards that don't support sprints (400 error) ([6e9fcb1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/6e9fcb16cf9d5de0a324c964fea0474d6b7ecfc6))
 ## [1.35.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.34.0...v1.35.0) (2026-03-11)
 
 ### Features
