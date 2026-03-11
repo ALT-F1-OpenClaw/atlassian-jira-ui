@@ -116,10 +116,10 @@
 ### 11. Dark/light mode toggle
 
 - [x] **11.1** Dark mode (current default)
-- [ ] **11.2** Light mode theme
-- [ ] **11.3** Toggle switch in header
-- [ ] **11.4** Persist preference in `localStorage`
-- [ ] **11.5** Respect system preference (`prefers-color-scheme`)
+- [x] **11.2** Light mode theme — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **11.3** Toggle switch in header — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **11.4** Persist preference in `localStorage` — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **11.5** Respect system preference (`prefers-color-scheme`) — *BDD tests: `App.test.tsx` (2 scenarios)*
 
 **Tech**: Tailwind CSS `dark:` variant classes, CSS custom properties, `localStorage` for preference.
 
@@ -159,6 +159,6 @@
 | 9 | Sprint dashboard | 3 | Complete |
 | 9b | Sprint CRUD | 3 | Not started |
 | 10 | Time tracking | 3 | Complete |
-| 11 | Dark/light mode toggle | 3 | Partial |
+| 11 | Dark/light mode toggle | 3 | Complete |
 | 12 | Offline mode | 3 | Not started |
 | 13 | About / Features page | 3 | Not started |

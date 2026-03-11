@@ -547,7 +547,7 @@ function RichTextEditor({
     editorProps: {
       attributes: {
         class:
-          "prose prose-invert prose-sm max-w-none min-h-[120px] px-3 py-2 focus:outline-none text-zinc-200",
+          "prose dark:prose-invert prose-sm max-w-none min-h-[120px] px-3 py-2 focus:outline-none text-zinc-200",
       },
     },
   });
@@ -905,7 +905,7 @@ function InlineEditDate({
           if (e.key === "Escape") setEditing(false);
         }}
         aria-label={label}
-        className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none [color-scheme:dark]"
+        className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
       />
       {value && (
         <button
@@ -3475,7 +3475,31 @@ function isInputFocused(): boolean {
   return false;
 }
 
+/* ── Theme ── */
+
+const THEME_KEY = "jira-ui-theme";
+type Theme = "light" | "dark";
+
+function useTheme(): [Theme, () => void] {
+  const [theme, setTheme] = useState<Theme>(() =>
+    document.documentElement.classList.contains("dark") ? "dark" : "light"
+  );
+
+  const toggleTheme = useCallback(() => {
+    const next: Theme = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.classList.toggle("dark", next === "dark");
+    localStorage.setItem(THEME_KEY, next);
+    // Update meta theme-color
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", next === "dark" ? "#09090b" : "#ffffff");
+  }, [theme]);
+
+  return [theme, toggleTheme];
+}
+
 export default function App() {
+  const [theme, toggleTheme] = useTheme();
   const [view, setView] = useState<View>("list");
   const [project, setProject] = useState("");
   const [filters, setFilters] = useState<Filters>({ status: "", type: "", assignee: "" });
@@ -3661,6 +3685,14 @@ export default function App() {
               title="Shortcuts (?)"
             >
               ?
+            </button>
+            <button
+              onClick={toggleTheme}
+              className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-400 cursor-pointer"
+              aria-label={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "dark" ? "Light mode" : "Dark mode"}
+            >
+              {theme === "dark" ? "☀️" : "🌙"}
             </button>
             <nav className="flex gap-1">
               {(["board", "list", "sprint"] as View[]).map((v) => (

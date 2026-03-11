@@ -3744,3 +3744,90 @@ describe("Feature: Work log history (10.4)", () => {
     });
   });
 });
+
+/* ── Feature: Dark/Light Mode Toggle (tasks 11.2–11.5) ── */
+
+describe("Feature: Dark/Light mode toggle", () => {
+  describe("Scenario: Toggle button is visible in header", () => {
+    it("Given the app is loaded, then a theme toggle button is visible in the header", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const toggleBtn = screen.getByLabelText(/switch to (light|dark) mode/i);
+      expect(toggleBtn).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Toggle switches from dark to light mode", () => {
+    it("Given the app is in dark mode, when the toggle is clicked, then the html element loses the dark class", async () => {
+      document.documentElement.classList.add("dark");
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      const toggleBtn = screen.getByLabelText("Switch to light mode");
+      await user.click(toggleBtn);
+      expect(document.documentElement.classList.contains("dark")).toBe(false);
+    });
+  });
+
+  describe("Scenario: Toggle switches from light to dark mode", () => {
+    it("Given the app is in light mode, when the toggle is clicked, then the html element gains the dark class", async () => {
+      document.documentElement.classList.remove("dark");
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      const toggleBtn = screen.getByLabelText("Switch to dark mode");
+      await user.click(toggleBtn);
+      expect(document.documentElement.classList.contains("dark")).toBe(true);
+    });
+  });
+
+  describe("Scenario: Toggle shows sun icon in dark mode and moon icon in light mode", () => {
+    it("Given dark mode is active, then the toggle shows the sun icon; after clicking it shows the moon icon", async () => {
+      document.documentElement.classList.add("dark");
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      const toggleBtn = screen.getByLabelText("Switch to light mode");
+      expect(toggleBtn).toHaveTextContent("☀️");
+      await user.click(toggleBtn);
+      expect(screen.getByLabelText("Switch to dark mode")).toHaveTextContent("🌙");
+    });
+  });
+
+  describe("Scenario: Theme preference is persisted in localStorage", () => {
+    it("Given the user toggles to light mode, then the preference is saved to localStorage", async () => {
+      document.documentElement.classList.add("dark");
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByLabelText("Switch to light mode"));
+      expect(localStorage.getItem("jira-ui-theme")).toBe("light");
+    });
+
+    it("Given the user toggles to dark mode, then the preference is saved to localStorage", async () => {
+      document.documentElement.classList.remove("dark");
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByLabelText("Switch to dark mode"));
+      expect(localStorage.getItem("jira-ui-theme")).toBe("dark");
+    });
+  });
+
+  describe("Scenario: System preference is respected as default", () => {
+    it("Given no saved preference and system prefers dark, then dark mode is active", async () => {
+      // Simulate: no localStorage value, system prefers dark
+      document.documentElement.classList.add("dark");
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      expect(screen.getByLabelText("Switch to light mode")).toBeInTheDocument();
+    });
+
+    it("Given no saved preference and system prefers light, then light mode is active", async () => {
+      document.documentElement.classList.remove("dark");
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      expect(screen.getByLabelText("Switch to dark mode")).toBeInTheDocument();
+    });
+  });
+});

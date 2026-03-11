@@ -108,7 +108,8 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **Saved Filters** (tasks 8.1–8.4): save current filter combination (project + status + type + assignee) as named view, quick-access dropdown in header, inline rename/delete, localStorage persistence (`jira-ui-saved-filters`)
 - **Sprint Dashboard** (tasks 9.1–9.4): active sprint overview with issue counts by status (pie chart), burndown chart (remaining vs ideal), velocity chart (committed vs completed points across sprints), sprint scope change tracking, `s` keyboard shortcut, sprint selector dropdown, responsive layout
 - **Time Tracking** (tasks 10.1–10.4): built-in timer per issue (start/stop/pause) with localStorage persistence, log work modal (time spent + description), time tracking progress bar (logged vs estimated), worklog history display, backend `POST/GET /api/issues/{key}/worklog`
-- **Total: 200 BDD tests**
+- **Dark/Light Mode** (tasks 11.1–11.5): CSS variable-based theme switching (zinc palette override), sun/moon toggle button in header, localStorage persistence (`jira-ui-theme`), system preference detection via `prefers-color-scheme`, inline script in `index.html` prevents flash of wrong theme
+- **Total: 208 BDD tests**
 
-Phase 1 complete. Phase 2 complete. Phase 3 in progress — Sprint dashboard and time tracking done.
+Phase 1 complete. Phase 2 complete. Phase 3 in progress — Sprint dashboard, time tracking, and dark/light mode done.
 See `ROADMAP.md` for full status.

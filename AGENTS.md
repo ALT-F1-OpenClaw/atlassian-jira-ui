@@ -31,7 +31,7 @@ Tasks are tracked in `ROADMAP.md` with numbered IDs (e.g., `2.1`, `3.3`). When a
 - All UI lives in `frontend/src/App.tsx` (single-file for now)
 - Data fetching: TanStack Query `useQuery` / `useMutation`
 - Include all state variables in `queryKey` arrays for automatic refetch
-- Styling: Tailwind CSS utility classes, dark theme (`bg-zinc-950`, `text-zinc-200`, etc.), **fully responsive** (mobile-first, must work on phone/tablet/desktop)
+- Styling: Tailwind CSS utility classes, dark/light theme via CSS variable overrides (zinc palette remapped in `index.css`), **fully responsive** (mobile-first, must work on phone/tablet/desktop). Theme toggled via `.dark` class on `<html>`, `useTheme` hook in `App()`. Inline script in `index.html` prevents flash. Use `dark:` Tailwind variant only for non-zinc overrides (e.g. `dark:prose-invert`)
 - State that affects multiple components gets lifted to `App()` and passed as props
 - Reset pagination to page 0 when filters, sort, or project change
 - Board view uses `@dnd-kit/core` for drag-and-drop; mobile fallback uses ← → arrow buttons (`sm:hidden`)
