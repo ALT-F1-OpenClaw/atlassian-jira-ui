@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
+import { ResponsiveContainer, BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from "recharts";
 import Placeholder from "@tiptap/extension-placeholder";
 import {
   DndContext,
@@ -20,7 +21,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 const API = import.meta.env.VITE_API_URL || "";
 const APP_VERSION = __APP_VERSION__;
 
-type View = "board" | "list" | "detail";
+type View = "board" | "list" | "detail" | "sprint";
 
 interface Issue {
   id: string;
@@ -2226,6 +2227,7 @@ const SHORTCUTS: { key: string; description: string }[] = [
   { key: "Escape", description: "Close detail panel / modal" },
   { key: "b", description: "Switch to board view" },
   { key: "l", description: "Switch to list view" },
+  { key: "s", description: "Switch to sprint view" },
   { key: "c", description: "Create new issue" },
   { key: "?", description: "Show this help" },
   { key: "Ctrl+K / ⌘K", description: "Open command palette" },
@@ -2756,6 +2758,328 @@ function BulkActionBar({
   );
 }
 
+interface SprintInfo {
+  id: number;
+  name: string;
+  state: string;
+  startDate: string;
+  endDate: string;
+  goal: string;
+  boardId: number;
+  boardName: string;
+}
+
+interface SprintIssue {
+  id: string;
+  key: string;
+  summary: string;
+  status: string;
+  statusCategory: string;
+  priority: string;
+  assignee: string;
+  type: string;
+  storyPoints: number | null;
+  created: string;
+}
+
+interface BurndownPoint {
+  date: string;
+  remaining: number;
+  ideal: number;
+}
+
+interface VelocityEntry {
+  sprintId: number;
+  sprintName: string;
+  state: string;
+  committedPoints: number;
+  completedPoints: number;
+  committedCount: number;
+  completedCount: number;
+}
+
+const SPRINT_CHART_COLORS = ["#3b82f6", "#22c55e", "#eab308", "#ef4444", "#a855f7", "#06b6d4", "#f97316", "#ec4899"];
+
+function SprintDashboard({ project }: { project: string }) {
+  const [selectedSprintId, setSelectedSprintId] = useState<number | null>(null);
+
+  // Fetch available sprints
+  const { data: sprintsData, isLoading: sprintsLoading } = useQuery({
+    queryKey: ["sprints", project],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (project) params.set("project", project);
+      const res = await fetch(`${API}/api/sprints?${params}`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<{ sprints: SprintInfo[] }>;
+    },
+  });
+
+  const sprints = sprintsData?.sprints || [];
+  const activeSprint = selectedSprintId
+    ? sprints.find((s) => s.id === selectedSprintId) || sprints[0]
+    : sprints[0];
+
+  // Auto-select first sprint
+  useEffect(() => {
+    if (sprints.length > 0 && !selectedSprintId) {
+      setSelectedSprintId(sprints[0].id);
+    }
+  }, [sprints, selectedSprintId]);
+
+  const sprintId = activeSprint?.id;
+  const boardId = activeSprint?.boardId;
+
+  // Fetch sprint issues with status counts
+  const { data: issuesData, isLoading: issuesLoading } = useQuery({
+    queryKey: ["sprint-issues", sprintId],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/sprints/${sprintId}/issues`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<{
+        issues: SprintIssue[];
+        total: number;
+        statusCounts: { status: string; count: number }[];
+        categoryCounts: { todo: number; inProgress: number; done: number };
+      }>;
+    },
+    enabled: !!sprintId,
+  });
+
+  // Fetch burndown data
+  const { data: burndownData } = useQuery({
+    queryKey: ["sprint-burndown", sprintId, boardId],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/sprints/${sprintId}/burndown?board_id=${boardId}`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<{ burndown: BurndownPoint[]; sprint: unknown }>;
+    },
+    enabled: !!sprintId && !!boardId,
+  });
+
+  // Fetch velocity data
+  const { data: velocityData } = useQuery({
+    queryKey: ["sprint-velocity", sprintId, boardId],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/sprints/${sprintId}/velocity?board_id=${boardId}`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<{ velocity: VelocityEntry[] }>;
+    },
+    enabled: !!sprintId && !!boardId,
+  });
+
+  if (sprintsLoading) {
+    return (
+      <div className="flex items-center justify-center py-20 text-zinc-500" data-testid="sprint-loading">
+        Loading sprints…
+      </div>
+    );
+  }
+
+  if (sprints.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-zinc-500" data-testid="no-active-sprint">
+        <span className="text-4xl mb-4">🏃</span>
+        <p className="text-lg font-medium">No active sprint</p>
+        <p className="text-sm mt-1">Start a sprint in Jira to see the dashboard here.</p>
+      </div>
+    );
+  }
+
+  const categoryCounts = issuesData?.categoryCounts || { todo: 0, inProgress: 0, done: 0 };
+  const totalIssues = issuesData?.total || 0;
+  const statusCounts = issuesData?.statusCounts || [];
+  const burndown = burndownData?.burndown || [];
+  const velocity = velocityData?.velocity || [];
+
+  // Scope change: issues created after sprint start
+  const sprintStart = activeSprint?.startDate;
+  const scopeChanges = sprintStart
+    ? (issuesData?.issues || []).filter((i) => i.created > sprintStart)
+    : [];
+
+  // Format dates for display
+  const formatDate = (d: string) => {
+    if (!d) return "—";
+    try {
+      return new Date(d).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+    } catch {
+      return d;
+    }
+  };
+
+  const daysRemaining = activeSprint?.endDate
+    ? Math.max(0, Math.ceil((new Date(activeSprint.endDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
+    : null;
+
+  const completionPct = totalIssues > 0 ? Math.round((categoryCounts.done / totalIssues) * 100) : 0;
+
+  return (
+    <div className="p-4 sm:p-6 space-y-6" data-testid="sprint-dashboard">
+      {/* Sprint selector + header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          {sprints.length > 1 && (
+            <select
+              value={selectedSprintId || ""}
+              onChange={(e) => setSelectedSprintId(Number(e.target.value))}
+              className="mb-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
+              aria-label="Select sprint"
+            >
+              {sprints.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name} ({s.boardName})
+                </option>
+              ))}
+            </select>
+          )}
+          <h2 className="text-xl font-bold text-zinc-100" data-testid="sprint-name">{activeSprint.name}</h2>
+          <p className="text-sm text-zinc-400 mt-1">
+            {formatDate(activeSprint.startDate)} — {formatDate(activeSprint.endDate)}
+            {daysRemaining !== null && (
+              <span className="ml-2 text-zinc-500">({daysRemaining} days remaining)</span>
+            )}
+          </p>
+          {activeSprint.goal && (
+            <p className="text-sm text-zinc-500 mt-1 italic">Goal: {activeSprint.goal}</p>
+          )}
+        </div>
+        <div className="flex gap-3 text-center">
+          <div className="rounded-lg bg-zinc-900 border border-zinc-800 px-4 py-3 min-w-[80px]">
+            <div className="text-2xl font-bold text-zinc-100">{totalIssues}</div>
+            <div className="text-xs text-zinc-500">Total</div>
+          </div>
+          <div className="rounded-lg bg-zinc-900 border border-zinc-800 px-4 py-3 min-w-[80px]">
+            <div className="text-2xl font-bold text-green-400">{categoryCounts.done}</div>
+            <div className="text-xs text-zinc-500">Done</div>
+          </div>
+          <div className="rounded-lg bg-zinc-900 border border-zinc-800 px-4 py-3 min-w-[80px]">
+            <div className="text-2xl font-bold text-blue-400">{categoryCounts.inProgress}</div>
+            <div className="text-xs text-zinc-500">In Progress</div>
+          </div>
+          <div className="rounded-lg bg-zinc-900 border border-zinc-800 px-4 py-3 min-w-[80px]">
+            <div className="text-2xl font-bold text-zinc-400">{categoryCounts.todo}</div>
+            <div className="text-xs text-zinc-500">To Do</div>
+          </div>
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      <div>
+        <div className="flex justify-between text-xs text-zinc-500 mb-1">
+          <span>Progress</span>
+          <span data-testid="sprint-completion">{completionPct}% complete</span>
+        </div>
+        <div className="h-2 rounded-full bg-zinc-800 overflow-hidden">
+          <div
+            className="h-full rounded-full bg-green-500 transition-all"
+            style={{ width: `${completionPct}%` }}
+          />
+        </div>
+      </div>
+
+      {/* Charts grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Status breakdown pie chart */}
+        <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
+          <h3 className="text-sm font-medium text-zinc-300 mb-3">Issues by Status</h3>
+          {issuesLoading ? (
+            <div className="flex items-center justify-center h-48 text-zinc-500">Loading…</div>
+          ) : statusCounts.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <PieChart>
+                <Pie
+                  data={statusCounts}
+                  dataKey="count"
+                  nameKey="status"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={80}
+                  label
+                >
+                  {statusCounts.map((_entry, idx) => (
+                    <Cell key={idx} fill={SPRINT_CHART_COLORS[idx % SPRINT_CHART_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip contentStyle={{ backgroundColor: "#18181b", border: "1px solid #3f3f46", borderRadius: "6px", color: "#e4e4e7" }} />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-zinc-500">No data</div>
+          )}
+        </div>
+
+        {/* Burndown chart */}
+        <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
+          <h3 className="text-sm font-medium text-zinc-300 mb-3">Burndown Chart</h3>
+          {burndown.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={burndown}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
+                <XAxis dataKey="date" tick={{ fill: "#a1a1aa", fontSize: 11 }} tickFormatter={(d) => d.slice(5)} />
+                <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
+                <Tooltip contentStyle={{ backgroundColor: "#18181b", border: "1px solid #3f3f46", borderRadius: "6px", color: "#e4e4e7" }} />
+                <Legend wrapperStyle={{ color: "#a1a1aa" }} />
+                <Line type="monotone" dataKey="remaining" stroke="#3b82f6" strokeWidth={2} name="Remaining" dot={false} />
+                <Line type="monotone" dataKey="ideal" stroke="#6b7280" strokeWidth={1} strokeDasharray="5 5" name="Ideal" dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-zinc-500">No burndown data</div>
+          )}
+        </div>
+
+        {/* Velocity chart */}
+        <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
+          <h3 className="text-sm font-medium text-zinc-300 mb-3">Velocity Chart</h3>
+          {velocity.length > 0 ? (
+            <ResponsiveContainer width="100%" height={250}>
+              <BarChart data={velocity}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#3f3f46" />
+                <XAxis dataKey="sprintName" tick={{ fill: "#a1a1aa", fontSize: 11 }} />
+                <YAxis tick={{ fill: "#a1a1aa", fontSize: 11 }} />
+                <Tooltip contentStyle={{ backgroundColor: "#18181b", border: "1px solid #3f3f46", borderRadius: "6px", color: "#e4e4e7" }} />
+                <Legend wrapperStyle={{ color: "#a1a1aa" }} />
+                <Bar dataKey="committedPoints" fill="#6b7280" name="Committed" />
+                <Bar dataKey="completedPoints" fill="#22c55e" name="Completed" />
+              </BarChart>
+            </ResponsiveContainer>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-zinc-500">No velocity data</div>
+          )}
+        </div>
+
+        {/* Scope change tracking */}
+        <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
+          <h3 className="text-sm font-medium text-zinc-300 mb-3">
+            Scope Changes
+            {scopeChanges.length > 0 && (
+              <span className="ml-2 rounded-full bg-yellow-600 px-2 py-0.5 text-xs font-medium text-white" data-testid="scope-change-count">
+                +{scopeChanges.length}
+              </span>
+            )}
+          </h3>
+          {scopeChanges.length > 0 ? (
+            <div className="space-y-2 max-h-[230px] overflow-y-auto">
+              {scopeChanges.map((issue) => (
+                <div key={issue.key} className="flex items-center gap-2 text-sm rounded-md bg-zinc-800 px-3 py-2">
+                  <span className="font-mono text-xs text-blue-400">{issue.key}</span>
+                  <span className="text-zinc-300 truncate flex-1">{issue.summary}</span>
+                  <StatusBadge status={issue.status} />
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-48 text-zinc-500" data-testid="no-scope-changes">
+              No scope changes — sprint is on track
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function isInputFocused(): boolean {
   const tag = document.activeElement?.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
@@ -2870,6 +3194,11 @@ export default function App() {
           setView("list");
           return;
         }
+        if (e.key === "s") {
+          e.preventDefault();
+          setView("sprint");
+          return;
+        }
       }
 
       // j / k — navigate list view
@@ -2946,7 +3275,7 @@ export default function App() {
               ?
             </button>
             <nav className="flex gap-1">
-              {(["board", "list"] as View[]).map((v) => (
+              {(["board", "list", "sprint"] as View[]).map((v) => (
                 <button
                   key={v}
                   onClick={() => setView(v)}
@@ -2993,6 +3322,7 @@ export default function App() {
         {view === "board" && (
           <BoardView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} />
         )}
+        {view === "sprint" && <SprintDashboard project={project} />}
       </main>
 
       {/* Issue Detail Panel */}

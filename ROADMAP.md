@@ -87,12 +87,12 @@
 
 ### 9. Sprint dashboard
 
-- [ ] **9.1** Active sprint overview with issue counts by status
-- [ ] **9.2** Burndown chart (remaining work over time)
-- [ ] **9.3** Velocity chart (story points per sprint)
-- [ ] **9.4** Sprint scope change tracking
+- [x] **9.1** Active sprint overview with issue counts by status — *BDD tests: `App.test.tsx` (5 scenarios)*
+- [x] **9.2** Burndown chart (remaining work over time) — *BDD tests: `App.test.tsx` (1 scenario)*
+- [x] **9.3** Velocity chart (story points per sprint) — *BDD tests: `App.test.tsx` (1 scenario)*
+- [x] **9.4** Sprint scope change tracking — *BDD tests: `App.test.tsx` (3 scenarios)*
 
-**Tech**: Backend `GET /api/boards/{id}/sprint` exists. Jira Agile API `/rest/agile/1.0` configured in `jira_client.py`. Chart library: `recharts` or `chart.js`.
+**Tech**: Backend `GET /api/sprints`, `GET /api/sprints/{id}/issues`, `GET /api/sprints/{id}/burndown`, `GET /api/sprints/{id}/velocity`. `recharts` for charts (PieChart, LineChart, BarChart). `SprintDashboard` component in `App.tsx`. `s` keyboard shortcut to switch to sprint view. Sprint selector dropdown when multiple sprints exist.
 
 ### 10. Time tracking
 
@@ -137,7 +137,7 @@
 | 6 | Quick create modal | 2 | Complete |
 | 7 | Bulk actions | 2 | Complete |
 | 8 | Saved filters | 2 | Complete |
-| 9 | Sprint dashboard | 3 | Not started |
+| 9 | Sprint dashboard | 3 | Complete |
 | 10 | Dark/light mode toggle | 3 | Partial |
 | 11 | Time tracking | 3 | Not started |
 | 12 | Offline mode | 3 | Not started |

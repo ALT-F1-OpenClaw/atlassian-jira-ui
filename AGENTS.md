@@ -36,9 +36,10 @@ Tasks are tracked in `ROADMAP.md` with numbered IDs (e.g., `2.1`, `3.3`). When a
 - Reset pagination to page 0 when filters, sort, or project change
 - Board view uses `@dnd-kit/core` for drag-and-drop; mobile fallback uses ← → arrow buttons (`sm:hidden`)
 - Mobile-only UI patterns: use `sm:hidden` to show on mobile, `hidden sm:block` to show on desktop
-- Keyboard shortcuts: global `useEffect` keydown listener in `App()`, `isInputFocused()` helper to skip shortcuts when typing in inputs/textareas/selects/contenteditable. Shortcuts: j/k (list nav), Enter (open issue), Escape (close panel), b/l (view switch), c (create issue), ? (help overlay)
+- Keyboard shortcuts: global `useEffect` keydown listener in `App()`, `isInputFocused()` helper to skip shortcuts when typing in inputs/textareas/selects/contenteditable. Shortcuts: j/k (list nav), Enter (open issue), Escape (close panel), b/l/s (view switch: board/list/sprint), c (create issue), ? (help overlay)
 - Create issue modal: `CreateIssueModal` component with project/summary/type/priority/assignee/description fields, form validation, `useMutation` + optimistic cache update via `setQueriesData`, `+ Create` button in header
 - Saved filters: `SavedFiltersDropdown` component with save/apply/rename/delete, `SavedFilter` interface (`id`, `name`, `project`, `filters`), persisted via `localStorage` (`jira-ui-saved-filters` key), save button appears only when filters are active
+- Sprint dashboard: `SprintDashboard` component with `recharts` (PieChart, LineChart, BarChart). Fetches from `/api/sprints`, `/api/sprints/{id}/issues`, `/api/sprints/{id}/burndown`, `/api/sprints/{id}/velocity`. Sprint selector dropdown, issue counts by status category, progress bar, burndown chart, velocity chart, scope change tracking. `s` shortcut switches to sprint view
 
 ### Testing (Vitest + Testing Library)
 
@@ -75,6 +76,18 @@ Issue & { transitions: { id: string, name: string }[] }
 
 // Labels: GET /api/labels
 string[]
+
+// Sprints: GET /api/sprints?project=
+{ sprints: { id: number, name: string, state: string, startDate: string, endDate: string, goal: string, boardId: number, boardName: string }[] }
+
+// Sprint issues: GET /api/sprints/{id}/issues
+{ issues: SprintIssue[], total: number, statusCounts: { status: string, count: number }[], categoryCounts: { todo: number, inProgress: number, done: number } }
+
+// Sprint burndown: GET /api/sprints/{id}/burndown?board_id=
+{ burndown: { date: string, remaining: number, ideal: number }[], sprint: object }
+
+// Sprint velocity: GET /api/sprints/{id}/velocity?board_id=
+{ velocity: { sprintId: number, sprintName: string, state: string, committedPoints: number, completedPoints: number, committedCount: number, completedCount: number }[] }
 ```
 
 ### Screenshots

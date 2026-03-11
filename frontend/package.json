@@ -21,7 +21,8 @@
     "@tiptap/starter-kit": "^3.20.1",
     "cmdk": "^1.0.0",
     "react": "^19.0.0",
-    "react-dom": "^19.0.0"
+    "react-dom": "^19.0.0",
+    "recharts": "^3.8.0"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.0.0",

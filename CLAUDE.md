@@ -7,7 +7,7 @@ Modern alternative frontend for Atlassian Jira Cloud. Full-stack: FastAPI backen
 ## Tech Stack
 
 - **Backend**: Python 3.13, FastAPI, httpx (async Jira client), uvicorn — port 35400
-- **Frontend**: React 19, Vite 6, TypeScript 5.7 (strict), Tailwind CSS 4, TanStack Query — port 5173
+- **Frontend**: React 19, Vite 6, TypeScript 5.7 (strict), Tailwind CSS 4, TanStack Query, Recharts — port 5173
 - **Testing**: Vitest 4 + @testing-library/react + @testing-library/user-event (BDD style)
 - **Screenshots**: Playwright headless Chromium (`scripts/screenshots.mjs`)
 
@@ -106,7 +106,8 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **Quick Create Modal** (tasks 6.1–6.4): `c` key or `+ Create` button opens modal, project/summary/type/priority/assignee/description fields, form validation (project + summary required), optimistic UI update with query invalidation
 - **Bulk Actions** (tasks 7.1–7.5): checkbox selection on list rows, select all/deselect all, floating action bar with bulk transition/assign/priority dropdowns, `Promise.allSettled` batch API calls, success/failure result display, responsive layout
 - **Saved Filters** (tasks 8.1–8.4): save current filter combination (project + status + type + assignee) as named view, quick-access dropdown in header, inline rename/delete, localStorage persistence (`jira-ui-saved-filters`)
-- **Total: 174 BDD tests**
+- **Sprint Dashboard** (tasks 9.1–9.4): active sprint overview with issue counts by status (pie chart), burndown chart (remaining vs ideal), velocity chart (committed vs completed points across sprints), sprint scope change tracking, `s` keyboard shortcut, sprint selector dropdown, responsive layout
+- **Total: 186 BDD tests**
 
-Phase 1 complete. Phase 2 complete — Keyboard shortcuts, Quick create modal, Bulk actions, and Saved filters done. Next up: tasks 9.1–9.4.
+Phase 1 complete. Phase 2 complete. Phase 3 in progress — Sprint dashboard done. Next up: tasks 10.1–10.4.
 See `ROADMAP.md` for full status.

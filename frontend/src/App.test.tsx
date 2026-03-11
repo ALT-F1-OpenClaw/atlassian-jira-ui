@@ -4,6 +4,30 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import App from "./App";
 
+// Mock recharts to avoid SVG rendering issues in JSDOM
+vi.mock("recharts", () => {
+  const MockContainer = ({ children }: { children: React.ReactNode }) => <div data-testid="recharts-container">{children}</div>;
+  const MockChart = ({ children, data }: { children?: React.ReactNode; data?: unknown[] }) => (
+    <div data-testid="recharts-chart" data-count={data?.length || 0}>{children}</div>
+  );
+  const Noop = () => null;
+  return {
+    ResponsiveContainer: MockContainer,
+    PieChart: MockChart,
+    Pie: Noop,
+    Cell: Noop,
+    BarChart: MockChart,
+    Bar: Noop,
+    LineChart: MockChart,
+    Line: Noop,
+    XAxis: Noop,
+    YAxis: Noop,
+    CartesianGrid: Noop,
+    Tooltip: Noop,
+    Legend: Noop,
+  };
+});
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -144,6 +168,56 @@ const mockIssueDetail = {
 
 const mockLabels = ["frontend", "auth", "backend", "bug", "enhancement", "documentation"];
 
+const mockSprints = {
+  sprints: [
+    {
+      id: 100,
+      name: "Sprint 42",
+      state: "active",
+      startDate: "2026-03-01T00:00:00.000Z",
+      endDate: "2026-03-15T00:00:00.000Z",
+      goal: "Complete login feature",
+      boardId: 1,
+      boardName: "PROJ board",
+    },
+  ],
+};
+
+const mockSprintIssues = {
+  issues: [
+    { id: "10001", key: "PROJ-1", summary: "Implement login page", status: "In Progress", statusCategory: "indeterminate", priority: "High", assignee: "Alice Martin", type: "Story", storyPoints: 5, created: "2026-02-25T10:00:00.000Z" },
+    { id: "10002", key: "PROJ-2", summary: "Fix navigation bug", status: "To Do", statusCategory: "new", priority: "Medium", assignee: "", type: "Bug", storyPoints: 3, created: "2026-02-26T10:00:00.000Z" },
+    { id: "10003", key: "PROJ-3", summary: "Update API docs", status: "Done", statusCategory: "done", priority: "Low", assignee: "Bob Chen", type: "Task", storyPoints: 2, created: "2026-02-27T10:00:00.000Z" },
+    { id: "10004", key: "PROJ-4", summary: "Added after sprint start", status: "To Do", statusCategory: "new", priority: "Medium", assignee: "", type: "Task", storyPoints: 1, created: "2026-03-05T10:00:00.000Z" },
+  ],
+  total: 4,
+  statusCounts: [
+    { status: "In Progress", count: 1 },
+    { status: "To Do", count: 2 },
+    { status: "Done", count: 1 },
+  ],
+  categoryCounts: { todo: 2, inProgress: 1, done: 1 },
+};
+
+const mockBurndown = {
+  burndown: [
+    { date: "2026-03-01", remaining: 4, ideal: 4 },
+    { date: "2026-03-02", remaining: 4, ideal: 3.7 },
+    { date: "2026-03-03", remaining: 3, ideal: 3.4 },
+    { date: "2026-03-04", remaining: 3, ideal: 3.1 },
+    { date: "2026-03-05", remaining: 3, ideal: 2.9 },
+  ],
+  sprint: { id: 100, name: "Sprint 42", startDate: "2026-03-01T00:00:00.000Z", endDate: "2026-03-15T00:00:00.000Z", totalIssues: 4 },
+};
+
+const mockVelocity = {
+  velocity: [
+    { sprintId: 98, sprintName: "Sprint 40", state: "closed", committedPoints: 20, completedPoints: 18, committedCount: 8, completedCount: 7 },
+    { sprintId: 99, sprintName: "Sprint 41", state: "closed", committedPoints: 25, completedPoints: 22, committedCount: 10, completedCount: 9 },
+    { sprintId: 100, sprintName: "Sprint 42", state: "active", committedPoints: 11, completedPoints: 2, committedCount: 4, completedCount: 1 },
+  ],
+};
+
 function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: object; transitionResponse?: object; createResponse?: object; createError?: boolean }) {
   const detail = overrides?.issueDetail || mockIssueDetail;
   const patchRes = overrides?.patchResponse || { status: "ok", key: "PROJ-1" };
@@ -219,6 +293,30 @@ function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: obje
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve({ issues: searchResults, total: searchResults.length }),
+      } as Response);
+    }
+    if (urlStr.match(/\/api\/sprints\/\d+\/burndown/)) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockBurndown),
+      } as Response);
+    }
+    if (urlStr.match(/\/api\/sprints\/\d+\/velocity/)) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockVelocity),
+      } as Response);
+    }
+    if (urlStr.match(/\/api\/sprints\/\d+\/issues/)) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockSprintIssues),
+      } as Response);
+    }
+    if (urlStr.includes("/api/sprints")) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockSprints),
       } as Response);
     }
     if (urlStr.includes("/api/issues")) {
@@ -3253,6 +3351,141 @@ describe("Feature: Bulk actions on selected issues", () => {
 
       const stored = JSON.parse(localStorage.getItem("jira-ui-saved-filters") || "[]");
       expect(stored[0].name).toBe("Renamed");
+    });
+  });
+});
+
+/* ── Sprint Dashboard (tasks 9.1–9.4) ── */
+
+describe("Feature: Sprint dashboard shows active sprint overview", () => {
+  describe("Scenario: Sprint view is accessible from nav", () => {
+    it("Given the app is rendered, then there should be a Sprint nav button", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      expect(screen.getByRole("button", { name: /sprint/i })).toBeInTheDocument();
+    });
+
+    it("Given the app is rendered, when the user clicks Sprint, then the sprint dashboard loads", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      expect(await screen.findByTestId("sprint-dashboard")).toBeInTheDocument();
+    });
+
+    it("Given the app is rendered, when the user presses 's', then the sprint view activates", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      await user.keyboard("s");
+      expect(await screen.findByTestId("sprint-dashboard")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Active sprint overview displays name and dates (9.1)", () => {
+    it("Given the sprint view is active, then the sprint name is displayed", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      expect(await screen.findByTestId("sprint-name")).toHaveTextContent("Sprint 42");
+    });
+
+    it("Given the sprint view is active, then issue counts by status category are shown", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      const dashboard = await screen.findByTestId("sprint-dashboard");
+      // Total issues = 4
+      expect(within(dashboard).getByText("4")).toBeInTheDocument();
+      // The category labels are displayed
+      expect(within(dashboard).getByText("Total")).toBeInTheDocument();
+      expect(within(dashboard).getByText("Progress")).toBeInTheDocument();
+    });
+
+    it("Given the sprint view is active, then completion percentage is shown", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      expect(await screen.findByTestId("sprint-completion")).toHaveTextContent("25% complete");
+    });
+  });
+
+  describe("Scenario: No active sprint shows fallback message", () => {
+    it("Given no sprints exist, when sprint view is opened, then a message indicates no active sprint", async () => {
+      const user = userEvent.setup();
+      global.fetch = vi.fn((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/sprints")) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ sprints: [] }),
+          } as Response);
+        }
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockProjects),
+          } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve(mockIssues),
+          } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      expect(await screen.findByTestId("no-active-sprint")).toBeInTheDocument();
+      expect(screen.getByText("No active sprint")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Burndown chart shows remaining work over time (9.2)", () => {
+  describe("Scenario: Burndown chart renders with data", () => {
+    it("Given the sprint view is active, then the burndown chart section is displayed", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      expect(await screen.findByText("Burndown Chart")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Velocity chart shows story points per sprint (9.3)", () => {
+  describe("Scenario: Velocity chart renders with data", () => {
+    it("Given the sprint view is active, then the velocity chart section is displayed", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      expect(await screen.findByText("Velocity Chart")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Sprint scope change tracking (9.4)", () => {
+  describe("Scenario: Scope changes are detected and displayed", () => {
+    it("Given the sprint view is active, then the scope changes section is displayed", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      expect(await screen.findByText("Scope Changes")).toBeInTheDocument();
+    });
+
+    it("Given sprint has issues added after start, then scope change count is shown", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      expect(await screen.findByTestId("scope-change-count")).toHaveTextContent("+1");
+    });
+
+    it("Given sprint has scope changes, then added issue keys are listed", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      expect(await screen.findByText("PROJ-4")).toBeInTheDocument();
+      expect(screen.getByText("Added after sprint start")).toBeInTheDocument();
     });
   });
 });
