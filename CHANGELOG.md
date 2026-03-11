@@ -1,3 +1,8 @@
+## [1.28.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.27.0...v1.28.0) (2026-03-11)
+
+### Features
+
+* keyboard shortcuts with help overlay (tasks 5.1-5.5) ([73f9484](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/73f948458d8a91e9ac2118adac4ec6e6cb8ba96f))
 ## [1.27.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.26.0...v1.27.0) (2026-03-11)
 
 ### Features
