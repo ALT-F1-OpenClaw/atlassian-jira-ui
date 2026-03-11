@@ -1,3 +1,8 @@
+## [1.44.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.44.0...v1.44.1) (2026-03-11)
+
+### Bug Fixes
+
+* correct GitHub URL in About page — was pointing to anthropics/jira-ui ([9045400](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/9045400c075868812e7bc7465d26191029dadbc7)), closes [#21](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/21)
 ## [1.44.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.43.1...v1.44.0) (2026-03-11)
 
 ### Features
