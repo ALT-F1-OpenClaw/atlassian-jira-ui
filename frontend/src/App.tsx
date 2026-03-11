@@ -117,6 +117,28 @@ interface Filters {
   assignee: string;
 }
 
+interface SavedFilter {
+  id: string;
+  name: string;
+  project: string;
+  filters: Filters;
+}
+
+const SAVED_FILTERS_KEY = "jira-ui-saved-filters";
+
+function loadSavedFilters(): SavedFilter[] {
+  try {
+    const stored = localStorage.getItem(SAVED_FILTERS_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function persistSavedFilters(filters: SavedFilter[]) {
+  localStorage.setItem(SAVED_FILTERS_KEY, JSON.stringify(filters));
+}
+
 const FILTER_SELECT_CLASS =
   "w-full lg:w-auto rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none";
 
@@ -179,6 +201,153 @@ function FilterBar({
         </button>
       )}
     </>
+  );
+}
+
+/* ── Saved Filters ── */
+
+function SavedFiltersDropdown({
+  savedFilters,
+  onApply,
+  onSave,
+  onRename,
+  onDelete,
+  hasActiveFilters,
+}: {
+  savedFilters: SavedFilter[];
+  onApply: (sf: SavedFilter) => void;
+  onSave: () => void;
+  onRename: (id: string, newName: string) => void;
+  onDelete: (id: string) => void;
+  hasActiveFilters: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setEditingId(null);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open]);
+
+  const startEdit = (sf: SavedFilter) => {
+    setEditingId(sf.id);
+    setEditName(sf.name);
+  };
+
+  const submitEdit = () => {
+    if (editingId && editName.trim()) {
+      onRename(editingId, editName.trim());
+      setEditingId(null);
+    }
+  };
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <div className="flex gap-1">
+        <button
+          onClick={() => setOpen(!open)}
+          className="rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200 cursor-pointer"
+          aria-label="Saved filters"
+          aria-expanded={open}
+        >
+          <span className="hidden sm:inline">Saved Filters</span>
+          <span className="sm:hidden">★</span>
+          {savedFilters.length > 0 && (
+            <span className="ml-1 rounded-full bg-zinc-700 px-1.5 text-[10px]">{savedFilters.length}</span>
+          )}
+        </button>
+        {hasActiveFilters && (
+          <button
+            onClick={onSave}
+            className="rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-400 transition-colors hover:border-blue-600 hover:text-blue-400 cursor-pointer"
+            aria-label="Save current filter"
+            title="Save current filter combination"
+          >
+            <span className="hidden sm:inline">Save Filter</span>
+            <span className="sm:hidden">+★</span>
+          </button>
+        )}
+      </div>
+      {open && (
+        <div className="absolute left-0 top-full z-50 mt-1 w-64 rounded-md border border-zinc-700 bg-zinc-900 shadow-lg" role="listbox" aria-label="Saved filters list">
+          {savedFilters.length === 0 ? (
+            <div className="px-3 py-4 text-center text-xs text-zinc-500">
+              No saved filters yet.{" "}
+              {hasActiveFilters ? "Use \"Save Filter\" to save current filters." : "Apply some filters first."}
+            </div>
+          ) : (
+            <ul className="max-h-60 overflow-y-auto py-1">
+              {savedFilters.map((sf) => (
+                <li key={sf.id} className="group flex items-center gap-1 px-2 py-1.5 hover:bg-zinc-800">
+                  {editingId === sf.id ? (
+                    <form
+                      className="flex flex-1 gap-1"
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        submitEdit();
+                      }}
+                    >
+                      <input
+                        type="text"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        className="flex-1 rounded border border-zinc-600 bg-zinc-800 px-1.5 py-0.5 text-xs text-zinc-200 focus:border-blue-500 focus:outline-none"
+                        aria-label="Rename filter"
+                        autoFocus
+                      />
+                      <button type="submit" className="text-xs text-green-400 hover:text-green-300" aria-label="Confirm rename">✓</button>
+                      <button type="button" onClick={() => setEditingId(null)} className="text-xs text-zinc-500 hover:text-zinc-300" aria-label="Cancel rename">✕</button>
+                    </form>
+                  ) : (
+                    <>
+                      <button
+                        className="flex-1 truncate text-left text-xs text-zinc-300 hover:text-white"
+                        onClick={() => {
+                          onApply(sf);
+                          setOpen(false);
+                        }}
+                        role="option"
+                        aria-label={`Apply filter ${sf.name}`}
+                      >
+                        <span className="font-medium">{sf.name}</span>
+                        <span className="ml-1.5 text-zinc-600">
+                          {[sf.project, sf.filters.type, sf.filters.status, sf.filters.assignee].filter(Boolean).join(", ")}
+                        </span>
+                      </button>
+                      <button
+                        onClick={() => startEdit(sf)}
+                        className="invisible text-xs text-zinc-500 hover:text-zinc-300 group-hover:visible"
+                        aria-label={`Edit filter ${sf.name}`}
+                        title="Rename"
+                      >
+                        ✎
+                      </button>
+                      <button
+                        onClick={() => onDelete(sf.id)}
+                        className="invisible text-xs text-zinc-500 hover:text-red-400 group-hover:visible"
+                        aria-label={`Delete filter ${sf.name}`}
+                        title="Delete"
+                      >
+                        ✕
+                      </button>
+                    </>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -2605,10 +2774,50 @@ export default function App() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [selectedIssueIds, setSelectedIssueIds] = useState<Set<string>>(new Set());
+  const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(loadSavedFilters);
 
   const handleCloseDetail = useCallback(() => setSelectedIssueKey(null), []);
   const handleCloseShortcutHelp = useCallback(() => setShowShortcutHelp(false), []);
   const handleCloseCreateModal = useCallback(() => setShowCreateModal(false), []);
+
+  const hasActiveFilters = !!(project || filters.status || filters.type || filters.assignee);
+
+  const handleSaveFilter = useCallback(() => {
+    const name = prompt("Name for this filter:");
+    if (!name?.trim()) return;
+    const newFilter: SavedFilter = {
+      id: Date.now().toString(),
+      name: name.trim(),
+      project,
+      filters: { ...filters },
+    };
+    setSavedFilters((prev) => {
+      const updated = [...prev, newFilter];
+      persistSavedFilters(updated);
+      return updated;
+    });
+  }, [project, filters]);
+
+  const handleApplySavedFilter = useCallback((sf: SavedFilter) => {
+    setProject(sf.project);
+    setFilters(sf.filters);
+  }, []);
+
+  const handleRenameSavedFilter = useCallback((id: string, newName: string) => {
+    setSavedFilters((prev) => {
+      const updated = prev.map((sf) => (sf.id === id ? { ...sf, name: newName } : sf));
+      persistSavedFilters(updated);
+      return updated;
+    });
+  }, []);
+
+  const handleDeleteSavedFilter = useCallback((id: string) => {
+    setSavedFilters((prev) => {
+      const updated = prev.filter((sf) => sf.id !== id);
+      persistSavedFilters(updated);
+      return updated;
+    });
+  }, []);
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -2767,6 +2976,14 @@ export default function App() {
             ))}
           </select>
           <FilterBar filters={filters} onChange={setFilters} issues={issuesForFilters} />
+          <SavedFiltersDropdown
+            savedFilters={savedFilters}
+            onApply={handleApplySavedFilter}
+            onSave={handleSaveFilter}
+            onRename={handleRenameSavedFilter}
+            onDelete={handleDeleteSavedFilter}
+            hasActiveFilters={hasActiveFilters}
+          />
         </div>
       </header>
 

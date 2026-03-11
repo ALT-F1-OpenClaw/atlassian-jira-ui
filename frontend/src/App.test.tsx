@@ -3081,4 +3081,178 @@ describe("Feature: Bulk actions on selected issues", () => {
       expect(screen.queryByRole("toolbar", { name: /bulk actions/i })).not.toBeInTheDocument();
     });
   });
+
+  /* ── Saved Filters (8.1–8.4) ── */
+
+  describe("Scenario: Save current filter combination (8.1)", () => {
+    it("Given filters are active, when Save Filter is clicked and a name is entered, then the filter is saved", async () => {
+      const user = userEvent.setup();
+      vi.spyOn(window, "prompt").mockReturnValue("My Bug Filter");
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      // Apply a filter
+      const typeFilter = screen.getByLabelText("Filter by type");
+      await user.selectOptions(typeFilter, "Bug");
+
+      // Save Filter button should appear
+      const saveBtn = screen.getByLabelText("Save current filter");
+      await user.click(saveBtn);
+
+      // Open saved filters dropdown
+      await user.click(screen.getByLabelText("Saved filters"));
+      expect(screen.getByText("My Bug Filter")).toBeInTheDocument();
+    });
+
+    it("Given no filters are active, then the Save Filter button is not shown", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      expect(screen.queryByLabelText("Save current filter")).not.toBeInTheDocument();
+    });
+
+    it("Given the prompt is cancelled, then no filter is saved", async () => {
+      const user = userEvent.setup();
+      vi.spyOn(window, "prompt").mockReturnValue(null);
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      const typeFilter = screen.getByLabelText("Filter by type");
+      await user.selectOptions(typeFilter, "Bug");
+
+      await user.click(screen.getByLabelText("Save current filter"));
+
+      await user.click(screen.getByLabelText("Saved filters"));
+      expect(screen.getByText(/No saved filters yet/)).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Quick-access filter dropdown (8.2)", () => {
+    it("Given saved filters exist, when the dropdown is opened, then all saved filters are listed", async () => {
+      const user = userEvent.setup();
+      localStorage.setItem("jira-ui-saved-filters", JSON.stringify([
+        { id: "1", name: "Bugs Only", project: "", filters: { status: "", type: "Bug", assignee: "" } },
+        { id: "2", name: "Alice Tasks", project: "PROJ", filters: { status: "", type: "", assignee: "Alice Martin" } },
+      ]));
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Saved filters"));
+      expect(screen.getByText("Bugs Only")).toBeInTheDocument();
+      expect(screen.getByText("Alice Tasks")).toBeInTheDocument();
+    });
+
+    it("Given a saved filter is clicked, then the filters are applied", async () => {
+      const user = userEvent.setup();
+      localStorage.setItem("jira-ui-saved-filters", JSON.stringify([
+        { id: "1", name: "Bugs Only", project: "", filters: { status: "", type: "Bug", assignee: "" } },
+      ]));
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Saved filters"));
+      await user.click(screen.getByLabelText("Apply filter Bugs Only"));
+
+      expect(screen.getByLabelText("Filter by type")).toHaveValue("Bug");
+    });
+
+    it("Given no saved filters exist, then the dropdown shows an empty message", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Saved filters"));
+      expect(screen.getByText(/No saved filters yet/)).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Edit and delete saved filters (8.3)", () => {
+    it("Given a saved filter exists, when edit is clicked and a new name is submitted, then the filter is renamed", async () => {
+      const user = userEvent.setup();
+      localStorage.setItem("jira-ui-saved-filters", JSON.stringify([
+        { id: "1", name: "Old Name", project: "", filters: { status: "", type: "Bug", assignee: "" } },
+      ]));
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Saved filters"));
+      await user.click(screen.getByLabelText("Edit filter Old Name"));
+
+      const renameInput = screen.getByLabelText("Rename filter");
+      await user.clear(renameInput);
+      await user.type(renameInput, "New Name");
+      await user.click(screen.getByLabelText("Confirm rename"));
+
+      expect(screen.getByText("New Name")).toBeInTheDocument();
+      expect(screen.queryByText("Old Name")).not.toBeInTheDocument();
+    });
+
+    it("Given a saved filter exists, when delete is clicked, then the filter is removed", async () => {
+      const user = userEvent.setup();
+      localStorage.setItem("jira-ui-saved-filters", JSON.stringify([
+        { id: "1", name: "To Delete", project: "", filters: { status: "", type: "Bug", assignee: "" } },
+      ]));
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Saved filters"));
+      expect(screen.getByText("To Delete")).toBeInTheDocument();
+
+      await user.click(screen.getByLabelText("Delete filter To Delete"));
+      expect(screen.queryByText("To Delete")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Persist saved filters in localStorage (8.4)", () => {
+    it("Given a filter is saved, then it is persisted to localStorage", async () => {
+      const user = userEvent.setup();
+      vi.spyOn(window, "prompt").mockReturnValue("Persisted Filter");
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      const typeFilter = screen.getByLabelText("Filter by type");
+      await user.selectOptions(typeFilter, "Bug");
+      await user.click(screen.getByLabelText("Save current filter"));
+
+      const stored = JSON.parse(localStorage.getItem("jira-ui-saved-filters") || "[]");
+      expect(stored).toHaveLength(1);
+      expect(stored[0].name).toBe("Persisted Filter");
+      expect(stored[0].filters.type).toBe("Bug");
+    });
+
+    it("Given a filter is deleted, then localStorage is updated", async () => {
+      const user = userEvent.setup();
+      localStorage.setItem("jira-ui-saved-filters", JSON.stringify([
+        { id: "1", name: "Will Delete", project: "", filters: { status: "", type: "Bug", assignee: "" } },
+      ]));
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Saved filters"));
+      await user.click(screen.getByLabelText("Delete filter Will Delete"));
+
+      const stored = JSON.parse(localStorage.getItem("jira-ui-saved-filters") || "[]");
+      expect(stored).toHaveLength(0);
+    });
+
+    it("Given a filter is renamed, then localStorage is updated with the new name", async () => {
+      const user = userEvent.setup();
+      localStorage.setItem("jira-ui-saved-filters", JSON.stringify([
+        { id: "1", name: "Original", project: "", filters: { status: "", type: "Bug", assignee: "" } },
+      ]));
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Saved filters"));
+      await user.click(screen.getByLabelText("Edit filter Original"));
+
+      const renameInput = screen.getByLabelText("Rename filter");
+      await user.clear(renameInput);
+      await user.type(renameInput, "Renamed");
+      await user.click(screen.getByLabelText("Confirm rename"));
+
+      const stored = JSON.parse(localStorage.getItem("jira-ui-saved-filters") || "[]");
+      expect(stored[0].name).toBe("Renamed");
+    });
+  });
 });

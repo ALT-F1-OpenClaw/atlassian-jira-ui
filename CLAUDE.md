@@ -105,7 +105,8 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **Keyboard Shortcuts** (tasks 5.1–5.5): j/k list navigation with highlight, Enter opens issue, Escape closes panels, b/l view switching, ? help overlay, context-aware (disabled in inputs)
 - **Quick Create Modal** (tasks 6.1–6.4): `c` key or `+ Create` button opens modal, project/summary/type/priority/assignee/description fields, form validation (project + summary required), optimistic UI update with query invalidation
 - **Bulk Actions** (tasks 7.1–7.5): checkbox selection on list rows, select all/deselect all, floating action bar with bulk transition/assign/priority dropdowns, `Promise.allSettled` batch API calls, success/failure result display, responsive layout
-- **Total: 163 BDD tests**
+- **Saved Filters** (tasks 8.1–8.4): save current filter combination (project + status + type + assignee) as named view, quick-access dropdown in header, inline rename/delete, localStorage persistence (`jira-ui-saved-filters`)
+- **Total: 174 BDD tests**
 
-Phase 1 complete. Phase 2 in progress — Keyboard shortcuts, Quick create modal, and Bulk actions done. Next up: tasks 8.1–8.4.
+Phase 1 complete. Phase 2 complete — Keyboard shortcuts, Quick create modal, Bulk actions, and Saved filters done. Next up: tasks 9.1–9.4.
 See `ROADMAP.md` for full status.

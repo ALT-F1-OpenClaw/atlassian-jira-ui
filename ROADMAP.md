@@ -74,12 +74,12 @@
 
 ### 8. Saved filters
 
-- [ ] **8.1** Save current filter combination (project + status + assignee + type) as named view
-- [ ] **8.2** Quick-access filter list in sidebar or dropdown
-- [ ] **8.3** Edit and delete saved filters
-- [ ] **8.4** Persist in `localStorage`
+- [x] **8.1** Save current filter combination (project + status + assignee + type) as named view — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **8.2** Quick-access filter list in sidebar or dropdown — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **8.3** Edit and delete saved filters — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **8.4** Persist in `localStorage` — *BDD tests: `App.test.tsx` (3 scenarios)*
 
-**Tech**: `localStorage` for persistence, filter preset UI. Optional: backend endpoint for server-side persistence.
+**Tech**: `localStorage` for persistence (`jira-ui-saved-filters` key), `SavedFiltersDropdown` component with save/apply/rename/delete. `SavedFilter` interface stores `id`, `name`, `project`, and `filters` (status/type/assignee). Save button appears when filters are active; dropdown shows all saved filters with inline edit/delete controls.
 
 ---
 
@@ -136,7 +136,7 @@
 | 5 | Keyboard shortcuts | 2 | Complete |
 | 6 | Quick create modal | 2 | Complete |
 | 7 | Bulk actions | 2 | Complete |
-| 8 | Saved filters | 2 | Not started |
+| 8 | Saved filters | 2 | Complete |
 | 9 | Sprint dashboard | 3 | Not started |
 | 10 | Dark/light mode toggle | 3 | Partial |
 | 11 | Time tracking | 3 | Not started |
