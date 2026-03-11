@@ -84,6 +84,28 @@ export const MOCK_BOARDS = [
 export const MOCK_SPRINTS = {
   sprints: [
     { id: 1, name: "Sprint 1", state: "active", startDate: "2026-03-01", endDate: "2026-03-15", goal: "Deliver login fix", boardId: 1, boardName: "PROJ board" },
+    { id: 2, name: "Sprint 2", state: "future", startDate: "2026-03-16", endDate: "2026-03-30", goal: "Dark mode & search", boardId: 1, boardName: "PROJ board" },
+  ],
+};
+
+export const MOCK_BURNDOWN = {
+  data: [
+    { date: "2026-03-01", remaining: 20, ideal: 20 },
+    { date: "2026-03-03", remaining: 18, ideal: 17 },
+    { date: "2026-03-05", remaining: 15, ideal: 14 },
+    { date: "2026-03-07", remaining: 12, ideal: 11 },
+    { date: "2026-03-09", remaining: 10, ideal: 9 },
+    { date: "2026-03-11", remaining: 7, ideal: 6 },
+    { date: "2026-03-13", remaining: 5, ideal: 3 },
+    { date: "2026-03-15", remaining: 2, ideal: 0 },
+  ],
+};
+
+export const MOCK_VELOCITY = {
+  sprints: [
+    { name: "Sprint -2", committed: 15, completed: 13 },
+    { name: "Sprint -1", committed: 18, completed: 16 },
+    { name: "Sprint 1", committed: 20, completed: 14 },
   ],
 };
 
@@ -137,13 +159,26 @@ export async function mockAllApiRoutes(page: Page) {
   await page.route("**/api/boards**", (route) =>
     route.fulfill({ json: MOCK_BOARDS })
   );
+  // Sprint sub-resources
+  await page.route("**/api/sprints/*/burndown**", (route) =>
+    route.fulfill({ json: MOCK_BURNDOWN })
+  );
+  await page.route("**/api/sprints/*/velocity**", (route) =>
+    route.fulfill({ json: MOCK_VELOCITY })
+  );
   await page.route("**/api/sprints/*/issues**", (route) =>
     route.fulfill({ json: { issues: MOCK_ISSUES_LIST.issues.slice(0, 2), total: 2 } })
   );
-  // Sprint list (for dashboard /api/sprints?state=active)
-  await page.route(/\/api\/sprints(\?.*)?$/, (route) =>
-    route.fulfill({ json: MOCK_SPRINTS })
-  );
+  // Sprint list (for dashboard /api/sprints?state=active and sprint dashboard)
+  await page.route(/\/api\/sprints/, (route) => {
+    const url = route.request().url();
+    // Already handled sub-resources above via glob — this catches list only
+    if (/\/sprints\/\d+/.test(url)) {
+      // Individual sprint detail
+      return route.fulfill({ json: MOCK_SPRINTS.sprints[0] });
+    }
+    return route.fulfill({ json: MOCK_SPRINTS });
+  });
   await page.route("**/api/search**", (route) => {
     const url = route.request().url();
     if (url.includes("/quick")) {
