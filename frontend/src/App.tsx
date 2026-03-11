@@ -3515,15 +3515,225 @@ interface VelocityEntry {
 
 const SPRINT_CHART_COLORS = ["#3b82f6", "#22c55e", "#eab308", "#ef4444", "#a855f7", "#06b6d4", "#f97316", "#ec4899"];
 
-function SprintDashboard({ project }: { project: string }) {
-  const [selectedSprintId, setSelectedSprintId] = useState<number | null>(null);
+function CreateSprintModal({ boardId, onClose }: { boardId: number; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState("");
+  const [goal, setGoal] = useState("");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
+  const [error, setError] = useState("");
 
-  // Fetch available sprints
+  const createMutation = useMutation({
+    mutationFn: async () => {
+      const body: Record<string, unknown> = { name, board_id: boardId };
+      if (goal) body.goal = goal;
+      if (startDate) body.start_date = new Date(startDate).toISOString();
+      if (endDate) body.end_date = new Date(endDate).toISOString();
+      const res = await fetch(`${API}/api/sprints`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sprints"] });
+      onClose();
+    },
+    onError: () => setError("Failed to create sprint"),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" data-testid="create-sprint-modal">
+      <div className="w-full max-w-md rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl mx-4" role="dialog" aria-label="Create sprint">
+        <h2 className="text-lg font-bold text-zinc-100 mb-4">Create Sprint</h2>
+        {error && <div className="mb-3 rounded-md bg-red-900/50 border border-red-700 px-3 py-2 text-sm text-red-300">{error}</div>}
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Name *</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none" placeholder="Sprint name" data-testid="sprint-name-input" />
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Goal</label>
+            <textarea value={goal} onChange={(e) => setGoal(e.target.value)} className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none resize-none" rows={2} placeholder="Sprint goal" data-testid="sprint-goal-input" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Start Date</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none" data-testid="sprint-start-date" />
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">End Date</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none" data-testid="sprint-end-date" />
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-5">
+          <button onClick={onClose} className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-200 cursor-pointer">Cancel</button>
+          <button onClick={() => createMutation.mutate()} disabled={!name.trim() || createMutation.isPending} className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 cursor-pointer" data-testid="create-sprint-submit">
+            {createMutation.isPending ? "Creating…" : "Create Sprint"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function EditSprintModal({ sprint, onClose }: { sprint: SprintInfo; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState(sprint.name);
+  const [goal, setGoal] = useState(sprint.goal);
+  const [startDate, setStartDate] = useState(sprint.startDate ? sprint.startDate.slice(0, 10) : "");
+  const [endDate, setEndDate] = useState(sprint.endDate ? sprint.endDate.slice(0, 10) : "");
+  const [error, setError] = useState("");
+
+  const updateMutation = useMutation({
+    mutationFn: async () => {
+      const body: Record<string, unknown> = {};
+      if (name !== sprint.name) body.name = name;
+      if (goal !== sprint.goal) body.goal = goal;
+      if (startDate && startDate !== sprint.startDate?.slice(0, 10)) body.start_date = new Date(startDate).toISOString();
+      if (endDate && endDate !== sprint.endDate?.slice(0, 10)) body.end_date = new Date(endDate).toISOString();
+      const res = await fetch(`${API}/api/sprints/${sprint.id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sprints"] });
+      onClose();
+    },
+    onError: () => setError("Failed to update sprint"),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" data-testid="edit-sprint-modal">
+      <div className="w-full max-w-md rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl mx-4" role="dialog" aria-label="Edit sprint">
+        <h2 className="text-lg font-bold text-zinc-100 mb-4">Edit Sprint</h2>
+        {error && <div className="mb-3 rounded-md bg-red-900/50 border border-red-700 px-3 py-2 text-sm text-red-300">{error}</div>}
+        <div className="space-y-3">
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Name</label>
+            <input value={name} onChange={(e) => setName(e.target.value)} className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none" data-testid="edit-sprint-name" />
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Goal</label>
+            <textarea value={goal} onChange={(e) => setGoal(e.target.value)} className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none resize-none" rows={2} data-testid="edit-sprint-goal" />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Start Date</label>
+              <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none" data-testid="edit-sprint-start" />
+            </div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">End Date</label>
+              <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none" data-testid="edit-sprint-end" />
+            </div>
+          </div>
+        </div>
+        <div className="flex justify-end gap-2 mt-5">
+          <button onClick={onClose} className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-200 cursor-pointer">Cancel</button>
+          <button onClick={() => updateMutation.mutate()} disabled={!name.trim() || updateMutation.isPending} className="rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 cursor-pointer" data-testid="edit-sprint-submit">
+            {updateMutation.isPending ? "Saving…" : "Save Changes"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ConfirmDialog({ title, message, confirmLabel, confirmColor, onConfirm, onCancel, isPending }: { title: string; message: string; confirmLabel: string; confirmColor?: string; onConfirm: () => void; onCancel: () => void; isPending?: boolean }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" data-testid="confirm-dialog">
+      <div className="w-full max-w-sm rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl mx-4" role="dialog" aria-label={title}>
+        <h2 className="text-lg font-bold text-zinc-100 mb-2">{title}</h2>
+        <p className="text-sm text-zinc-400 mb-5">{message}</p>
+        <div className="flex justify-end gap-2">
+          <button onClick={onCancel} className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-200 cursor-pointer">Cancel</button>
+          <button onClick={onConfirm} disabled={isPending} className={`rounded-md px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50 cursor-pointer ${confirmColor || "bg-blue-600 hover:bg-blue-500"}`} data-testid="confirm-action">
+            {isPending ? "Processing…" : confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ManageSprintScopeModal({ sprintId, currentIssues, onClose }: { sprintId: number; currentIssues: SprintIssue[]; onClose: () => void }) {
+  const queryClient = useQueryClient();
+  const [issueKey, setIssueKey] = useState("");
+  const [error, setError] = useState("");
+
+  const addMutation = useMutation({
+    mutationFn: async (key: string) => {
+      const res = await fetch(`${API}/api/sprints/${sprintId}/issues`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ issues: [key] }) });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sprint-issues", sprintId] });
+      setIssueKey("");
+      setError("");
+    },
+    onError: () => setError("Failed to add issue"),
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: async (key: string) => {
+      const res = await fetch(`${API}/api/sprints/${sprintId}/issues/${key}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["sprint-issues", sprintId] });
+    },
+    onError: () => setError("Failed to remove issue"),
+  });
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" data-testid="manage-scope-modal">
+      <div className="w-full max-w-lg rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl mx-4" role="dialog" aria-label="Manage sprint scope">
+        <h2 className="text-lg font-bold text-zinc-100 mb-4">Manage Sprint Scope</h2>
+        {error && <div className="mb-3 rounded-md bg-red-900/50 border border-red-700 px-3 py-2 text-sm text-red-300">{error}</div>}
+        <div className="flex gap-2 mb-4">
+          <input value={issueKey} onChange={(e) => setIssueKey(e.target.value.toUpperCase())} className="flex-1 rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none" placeholder="Issue key (e.g. PROJ-5)" data-testid="scope-issue-input" onKeyDown={(e) => { if (e.key === "Enter" && issueKey.trim()) addMutation.mutate(issueKey.trim()); }} />
+          <button onClick={() => { if (issueKey.trim()) addMutation.mutate(issueKey.trim()); }} disabled={!issueKey.trim() || addMutation.isPending} className="rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 cursor-pointer" data-testid="add-issue-btn">
+            {addMutation.isPending ? "Adding…" : "Add"}
+          </button>
+        </div>
+        <div className="space-y-1 max-h-[300px] overflow-y-auto">
+          {currentIssues.length === 0 ? (
+            <p className="text-sm text-zinc-500 text-center py-4">No issues in sprint</p>
+          ) : currentIssues.map((issue) => (
+            <div key={issue.key} className="flex items-center gap-2 text-sm rounded-md bg-zinc-800 px-3 py-2">
+              <span className="font-mono text-xs text-blue-400">{issue.key}</span>
+              <span className="text-zinc-300 truncate flex-1">{issue.summary}</span>
+              <StatusBadge status={issue.status} />
+              <button onClick={() => removeMutation.mutate(issue.key)} disabled={removeMutation.isPending} className="text-red-400 hover:text-red-300 text-xs cursor-pointer" aria-label={`Remove ${issue.key}`} data-testid={`remove-issue-${issue.key}`}>
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end mt-4">
+          <button onClick={onClose} className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-200 cursor-pointer">Close</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SprintDashboard({ project }: { project: string }) {
+  const queryClient = useQueryClient();
+  const [selectedSprintId, setSelectedSprintId] = useState<number | null>(null);
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showScopeModal, setShowScopeModal] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<"start" | "complete" | "delete" | null>(null);
+
+  // Fetch available sprints (active + future for CRUD)
   const { data: sprintsData, isLoading: sprintsLoading } = useQuery({
     queryKey: ["sprints", project],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (project) params.set("project", project);
+      params.set("state", "active,future");
       const res = await fetch(`${API}/api/sprints?${params}`);
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<{ sprints: SprintInfo[] }>;
@@ -3583,6 +3793,36 @@ function SprintDashboard({ project }: { project: string }) {
     enabled: !!sprintId && !!boardId,
   });
 
+  // Start sprint mutation
+  const startMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${API}/api/sprints/${sprintId}/start`, { method: "POST" });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["sprints"] }); setConfirmAction(null); },
+  });
+
+  // Complete sprint mutation
+  const completeMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${API}/api/sprints/${sprintId}/complete`, { method: "POST" });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ["sprints"] }); setConfirmAction(null); },
+  });
+
+  // Delete sprint mutation
+  const deleteMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`${API}/api/sprints/${sprintId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => { setSelectedSprintId(null); queryClient.invalidateQueries({ queryKey: ["sprints"] }); setConfirmAction(null); },
+  });
+
   if (sprintsLoading) {
     return (
       <div className="flex items-center justify-center py-20 text-zinc-500" data-testid="sprint-loading">
@@ -3591,12 +3831,21 @@ function SprintDashboard({ project }: { project: string }) {
     );
   }
 
+  // Determine board ID for create (from first sprint or from boards query)
+  const createBoardId = sprints.length > 0 ? sprints[0].boardId : 0;
+
   if (sprints.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-20 text-zinc-500" data-testid="no-active-sprint">
         <span className="text-4xl mb-4">🏃</span>
         <p className="text-lg font-medium">No active sprint</p>
-        <p className="text-sm mt-1">Start a sprint in Jira to see the dashboard here.</p>
+        <p className="text-sm mt-1">Create a new sprint to get started.</p>
+        {createBoardId > 0 && (
+          <button onClick={() => setShowCreateModal(true)} className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 cursor-pointer" data-testid="create-sprint-empty">
+            + Create Sprint
+          </button>
+        )}
+        {showCreateModal && createBoardId > 0 && <CreateSprintModal boardId={createBoardId} onClose={() => setShowCreateModal(false)} />}
       </div>
     );
   }
@@ -3629,10 +3878,12 @@ function SprintDashboard({ project }: { project: string }) {
 
   const completionPct = totalIssues > 0 ? Math.round((categoryCounts.done / totalIssues) * 100) : 0;
 
+  const sprintState = activeSprint?.state || "";
+
   return (
     <div className="p-4 sm:p-6 space-y-6" data-testid="sprint-dashboard">
       {/* Sprint selector + header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           {sprints.length > 1 && (
             <select
@@ -3643,7 +3894,7 @@ function SprintDashboard({ project }: { project: string }) {
             >
               {sprints.map((s) => (
                 <option key={s.id} value={s.id}>
-                  {s.name} ({s.boardName})
+                  {s.name} ({s.boardName}) [{s.state}]
                 </option>
               ))}
             </select>
@@ -3656,8 +3907,33 @@ function SprintDashboard({ project }: { project: string }) {
             )}
           </p>
           {activeSprint.goal && (
-            <p className="text-sm text-zinc-500 mt-1 italic">Goal: {activeSprint.goal}</p>
+            <p className="text-sm text-zinc-500 mt-1 italic" data-testid="sprint-goal">Goal: {activeSprint.goal}</p>
           )}
+          {/* Sprint action buttons */}
+          <div className="flex flex-wrap gap-2 mt-3" data-testid="sprint-actions">
+            <button onClick={() => setShowEditModal(true)} className="rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 cursor-pointer" data-testid="edit-sprint-btn" aria-label="Edit sprint">
+              Edit
+            </button>
+            {sprintState === "future" && (
+              <button onClick={() => setConfirmAction("start")} className="rounded-md bg-green-700 px-2.5 py-1 text-xs font-medium text-white hover:bg-green-600 cursor-pointer" data-testid="start-sprint-btn" aria-label="Start sprint">
+                Start Sprint
+              </button>
+            )}
+            {sprintState === "active" && (
+              <button onClick={() => setConfirmAction("complete")} className="rounded-md bg-blue-700 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-600 cursor-pointer" data-testid="complete-sprint-btn" aria-label="Complete sprint">
+                Complete Sprint
+              </button>
+            )}
+            <button onClick={() => setShowScopeModal(true)} className="rounded-md border border-zinc-700 px-2.5 py-1 text-xs text-zinc-400 hover:text-zinc-200 hover:border-zinc-500 cursor-pointer" data-testid="manage-scope-btn" aria-label="Manage scope">
+              Manage Scope
+            </button>
+            <button onClick={() => setConfirmAction("delete")} className="rounded-md border border-red-800 px-2.5 py-1 text-xs text-red-400 hover:text-red-300 hover:border-red-600 cursor-pointer" data-testid="delete-sprint-btn" aria-label="Delete sprint">
+              Delete
+            </button>
+            <button onClick={() => setShowCreateModal(true)} className="rounded-md bg-blue-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-blue-500 cursor-pointer" data-testid="create-sprint-btn" aria-label="Create sprint">
+              + New Sprint
+            </button>
+          </div>
         </div>
         <div className="flex gap-3 text-center">
           <div className="rounded-lg bg-zinc-900 border border-zinc-800 px-4 py-3 min-w-[80px]">
@@ -3791,6 +4067,20 @@ function SprintDashboard({ project }: { project: string }) {
           )}
         </div>
       </div>
+
+      {/* Modals */}
+      {showCreateModal && boardId && <CreateSprintModal boardId={boardId} onClose={() => setShowCreateModal(false)} />}
+      {showEditModal && activeSprint && <EditSprintModal sprint={activeSprint} onClose={() => setShowEditModal(false)} />}
+      {showScopeModal && sprintId && <ManageSprintScopeModal sprintId={sprintId} currentIssues={issuesData?.issues || []} onClose={() => setShowScopeModal(false)} />}
+      {confirmAction === "start" && (
+        <ConfirmDialog title="Start Sprint" message={`Start "${activeSprint.name}"? This will make the sprint active.`} confirmLabel="Start Sprint" confirmColor="bg-green-700 hover:bg-green-600" onConfirm={() => startMutation.mutate()} onCancel={() => setConfirmAction(null)} isPending={startMutation.isPending} />
+      )}
+      {confirmAction === "complete" && (
+        <ConfirmDialog title="Complete Sprint" message={`Complete "${activeSprint.name}"? Incomplete issues will be moved to the backlog.`} confirmLabel="Complete Sprint" onConfirm={() => completeMutation.mutate()} onCancel={() => setConfirmAction(null)} isPending={completeMutation.isPending} />
+      )}
+      {confirmAction === "delete" && (
+        <ConfirmDialog title="Delete Sprint" message={`Delete "${activeSprint.name}"? Issues will be moved back to the backlog. This cannot be undone.`} confirmLabel="Delete Sprint" confirmColor="bg-red-700 hover:bg-red-600" onConfirm={() => deleteMutation.mutate()} onCancel={() => setConfirmAction(null)} isPending={deleteMutation.isPending} />
+      )}
     </div>
   );
 }

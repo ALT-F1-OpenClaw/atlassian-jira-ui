@@ -352,10 +352,59 @@ function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: obje
         json: () => Promise.resolve(mockVelocity),
       } as Response);
     }
+    // Sprint CRUD: DELETE /api/sprints/:id/issues/:key
+    if (urlStr.match(/\/api\/sprints\/\d+\/issues\/[A-Z]+-\d+/) && init?.method === "DELETE") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: "ok", removed: "PROJ-1" }),
+      } as Response);
+    }
+    // Sprint CRUD: POST /api/sprints/:id/issues (add issues)
+    if (urlStr.match(/\/api\/sprints\/\d+\/issues/) && init?.method === "POST") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: "ok", added: ["PROJ-5"] }),
+      } as Response);
+    }
     if (urlStr.match(/\/api\/sprints\/\d+\/issues/)) {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockSprintIssues),
+      } as Response);
+    }
+    // Sprint CRUD: POST /api/sprints/:id/start
+    if (urlStr.match(/\/api\/sprints\/\d+\/start/) && init?.method === "POST") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: "ok", sprint: { id: 100, name: "Sprint 42", state: "active" } }),
+      } as Response);
+    }
+    // Sprint CRUD: POST /api/sprints/:id/complete
+    if (urlStr.match(/\/api\/sprints\/\d+\/complete/) && init?.method === "POST") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: "ok", sprint: { id: 100, name: "Sprint 42", state: "closed" } }),
+      } as Response);
+    }
+    // Sprint CRUD: DELETE /api/sprints/:id
+    if (urlStr.match(/\/api\/sprints\/\d+$/) && init?.method === "DELETE") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: "ok" }),
+      } as Response);
+    }
+    // Sprint CRUD: PATCH /api/sprints/:id
+    if (urlStr.match(/\/api\/sprints\/\d+$/) && init?.method === "PATCH") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: "ok", sprint: { id: 100, name: "Sprint 42 Updated", state: "active" } }),
+      } as Response);
+    }
+    // Sprint CRUD: POST /api/sprints (create)
+    if (urlStr.match(/\/api\/sprints$/) && init?.method === "POST") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: "ok", sprint: { id: 101, name: "Sprint 43", state: "future" } }),
       } as Response);
     }
     if (urlStr.includes("/api/sprints")) {
@@ -3531,6 +3580,254 @@ describe("Feature: Sprint scope change tracking (9.4)", () => {
       await user.click(screen.getByRole("button", { name: /sprint/i }));
       expect(await screen.findByText("PROJ-4")).toBeInTheDocument();
       expect(screen.getByText("Added after sprint start")).toBeInTheDocument();
+    });
+  });
+});
+
+/* ── Sprint CRUD (tasks 9b.1–9b.5) ── */
+
+describe("Feature: Create sprint (9b.1)", () => {
+  describe("Scenario: Create sprint button and modal", () => {
+    it("Given the sprint dashboard is active, then a Create Sprint button is visible", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      expect(await screen.findByTestId("create-sprint-btn")).toBeInTheDocument();
+    });
+
+    it("Given the sprint dashboard is active, when user clicks Create Sprint, then the create modal opens", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("create-sprint-btn"));
+      expect(await screen.findByTestId("create-sprint-modal")).toBeInTheDocument();
+      expect(screen.getByTestId("sprint-name-input")).toBeInTheDocument();
+      expect(screen.getByTestId("sprint-goal-input")).toBeInTheDocument();
+      expect(screen.getByTestId("sprint-start-date")).toBeInTheDocument();
+      expect(screen.getByTestId("sprint-end-date")).toBeInTheDocument();
+    });
+
+    it("Given the create sprint modal is open, when user fills name and submits, then the API is called", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("create-sprint-btn"));
+      await screen.findByTestId("create-sprint-modal");
+      await user.type(screen.getByTestId("sprint-name-input"), "Sprint 43");
+      await user.click(screen.getByTestId("create-sprint-submit"));
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const createCall = calls.find(([url, opts]: [string, RequestInit?]) => typeof url === "string" && url.match(/\/api\/sprints$/) && opts?.method === "POST");
+        expect(createCall).toBeTruthy();
+        const body = JSON.parse(createCall![1]!.body as string);
+        expect(body.name).toBe("Sprint 43");
+      });
+    });
+
+    it("Given the create sprint modal is open, when user clicks Cancel, then the modal closes", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("create-sprint-btn"));
+      await screen.findByTestId("create-sprint-modal");
+      await user.click(screen.getByRole("button", { name: /cancel/i }));
+      await waitFor(() => {
+        expect(screen.queryByTestId("create-sprint-modal")).not.toBeInTheDocument();
+      });
+    });
+  });
+});
+
+describe("Feature: Edit sprint (9b.2)", () => {
+  describe("Scenario: Edit sprint modal with current values", () => {
+    it("Given the sprint dashboard is active, when user clicks Edit, then the edit modal opens with current sprint data", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("edit-sprint-btn"));
+      expect(await screen.findByTestId("edit-sprint-modal")).toBeInTheDocument();
+      expect(screen.getByTestId("edit-sprint-name")).toHaveValue("Sprint 42");
+      expect(screen.getByTestId("edit-sprint-goal")).toHaveValue("Complete login feature");
+    });
+
+    it("Given the edit modal is open, when user changes name and submits, then the PATCH API is called", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("edit-sprint-btn"));
+      await screen.findByTestId("edit-sprint-modal");
+      const nameInput = screen.getByTestId("edit-sprint-name");
+      await user.clear(nameInput);
+      await user.type(nameInput, "Sprint 42 Renamed");
+      await user.click(screen.getByTestId("edit-sprint-submit"));
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(([url, opts]: [string, RequestInit?]) => typeof url === "string" && url.match(/\/api\/sprints\/\d+$/) && opts?.method === "PATCH");
+        expect(patchCall).toBeTruthy();
+        const body = JSON.parse(patchCall![1]!.body as string);
+        expect(body.name).toBe("Sprint 42 Renamed");
+      });
+    });
+  });
+});
+
+describe("Feature: Start/Complete sprint (9b.3)", () => {
+  describe("Scenario: Start sprint button with confirmation", () => {
+    it("Given a future sprint is selected, when user clicks Start Sprint, then a confirmation dialog appears", async () => {
+      // Override sprints to have a future sprint
+      global.fetch = vi.fn((url: string | URL | Request, init?: RequestInit) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/sprints") && !urlStr.match(/\/api\/sprints\/\d+/)) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ sprints: [{ ...mockSprints.sprints[0], state: "future" }] }),
+          } as Response);
+        }
+        if (urlStr.match(/\/api\/sprints\/\d+\/burndown/)) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockBurndown) } as Response);
+        if (urlStr.match(/\/api\/sprints\/\d+\/velocity/)) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockVelocity) } as Response);
+        if (urlStr.match(/\/api\/sprints\/\d+\/start/) && init?.method === "POST") return Promise.resolve({ ok: true, json: () => Promise.resolve({ status: "ok" }) } as Response);
+        if (urlStr.match(/\/api\/sprints\/\d+\/issues/)) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockSprintIssues) } as Response);
+        if (urlStr.includes("/api/projects")) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        if (urlStr.includes("/api/issues")) return Promise.resolve({ ok: true, json: () => Promise.resolve(mockIssues) } as Response);
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      expect(screen.getByTestId("start-sprint-btn")).toBeInTheDocument();
+      await user.click(screen.getByTestId("start-sprint-btn"));
+      const dialog = await screen.findByTestId("confirm-dialog");
+      expect(dialog).toBeInTheDocument();
+      expect(within(dialog).getByRole("heading", { name: /Start Sprint/ })).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Complete sprint button with confirmation", () => {
+    it("Given an active sprint, when user clicks Complete Sprint, then a confirmation dialog appears", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      expect(screen.getByTestId("complete-sprint-btn")).toBeInTheDocument();
+      await user.click(screen.getByTestId("complete-sprint-btn"));
+      const dialog = await screen.findByTestId("confirm-dialog");
+      expect(dialog).toBeInTheDocument();
+      expect(within(dialog).getByRole("heading", { name: /Complete Sprint/ })).toBeInTheDocument();
+    });
+
+    it("Given the complete confirmation dialog is open, when user confirms, then the API is called", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("complete-sprint-btn"));
+      await screen.findByTestId("confirm-dialog");
+      await user.click(screen.getByTestId("confirm-action"));
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const completeCall = calls.find(([url, opts]: [string, RequestInit?]) => typeof url === "string" && url.match(/\/api\/sprints\/\d+\/complete/) && opts?.method === "POST");
+        expect(completeCall).toBeTruthy();
+      });
+    });
+  });
+});
+
+describe("Feature: Delete sprint (9b.4)", () => {
+  describe("Scenario: Delete sprint with confirmation", () => {
+    it("Given the sprint dashboard is active, when user clicks Delete, then a confirmation dialog appears", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("delete-sprint-btn"));
+      const dialog = await screen.findByTestId("confirm-dialog");
+      expect(dialog).toBeInTheDocument();
+      expect(within(dialog).getByRole("heading", { name: /Delete Sprint/ })).toBeInTheDocument();
+      expect(within(dialog).getByText(/cannot be undone/)).toBeInTheDocument();
+    });
+
+    it("Given the delete confirmation is open, when user confirms, then the DELETE API is called", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("delete-sprint-btn"));
+      await screen.findByTestId("confirm-dialog");
+      await user.click(screen.getByTestId("confirm-action"));
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const deleteCall = calls.find(([url, opts]: [string, RequestInit?]) => typeof url === "string" && url.match(/\/api\/sprints\/\d+$/) && opts?.method === "DELETE");
+        expect(deleteCall).toBeTruthy();
+      });
+    });
+
+    it("Given the delete confirmation is open, when user clicks Cancel, then the dialog closes", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("delete-sprint-btn"));
+      await screen.findByTestId("confirm-dialog");
+      await user.click(screen.getByRole("button", { name: /cancel/i }));
+      await waitFor(() => {
+        expect(screen.queryByTestId("confirm-dialog")).not.toBeInTheDocument();
+      });
+    });
+  });
+});
+
+describe("Feature: Manage sprint scope (9b.5)", () => {
+  describe("Scenario: Add and remove issues from sprint", () => {
+    it("Given the sprint dashboard is active, when user clicks Manage Scope, then the scope modal opens with current issues", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("manage-scope-btn"));
+      expect(await screen.findByTestId("manage-scope-modal")).toBeInTheDocument();
+      expect(screen.getByTestId("scope-issue-input")).toBeInTheDocument();
+      expect(screen.getByTestId("add-issue-btn")).toBeInTheDocument();
+    });
+
+    it("Given the scope modal is open, when user types an issue key and clicks Add, then the POST API is called", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("manage-scope-btn"));
+      await screen.findByTestId("manage-scope-modal");
+      await user.type(screen.getByTestId("scope-issue-input"), "PROJ-5");
+      await user.click(screen.getByTestId("add-issue-btn"));
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const addCall = calls.find(([url, opts]: [string, RequestInit?]) => typeof url === "string" && url.match(/\/api\/sprints\/\d+\/issues/) && opts?.method === "POST");
+        expect(addCall).toBeTruthy();
+        const body = JSON.parse(addCall![1]!.body as string);
+        expect(body.issues).toContain("PROJ-5");
+      });
+    });
+
+    it("Given the scope modal shows issues, when user clicks Remove on an issue, then the DELETE API is called", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await screen.findByTestId("sprint-dashboard");
+      await user.click(screen.getByTestId("manage-scope-btn"));
+      await screen.findByTestId("manage-scope-modal");
+      const removeBtn = await screen.findByTestId("remove-issue-PROJ-1");
+      await user.click(removeBtn);
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const removeCall = calls.find(([url, opts]: [string, RequestInit?]) => typeof url === "string" && url.match(/\/api\/sprints\/\d+\/issues\/PROJ-1/) && opts?.method === "DELETE");
+        expect(removeCall).toBeTruthy();
+      });
     });
   });
 });

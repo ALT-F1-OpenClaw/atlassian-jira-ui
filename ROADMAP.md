@@ -96,11 +96,11 @@
 
 ### 9b. Sprint CRUD
 
-- [ ] **9b.1** Create sprint — modal with name, goal, start/end dates; `POST /api/sprints`
-- [ ] **9b.2** Edit sprint — inline edit name, goal, dates on sprint dashboard; `PATCH /api/sprints/{id}`
-- [ ] **9b.3** Start / Complete sprint — action buttons with confirmation; `POST /api/sprints/{id}/start`, `POST /api/sprints/{id}/complete`
-- [ ] **9b.4** Delete sprint — confirm dialog, moves issues back to backlog; `DELETE /api/sprints/{id}`
-- [ ] **9b.5** Manage sprint scope — drag issues in/out of sprint backlog; `POST /api/sprints/{id}/issues`, `DELETE /api/sprints/{id}/issues/{key}`
+- [x] **9b.1** Create sprint — modal with name, goal, start/end dates; `POST /api/sprints` — *BDD tests: `App.test.tsx` (4 scenarios)*
+- [x] **9b.2** Edit sprint — edit name, goal, dates via modal on sprint dashboard; `PATCH /api/sprints/{id}` — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **9b.3** Start / Complete sprint — action buttons with confirmation; `POST /api/sprints/{id}/start`, `POST /api/sprints/{id}/complete` — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **9b.4** Delete sprint — confirm dialog, moves issues back to backlog; `DELETE /api/sprints/{id}` — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **9b.5** Manage sprint scope — add/remove issues from sprint; `POST /api/sprints/{id}/issues`, `DELETE /api/sprints/{id}/issues/{key}` — *BDD tests: `App.test.tsx` (3 scenarios)*
 
 **Tech**: Jira Agile API `POST /rest/agile/1.0/sprint`, `PUT /rest/agile/1.0/sprint/{id}`, `POST /rest/agile/1.0/sprint/{id}/issue`, `DELETE /rest/agile/1.0/sprint/{id}`. New backend endpoints needed.
 
@@ -167,7 +167,7 @@
 | 7 | Bulk actions | 2 | Complete |
 | 8 | Saved filters | 2 | Complete |
 | 9 | Sprint dashboard | 3 | Complete |
-| 9b | Sprint CRUD | 3 | Not started |
+| 9b | Sprint CRUD | 3 | Complete |
 | 10 | Time tracking | 3 | Complete |
 | 11 | Dark/light mode toggle | 3 | Complete |
 | 12 | Offline mode | 3 | Complete |

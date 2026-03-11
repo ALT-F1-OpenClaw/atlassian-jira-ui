@@ -2,19 +2,30 @@
 
 from datetime import datetime, timezone
 from fastapi import APIRouter, Query
+from pydantic import BaseModel
 from ..jira_client import jira_request
 
 router = APIRouter(prefix="/api/sprints", tags=["sprints"])
 
 
 @router.get("")
-async def list_sprints(project: str | None = None):
-    """List boards and their active sprints."""
+async def list_sprints(
+    project: str | None = None,
+    state: str | None = None,
+):
+    """List boards and their sprints.
+
+    Args:
+        project: Filter by project key.
+        state: Comma-separated sprint states (active, future, closed). Defaults to active.
+    """
     params = {}
     if project:
         params["projectKeyOrId"] = project
     boards_data = await jira_request("GET", "/board", base="agile", params=params)
     boards = (boards_data or {}).get("values", [])
+
+    sprint_state = state or "active"
 
     sprints = []
     for board in boards:
@@ -24,7 +35,7 @@ async def list_sprints(project: str | None = None):
                 "GET",
                 f"/board/{board_id}/sprint",
                 base="agile",
-                params={"state": "active"},
+                params={"state": sprint_state},
             )
         except Exception:
             # Kanban boards don't support sprints — skip
@@ -238,3 +249,144 @@ async def get_sprint_velocity(
         })
 
     return {"velocity": velocity}
+
+
+# ─── Sprint CRUD (tasks 9b.1–9b.5) ──────────────────────────────────
+
+
+class CreateSprintBody(BaseModel):
+    name: str
+    board_id: int
+    goal: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+
+
+class UpdateSprintBody(BaseModel):
+    name: str | None = None
+    goal: str | None = None
+    start_date: str | None = None
+    end_date: str | None = None
+
+
+class SprintIssuesBody(BaseModel):
+    issues: list[str]  # issue keys or IDs
+
+
+def _format_sprint(s: dict) -> dict:
+    return {
+        "id": s.get("id"),
+        "name": s.get("name", ""),
+        "state": s.get("state", ""),
+        "startDate": s.get("startDate", ""),
+        "endDate": s.get("endDate", ""),
+        "goal": s.get("goal", ""),
+        "originBoardId": s.get("originBoardId"),
+    }
+
+
+@router.post("")
+async def create_sprint(body: CreateSprintBody):
+    """Create a new sprint on a board."""
+    payload: dict = {
+        "name": body.name,
+        "originBoardId": body.board_id,
+    }
+    if body.goal is not None:
+        payload["goal"] = body.goal
+    if body.start_date is not None:
+        payload["startDate"] = body.start_date
+    if body.end_date is not None:
+        payload["endDate"] = body.end_date
+
+    result = await jira_request("POST", "/sprint", base="agile", json=payload)
+    return {"status": "ok", "sprint": _format_sprint(result or {})}
+
+
+@router.patch("/{sprint_id}")
+async def update_sprint(sprint_id: int, body: UpdateSprintBody):
+    """Update sprint name, goal, or dates."""
+    payload: dict = {}
+    if body.name is not None:
+        payload["name"] = body.name
+    if body.goal is not None:
+        payload["goal"] = body.goal
+    if body.start_date is not None:
+        payload["startDate"] = body.start_date
+    if body.end_date is not None:
+        payload["endDate"] = body.end_date
+
+    if not payload:
+        return {"status": "ok", "sprint": {}}
+
+    # Jira requires sprint name in every PUT — fetch if not provided
+    if "name" not in payload:
+        sprint = await jira_request("GET", f"/sprint/{sprint_id}", base="agile")
+        if sprint:
+            payload["name"] = sprint["name"]
+
+    result = await jira_request("PUT", f"/sprint/{sprint_id}", base="agile", json=payload)
+    return {"status": "ok", "sprint": _format_sprint(result or {})}
+
+
+@router.post("/{sprint_id}/start")
+async def start_sprint(sprint_id: int):
+    """Start a sprint (set state to active)."""
+    # Get sprint to retrieve dates (required by Jira to start)
+    sprint = await jira_request("GET", f"/sprint/{sprint_id}", base="agile")
+    payload: dict = {"state": "active", "name": sprint["name"]}
+    # Jira requires startDate when starting a sprint
+    if sprint and sprint.get("startDate"):
+        payload["startDate"] = sprint["startDate"]
+    else:
+        payload["startDate"] = datetime.now(timezone.utc).isoformat()
+    if sprint and sprint.get("endDate"):
+        payload["endDate"] = sprint["endDate"]
+
+    result = await jira_request("PUT", f"/sprint/{sprint_id}", base="agile", json=payload)
+    return {"status": "ok", "sprint": _format_sprint(result or {})}
+
+
+@router.post("/{sprint_id}/complete")
+async def complete_sprint(sprint_id: int):
+    """Complete a sprint (set state to closed)."""
+    # Jira requires sprint name in PUT body — fetch it first
+    sprint = await jira_request("GET", f"/sprint/{sprint_id}", base="agile")
+    if not sprint:
+        return {"status": "error", "message": "Sprint not found"}
+    result = await jira_request(
+        "PUT", f"/sprint/{sprint_id}", base="agile",
+        json={"state": "closed", "name": sprint["name"]},
+    )
+    return {"status": "ok", "sprint": _format_sprint(result or {})}
+
+
+@router.delete("/{sprint_id}")
+async def delete_sprint(sprint_id: int):
+    """Delete a sprint. Issues are moved back to backlog."""
+    await jira_request("DELETE", f"/sprint/{sprint_id}", base="agile")
+    return {"status": "ok"}
+
+
+@router.post("/{sprint_id}/issues")
+async def add_issues_to_sprint(sprint_id: int, body: SprintIssuesBody):
+    """Add issues to a sprint."""
+    await jira_request(
+        "POST",
+        f"/sprint/{sprint_id}/issue",
+        base="agile",
+        json={"issues": body.issues},
+    )
+    return {"status": "ok", "added": body.issues}
+
+
+@router.delete("/{sprint_id}/issues/{issue_key}")
+async def remove_issue_from_sprint(sprint_id: int, issue_key: str):
+    """Remove an issue from a sprint (move to backlog)."""
+    await jira_request(
+        "POST",
+        "/backlog/issue",
+        base="agile",
+        json={"issues": [issue_key]},
+    )
+    return {"status": "ok", "removed": issue_key}

@@ -78,6 +78,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 
 ### Phase 3 — Power Features (In Progress)
 - [x] **Sprint dashboard** — Active sprint overview, burndown chart, velocity chart, scope change tracking
+- [x] **Sprint CRUD** — Create/edit/delete sprints, start/complete with confirmation dialogs, manage sprint scope (add/remove issues)
 - [x] **Time tracking** — Built-in timer per issue, log work modal, progress bar, worklog history
 - [x] **Dark/Light mode** — Toggle in header (sun/moon), CSS variable theme switching, localStorage persistence, system preference detection
 - [x] **Offline mode** — Service worker caching, IndexedDB mutation queue, auto-sync on reconnect, offline indicator
@@ -90,7 +91,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **Editable labels** — Add/remove with autocomplete from Jira labels
 - **Mobile Kanban arrows** — Arrow buttons on cards for status transitions (mobile only)
 - **PWA** — Web app manifest, service worker, installable on mobile
-- **214 BDD tests** — Comprehensive test coverage with Vitest + Testing Library
+- **229 BDD tests** — Comprehensive test coverage with Vitest + Testing Library
 
 ## Tech Stack
 
@@ -111,7 +112,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **dnd-kit** — drag & drop for board
 - **cmdk** — command palette
 - **Vitest** — fast unit testing
-- **Testing Library** — BDD-style component tests (214 scenarios)
+- **Testing Library** — BDD-style component tests (229 scenarios)
 
 ## Quick Start
 
@@ -264,8 +265,15 @@ atlassian-jira-ui/
 | GET | `/api/boards/{id}/sprint` | Active sprint |
 | GET | `/api/priorities` | List Jira priorities |
 | GET | `/api/labels` | List Jira labels |
-| GET | `/api/sprints` | List boards with active sprints |
+| GET | `/api/sprints` | List boards with sprints (supports `state` param) |
+| POST | `/api/sprints` | Create a new sprint |
+| PATCH | `/api/sprints/{id}` | Update sprint name, goal, dates |
+| DELETE | `/api/sprints/{id}` | Delete a sprint |
+| POST | `/api/sprints/{id}/start` | Start a sprint |
+| POST | `/api/sprints/{id}/complete` | Complete a sprint |
 | GET | `/api/sprints/{id}/issues` | Sprint issues with status counts |
+| POST | `/api/sprints/{id}/issues` | Add issues to a sprint |
+| DELETE | `/api/sprints/{id}/issues/{key}` | Remove issue from sprint |
 | GET | `/api/sprints/{id}/burndown` | Sprint burndown data |
 | GET | `/api/sprints/{id}/velocity` | Velocity (points per sprint) |
 | GET | `/api/search` | JQL search |
