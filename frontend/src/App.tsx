@@ -4,6 +4,18 @@ import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import Link from "@tiptap/extension-link";
 import Placeholder from "@tiptap/extension-placeholder";
+import {
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+  useDroppable,
+  useDraggable,
+  closestCenter,
+} from "@dnd-kit/core";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 
 const API = import.meta.env.VITE_API_URL || "";
 const APP_VERSION = __APP_VERSION__;
@@ -1194,6 +1206,376 @@ function IssueDetailPanel({
   );
 }
 
+/* ── Board View (Kanban) ── */
+
+type StatusCategory = "new" | "indeterminate" | "done";
+type SwimlaneSetting = "none" | "assignee" | "priority";
+
+const CATEGORY_LABELS: Record<StatusCategory, string> = {
+  new: "To Do",
+  indeterminate: "In Progress",
+  done: "Done",
+};
+
+const CATEGORY_COLORS: Record<StatusCategory, string> = {
+  new: "border-zinc-600",
+  indeterminate: "border-blue-600",
+  done: "border-green-600",
+};
+
+const CATEGORY_ORDER: StatusCategory[] = ["new", "indeterminate", "done"];
+
+function DraggableCard({
+  issue,
+  onSelect,
+  isDragOverlay,
+}: {
+  issue: Issue;
+  onSelect?: (key: string) => void;
+  isDragOverlay?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
+    id: issue.key,
+    data: { issue },
+  });
+
+  const initials = issue.assignee?.displayName
+    ?.split(" ")
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2) || "";
+
+  return (
+    <div
+      ref={isDragOverlay ? undefined : setNodeRef}
+      {...(isDragOverlay ? {} : { ...listeners, ...attributes })}
+      onClick={(e) => {
+        if (!isDragging) {
+          e.stopPropagation();
+          onSelect?.(issue.key);
+        }
+      }}
+      className={`rounded-lg border border-zinc-800 bg-zinc-900 p-3 cursor-grab active:cursor-grabbing transition-all hover:border-zinc-700 ${
+        isDragging && !isDragOverlay ? "opacity-30" : ""
+      } ${isDragOverlay ? "shadow-xl shadow-black/50 ring-2 ring-blue-500/50" : ""}`}
+      role="article"
+      aria-label={`Issue ${issue.key}`}
+    >
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <span className="font-mono text-xs text-blue-400">{issue.key}</span>
+          <p className="mt-0.5 text-sm text-zinc-200 line-clamp-2">{issue.summary}</p>
+        </div>
+      </div>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5">
+          <PriorityIcon priority={issue.priority?.name} />
+          <span className="text-xs text-zinc-500">{issue.type?.name}</span>
+        </div>
+        {issue.assignee ? (
+          issue.assignee.avatarUrl ? (
+            <img
+              src={issue.assignee.avatarUrl}
+              alt={issue.assignee.displayName}
+              title={issue.assignee.displayName}
+              className="h-6 w-6 rounded-full"
+            />
+          ) : (
+            <span
+              title={issue.assignee.displayName}
+              className="flex h-6 w-6 items-center justify-center rounded-full bg-zinc-700 text-[10px] font-medium text-zinc-300"
+            >
+              {initials}
+            </span>
+          )
+        ) : null}
+      </div>
+    </div>
+  );
+}
+
+function DroppableColumn({
+  category,
+  issues,
+  swimlane,
+  onSelectIssue,
+}: {
+  category: StatusCategory;
+  issues: Issue[];
+  swimlane: SwimlaneSetting;
+  onSelectIssue?: (key: string) => void;
+}) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `column-${category}`,
+    data: { category },
+  });
+
+  const renderCards = (cardIssues: Issue[]) =>
+    cardIssues.map((issue) => (
+      <DraggableCard key={issue.key} issue={issue} onSelect={onSelectIssue} />
+    ));
+
+  const renderSwimlanes = () => {
+    if (swimlane === "none") return renderCards(issues);
+
+    const groups = new Map<string, Issue[]>();
+    for (const issue of issues) {
+      const key =
+        swimlane === "assignee"
+          ? issue.assignee?.displayName || "Unassigned"
+          : issue.priority?.name || "None";
+      if (!groups.has(key)) groups.set(key, []);
+      groups.get(key)!.push(issue);
+    }
+
+    // Sort groups
+    const sortedKeys = [...groups.keys()].sort((a, b) => {
+      if (swimlane === "assignee") {
+        if (a === "Unassigned") return 1;
+        if (b === "Unassigned") return -1;
+        return a.localeCompare(b);
+      }
+      // Priority order
+      const order = ["Highest", "High", "Medium", "Low", "Lowest", "None"];
+      return order.indexOf(a) - order.indexOf(b);
+    });
+
+    return sortedKeys.map((key) => (
+      <SwimlaneGroup key={key} label={key} issues={groups.get(key)!} onSelectIssue={onSelectIssue} />
+    ));
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      className={`flex min-w-[280px] flex-1 flex-col rounded-lg border-t-2 bg-zinc-950/50 ${CATEGORY_COLORS[category]} ${
+        isOver ? "ring-2 ring-blue-500/30 bg-blue-950/20" : ""
+      }`}
+      data-testid={`board-column-${category}`}
+    >
+      <div className="flex items-center justify-between px-3 py-2">
+        <h3 className="text-sm font-semibold text-zinc-300">
+          {CATEGORY_LABELS[category]}
+        </h3>
+        <span className="rounded-full bg-zinc-800 px-2 py-0.5 text-xs text-zinc-400">
+          {issues.length}
+        </span>
+      </div>
+      <div className="flex-1 space-y-2 overflow-y-auto px-2 pb-2">
+        {renderSwimlanes()}
+      </div>
+    </div>
+  );
+}
+
+function SwimlaneGroup({
+  label,
+  issues,
+  onSelectIssue,
+}: {
+  label: string;
+  issues: Issue[];
+  onSelectIssue?: (key: string) => void;
+}) {
+  const [collapsed, setCollapsed] = useState(false);
+
+  return (
+    <div className="mb-1">
+      <button
+        onClick={() => setCollapsed(!collapsed)}
+        className="flex w-full items-center gap-1 rounded px-1 py-0.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors cursor-pointer"
+        aria-expanded={!collapsed}
+        aria-label={`Swimlane ${label}`}
+      >
+        <span className={`transition-transform ${collapsed ? "" : "rotate-90"}`}>▶</span>
+        <span className="font-medium">{label}</span>
+        <span className="text-zinc-600">({issues.length})</span>
+      </button>
+      {!collapsed && (
+        <div className="mt-1 space-y-2">
+          {issues.map((issue) => (
+            <DraggableCard key={issue.key} issue={issue} onSelect={onSelectIssue} />
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function BoardView({
+  project,
+  filters,
+  onIssuesLoaded,
+  onSelectIssue,
+}: {
+  project: string;
+  filters: Filters;
+  onIssuesLoaded?: (issues: Issue[]) => void;
+  onSelectIssue?: (key: string) => void;
+}) {
+  const queryClient = useQueryClient();
+  const [swimlane, setSwimlane] = useState<SwimlaneSetting>("none");
+  const [activeIssue, setActiveIssue] = useState<Issue | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
+  );
+
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["issues", project, "updated", "DESC", filters.status, filters.type, filters.assignee, "board"],
+    queryFn: async () => {
+      const params = new URLSearchParams({ max_results: "200", start_at: "0", sort_by: "updated", sort_order: "DESC" });
+      if (project) params.set("project", project);
+      if (filters.status) params.set("status", filters.status);
+      if (filters.type) params.set("type", filters.type);
+      if (filters.assignee) params.set("assignee", filters.assignee);
+      const res = await fetch(`${API}/api/issues?${params}`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<{ issues: Issue[]; total: number }>;
+    },
+  });
+
+  useEffect(() => {
+    if (data?.issues) onIssuesLoaded?.(data.issues);
+  }, [data?.issues, onIssuesLoaded]);
+
+  const transitionMutation = useMutation({
+    mutationFn: async ({ issueKey, transitionId }: { issueKey: string; transitionId: string }) => {
+      const res = await fetch(`${API}/api/issues/${issueKey}/transition`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ transition_id: transitionId }),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["issues"] });
+    },
+  });
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const issue = event.active.data.current?.issue as Issue | undefined;
+    if (issue) setActiveIssue(issue);
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    setActiveIssue(null);
+    const { active, over } = event;
+    if (!over) return;
+
+    const issue = active.data.current?.issue as Issue | undefined;
+    if (!issue) return;
+
+    const targetColumnId = over.id as string;
+    const targetCategory = targetColumnId.replace("column-", "") as StatusCategory;
+    const currentCategory = issue.status.category as StatusCategory;
+
+    if (targetCategory === currentCategory) return;
+
+    // Fetch issue detail to get available transitions
+    try {
+      const res = await fetch(`${API}/api/issues/${issue.key}`);
+      if (!res.ok) return;
+      const detail = (await res.json()) as IssueDetail;
+
+      // Map target category to likely transition names
+      const categoryTransitionNames: Record<StatusCategory, string[]> = {
+        new: ["to do", "backlog", "open", "reopen", "reopened"],
+        indeterminate: ["in progress", "in review", "start progress", "start", "review"],
+        done: ["done", "close", "closed", "resolve", "resolved", "complete"],
+      };
+
+      const targetNames = categoryTransitionNames[targetCategory];
+      const transition = detail.transitions.find((t) =>
+        targetNames.some((name) => t.name.toLowerCase().includes(name)),
+      ) || detail.transitions[0]; // Fallback to first available transition
+
+      if (transition) {
+        // Optimistic update
+        queryClient.setQueryData(
+          ["issues", project, "updated", "DESC", filters.status, filters.type, filters.assignee, "board"],
+          (old: { issues: Issue[]; total: number } | undefined) => {
+            if (!old) return old;
+            return {
+              ...old,
+              issues: old.issues.map((i) =>
+                i.key === issue.key
+                  ? { ...i, status: { ...i.status, category: targetCategory, name: CATEGORY_LABELS[targetCategory] } }
+                  : i,
+              ),
+            };
+          },
+        );
+        transitionMutation.mutate({ issueKey: issue.key, transitionId: transition.id });
+      }
+    } catch {
+      // Ignore transition errors silently
+    }
+  };
+
+  if (isLoading) return <div className="p-8 text-zinc-500">Loading board...</div>;
+  if (error) return <div className="p-8 text-red-400">Error: {(error as Error).message}</div>;
+
+  const issues = data?.issues || [];
+  const columns: Record<StatusCategory, Issue[]> = { new: [], indeterminate: [], done: [] };
+  for (const issue of issues) {
+    const cat = (issue.status?.category || "new") as StatusCategory;
+    if (columns[cat]) columns[cat].push(issue);
+    else columns.new.push(issue);
+  }
+
+  return (
+    <DndContext
+      sensors={sensors}
+      collisionDetection={closestCenter}
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="p-3">
+        {/* Board header with swimlane toggle */}
+        <div className="mb-3 flex items-center gap-2">
+          <label className="text-xs text-zinc-500">Swimlanes:</label>
+          <select
+            value={swimlane}
+            onChange={(e) => setSwimlane(e.target.value as SwimlaneSetting)}
+            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-300 focus:border-blue-500 focus:outline-none"
+            aria-label="Swimlane grouping"
+          >
+            <option value="none">None</option>
+            <option value="assignee">Assignee</option>
+            <option value="priority">Priority</option>
+          </select>
+        </div>
+
+        {/* Columns */}
+        <div className="flex gap-3 overflow-x-auto pb-2" role="region" aria-label="Kanban board">
+          {CATEGORY_ORDER.map((cat) => (
+            <DroppableColumn
+              key={cat}
+              category={cat}
+              issues={columns[cat]}
+              swimlane={swimlane}
+              onSelectIssue={onSelectIssue}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Drag overlay */}
+      <DragOverlay>
+        {activeIssue ? (
+          <div className="w-[280px]">
+            <DraggableCard issue={activeIssue} isDragOverlay />
+          </div>
+        ) : null}
+      </DragOverlay>
+    </DndContext>
+  );
+}
+
 /* ── List View ── */
 
 const PAGE_SIZE = 50;
@@ -1382,9 +1764,7 @@ export default function App() {
       <main className="flex-1 overflow-auto">
         {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} />}
         {view === "board" && (
-          <div className="p-8 text-zinc-500">
-            Board view — coming in Phase 1
-          </div>
+          <BoardView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} />
         )}
       </main>
 

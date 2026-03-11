@@ -23,10 +23,10 @@
 
 ### 3. Board view (Kanban)
 
-- [ ] **3.1** Columns grouped by status category (To Do / In Progress / Done)
-- [ ] **3.2** Issue cards with key, summary, priority, assignee avatar
-- [ ] **3.3** Drag-and-drop between columns triggers status transition
-- [ ] **3.4** Swimlanes by assignee or priority (optional toggle)
+- [x] **3.1** Columns grouped by status category (To Do / In Progress / Done) — *BDD tests: `App.test.tsx` (5 scenarios)*
+- [x] **3.2** Issue cards with key, summary, priority, assignee avatar — *BDD tests: `App.test.tsx` (6 scenarios)*
+- [x] **3.3** Drag-and-drop between columns triggers status transition — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **3.4** Swimlanes by assignee or priority (optional toggle) — *BDD tests: `App.test.tsx` (5 scenarios)*
 
 **Tech**: `@dnd-kit/core` + `@dnd-kit/sortable` (already in `package.json`). Backend `GET /api/boards/{id}`, `POST /api/issues/{key}/transition`. Group issues by `status.category`.
 
@@ -132,7 +132,7 @@
 | 1 | List view enhancements | 1 | Partial |
 | 2 | Issue detail panel | 1 | Complete |
 | 3 | Quick search / Command palette | 1 | Not started |
-| 4 | Board view (Kanban) | 1 | Not started |
+| 4 | Board view (Kanban) | 1 | Complete |
 | 5 | Quick create modal | 2 | Not started |
 | 6 | Keyboard shortcuts | 2 | Not started |
 | 7 | Bulk actions | 2 | Not started |

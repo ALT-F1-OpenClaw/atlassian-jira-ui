@@ -1645,3 +1645,254 @@ describe("Feature: Editable due date", () => {
     });
   });
 });
+
+/* ── Board View (Kanban) ── */
+
+describe("Feature: Board view displays issues in Kanban columns", () => {
+  describe("Scenario: Board shows three columns grouped by status category", () => {
+    it("Given the board view is active, then three columns (To Do, In Progress, Done) should be visible", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      const boardBtn = screen.getByRole("button", { name: /board/i });
+      await user.click(boardBtn);
+
+      const board = await screen.findByRole("region", { name: /Kanban board/ });
+      expect(within(board).getByText("To Do")).toBeInTheDocument();
+      expect(within(board).getByText("In Progress")).toBeInTheDocument();
+      expect(within(board).getByText("Done")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Issues are grouped into the correct columns", () => {
+    it("Given PROJ-2 has category 'new', then it should appear in the To Do column", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const todoColumn = await screen.findByTestId("board-column-new");
+      expect(within(todoColumn).getByText("PROJ-2")).toBeInTheDocument();
+    });
+
+    it("Given PROJ-1 has category 'indeterminate', then it should appear in the In Progress column", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const inProgressColumn = await screen.findByTestId("board-column-indeterminate");
+      expect(within(inProgressColumn).getByText("PROJ-1")).toBeInTheDocument();
+    });
+
+    it("Given PROJ-3 has category 'done', then it should appear in the Done column", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const doneColumn = await screen.findByTestId("board-column-done");
+      expect(within(doneColumn).getByText("PROJ-3")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Each column shows the issue count", () => {
+    it("Given 1 issue per category, then each column header should show count 1", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      await screen.findByTestId("board-column-new");
+
+      const columns = screen.getAllByTestId(/board-column-/);
+      for (const col of columns) {
+        expect(within(col).getByText("1")).toBeInTheDocument();
+      }
+    });
+  });
+});
+
+describe("Feature: Board view issue cards display key, summary, priority, assignee", () => {
+  describe("Scenario: Card shows issue key and summary", () => {
+    it("Given the board view is active, then cards should show issue key and summary text", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
+      expect(within(card).getByText("PROJ-1")).toBeInTheDocument();
+      expect(within(card).getByText("Implement login page")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Card shows priority icon", () => {
+    it("Given PROJ-1 has High priority, then the card should show the priority indicator", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
+      expect(within(card).getByTitle("High")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Card shows assignee initials when no avatar URL", () => {
+    it("Given PROJ-1 is assigned to Alice Martin with empty avatarUrl, then the card should show initials 'AM'", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
+      expect(within(card).getByTitle("Alice Martin")).toBeInTheDocument();
+      expect(within(card).getByText("AM")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Card for unassigned issue does not show avatar", () => {
+    it("Given PROJ-2 has no assignee, then no avatar or initials should appear on the card", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-2/ });
+      // No avatar initials element
+      const spans = within(card).queryAllByTitle(/.+/);
+      const avatarSpan = spans.find((s) => s.classList.contains("rounded-full"));
+      expect(avatarSpan).toBeUndefined();
+    });
+  });
+
+  describe("Scenario: Clicking a card opens the issue detail panel", () => {
+    it("Given the board view shows PROJ-1, when clicking the card, then the detail panel should open", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
+      await user.click(card);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      expect(panel).toBeInTheDocument();
+      expect(within(panel).getByText("PROJ-1")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Board view supports swimlanes", () => {
+  describe("Scenario: Swimlane dropdown defaults to None", () => {
+    it("Given the board view is active, then the swimlane selector should default to None", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const swimlaneSelect = await screen.findByLabelText("Swimlane grouping");
+      expect(swimlaneSelect).toHaveValue("none");
+    });
+  });
+
+  describe("Scenario: Selecting Assignee swimlane groups cards by assignee", () => {
+    it("Given the board view is active, when selecting Assignee swimlane, then swimlane headers should appear", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+      const swimlaneSelect = await screen.findByLabelText("Swimlane grouping");
+      await user.selectOptions(swimlaneSelect, "assignee");
+
+      // Should see assignee swimlane labels
+      expect(await screen.findByLabelText("Swimlane Alice Martin")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Selecting Priority swimlane groups cards by priority", () => {
+    it("Given the board view is active, when selecting Priority swimlane, then priority swimlane headers should appear", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+      const swimlaneSelect = await screen.findByLabelText("Swimlane grouping");
+      await user.selectOptions(swimlaneSelect, "priority");
+
+      // Should see priority swimlane labels
+      expect(await screen.findByLabelText("Swimlane High")).toBeInTheDocument();
+      expect(screen.getByLabelText("Swimlane Medium")).toBeInTheDocument();
+      expect(screen.getByLabelText("Swimlane Low")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Swimlane headers are collapsible", () => {
+    it("Given the Priority swimlane is active, when clicking a swimlane header, then its cards should toggle visibility", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+      const swimlaneSelect = await screen.findByLabelText("Swimlane grouping");
+      await user.selectOptions(swimlaneSelect, "priority");
+
+      const highSwimlane = await screen.findByLabelText("Swimlane High");
+      expect(highSwimlane).toHaveAttribute("aria-expanded", "true");
+
+      // Collapse
+      await user.click(highSwimlane);
+      expect(highSwimlane).toHaveAttribute("aria-expanded", "false");
+
+      // Expand again
+      await user.click(highSwimlane);
+      expect(highSwimlane).toHaveAttribute("aria-expanded", "true");
+    });
+  });
+
+  describe("Scenario: Unassigned issues grouped under 'Unassigned' swimlane", () => {
+    it("Given PROJ-2 has no assignee, when Assignee swimlane is active, then PROJ-2 should be in 'Unassigned' swimlane", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+      const swimlaneSelect = await screen.findByLabelText("Swimlane grouping");
+      await user.selectOptions(swimlaneSelect, "assignee");
+
+      expect(await screen.findByLabelText("Swimlane Unassigned")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Board view drag-and-drop triggers status transition", () => {
+  describe("Scenario: Board view has toggle buttons for switching views", () => {
+    it("Given the app is loaded, then both Board and List view buttons should be visible", async () => {
+      render(<App />, { wrapper: createWrapper() });
+
+      expect(screen.getByRole("button", { name: /board/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /list/i })).toBeInTheDocument();
+    });
+
+    it("Given the user clicks Board, then the board view should be shown and List view hidden", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      expect(await screen.findByRole("region", { name: /Kanban board/ })).toBeInTheDocument();
+      // List table should not be present
+      expect(screen.queryByRole("table")).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Board cards show issue type", () => {
+    it("Given PROJ-1 is a Story, then the card should display 'Story'", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      const user = userEvent.setup();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+
+      const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
+      expect(within(card).getByText("Story")).toBeInTheDocument();
+    });
+  });
+});
