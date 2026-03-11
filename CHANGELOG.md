@@ -1,3 +1,8 @@
+## [1.30.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.29.0...v1.30.0) (2026-03-11)
+
+### Features
+
+* bulk actions with floating action bar (tasks 7.1-7.5) ([e0b23c3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/e0b23c350057331072c89b842d5056f2546c2411))
 ## [1.29.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.28.0...v1.29.0) (2026-03-11)
 
 ### Features
