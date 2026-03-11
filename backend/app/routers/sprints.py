@@ -19,12 +19,16 @@ async def list_sprints(project: str | None = None):
     sprints = []
     for board in boards:
         board_id = board["id"]
-        sprint_data = await jira_request(
-            "GET",
-            f"/board/{board_id}/sprint",
-            base="agile",
-            params={"state": "active"},
-        )
+        try:
+            sprint_data = await jira_request(
+                "GET",
+                f"/board/{board_id}/sprint",
+                base="agile",
+                params={"state": "active"},
+            )
+        except Exception:
+            # Kanban boards don't support sprints — skip
+            continue
         for s in (sprint_data or {}).get("values", []):
             sprints.append({
                 "id": s["id"],
