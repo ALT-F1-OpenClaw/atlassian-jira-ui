@@ -1,3 +1,8 @@
+## [1.45.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.44.3...v1.45.0) (2026-03-11)
+
+### Features
+
+* display project avatars from Jira API instead of letter badges ([0a8f9c2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/0a8f9c2b3313ecedf9c49cfbb4de52601baa7437)), closes [#20](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/20)
 ## [1.44.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.44.2...v1.44.3) (2026-03-11)
 
 ### Bug Fixes
