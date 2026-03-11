@@ -159,3 +159,7 @@ string[]
 - Docker: images published to GHCR on tag push (`ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend` + `-frontend`)
 - Docker: multi-arch builds (linux/amd64 + linux/arm64) via QEMU + Buildx
 - Docker: `docker-compose.ghcr.yml` for pulling pre-built images; `docker-compose.yml` for building from source
+- Caching: tiered `staleTime` — `CACHE_STATIC` (30min) for priorities/projects/members/sprints, `CACHE_LIST` (2min) for issue lists, `CACHE_DETAIL` (1min) for single issues. Default gcTime 10min. `refetchOnWindowFocus: "always"` for stale data
+- Code splitting: `manualChunks` in `vite.config.ts` — vendor-tiptap (prosemirror), vendor-charts (recharts+d3), vendor-dnd, vendor-query. App chunk ~300KB, no chunk >500KB
+- Description editing: always uses TipTap rich text editor (no plain textarea fallback). Edit button visible for all issues, even without existing description
+- Sprint charts: each chart has explanatory subtitle with best/worst case indicators

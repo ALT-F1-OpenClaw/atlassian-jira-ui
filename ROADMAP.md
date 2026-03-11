@@ -211,9 +211,16 @@ Before going production-grade, re-enable these:
 ### Phase 4 — Polish & Performance
 | # | Feature | Status |
 |---|---------|--------|
-| 16 | Smart data caching (stale-while-revalidate) | Complete |
-| 17 | Code splitting (vendor chunks) | Complete |
-| 18 | Project avatars from Jira API | Planned |
-| 19 | Backend tests (pytest) | Planned |
-| 20 | E2E tests (Playwright) | Planned |
-| 21 | HTTPS via Tailscale (PWA install) | Planned |
+| 16 | Smart data caching (stale-while-revalidate, tiered staleTime) | Complete |
+| 17 | Code splitting (vendor chunks: app 300KB + 4 vendor chunks) | Complete |
+| 18 | Loading spinner (animated spinner replaces plain text loading) | Complete |
+| 19 | Wider command palette (responsive: md:2xl, lg:3xl) | Complete |
+| 20 | Clickable issue keys in sprint scope modal | Complete |
+| 21 | Light mode contrast overhaul (WCAG AA zinc palette recalibration) | Complete |
+| 22 | Chart hints (best/worst case explanations on sprint charts) | Complete |
+| 23 | Rich text editor always available for description editing | Complete |
+| 24 | Correct GitHub/changelog URLs in About page | Complete |
+| 25 | Project avatars from Jira API | Planned |
+| 26 | Backend tests (pytest) | Planned |
+| 27 | E2E tests (Playwright) | Planned |
+| 28 | HTTPS via Tailscale (PWA install) | Planned |
