@@ -1,3 +1,8 @@
+## [1.16.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.15.0...v1.16.0) (2026-03-11)
+
+### Features
+
+* expose Vite dev server on Tailscale network (allowedHosts) ([c009788](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/c009788037ee56ed796e34db242c5642e291e0f7))
 ## [1.15.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.14.0...v1.15.0) (2026-03-10)
 ## [1.14.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.13.0...v1.14.0) (2026-03-10)
 
