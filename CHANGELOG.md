@@ -1,3 +1,8 @@
+## [1.23.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.22.0...v1.23.0) (2026-03-11)
+
+### Features
+
+* editable due date with native date picker widget ([1597d8d](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/1597d8d3b746dc1be732d3a55d1bfc96a795d95d))
 ## [1.22.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.21.0...v1.22.0) (2026-03-11)
 
 ### Features
