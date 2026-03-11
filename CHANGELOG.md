@@ -1,3 +1,8 @@
+## [1.19.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.18.0...v1.19.0) (2026-03-11)
+
+### Features
+
+* add edit button for ADF descriptions in issue detail panel ([f4f3e21](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/f4f3e21f56de8afd30c6804dbecbe90e3c0d1805))
 ## [1.18.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.17.0...v1.18.0) (2026-03-11)
 
 ### Features
