@@ -1,3 +1,8 @@
+## [1.20.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.19.0...v1.20.0) (2026-03-11)
+
+### Features
+
+* rich text editor for ADF descriptions (TipTap) ([5c31ed3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/5c31ed3fb673220404776b1e695a946122492495))
 ## [1.19.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.18.0...v1.19.0) (2026-03-11)
 
 ### Features
