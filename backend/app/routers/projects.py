@@ -1,6 +1,6 @@
 """Project endpoints."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from ..jira_client import jira_request
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
@@ -27,3 +27,23 @@ async def list_projects():
 async def get_project(key: str):
     """Get project details."""
     return await jira_request("GET", f"/project/{key}")
+
+
+@router.get("/{key}/members")
+async def list_project_members(key: str, max_results: int = Query(default=50, le=1000)):
+    """List users assignable to issues in a project."""
+    data = await jira_request(
+        "GET",
+        "/user/assignable/search",
+        params={"project": key, "maxResults": max_results},
+    )
+    return [
+        {
+            "accountId": u.get("accountId", ""),
+            "displayName": u.get("displayName", ""),
+            "avatarUrl": u.get("avatarUrls", {}).get("48x48", ""),
+            "active": u.get("active", True),
+        }
+        for u in (data or [])
+        if u.get("accountType") == "atlassian"
+    ]

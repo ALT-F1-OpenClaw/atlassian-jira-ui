@@ -61,6 +61,20 @@ const mockProjects = [
   { key: "PROJ", name: "My Project", id: "1" },
 ];
 
+const mockPriorities = [
+  { id: "1", name: "Highest", iconUrl: "" },
+  { id: "2", name: "High", iconUrl: "" },
+  { id: "3", name: "Medium", iconUrl: "" },
+  { id: "4", name: "Low", iconUrl: "" },
+  { id: "5", name: "Lowest", iconUrl: "" },
+];
+
+const mockMembers = [
+  { accountId: "abc123", displayName: "Alice Martin", avatarUrl: "", active: true },
+  { accountId: "def456", displayName: "Bob Chen", avatarUrl: "", active: true },
+  { accountId: "ghi789", displayName: "Carol Davis", avatarUrl: "", active: true },
+];
+
 const mockIssueDetail = {
   id: "10001",
   key: "PROJ-1",
@@ -135,10 +149,22 @@ function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: obje
 
   global.fetch = vi.fn((url: string | URL | Request, init?: RequestInit) => {
     const urlStr = typeof url === "string" ? url : url.toString();
+    if (urlStr.match(/\/api\/projects\/[A-Z]+\/members/)) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockMembers),
+      } as Response);
+    }
     if (urlStr.includes("/api/projects")) {
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockProjects),
+      } as Response);
+    }
+    if (urlStr.includes("/api/priorities")) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockPriorities),
       } as Response);
     }
     // Issue detail: /api/issues/PROJ-1 (not /api/issues?...)
@@ -1144,8 +1170,10 @@ describe("Feature: Issue metadata display", () => {
       await user.click(issueKey.closest("tr")!);
 
       const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
-      const editBtn = within(panel).getByLabelText("Edit assignee");
-      expect(editBtn).toHaveTextContent("Alice Martin");
+      await waitFor(() => {
+        const editBtn = within(panel).getByLabelText("Edit assignee");
+        expect(editBtn).toHaveTextContent("Alice Martin");
+      });
     });
   });
 
@@ -1161,6 +1189,148 @@ describe("Feature: Issue metadata display", () => {
 
       const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
       expect(within(panel).getByText("None")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Assignee dropdown with project members", () => {
+  describe("Scenario: Assignee field shows a dropdown with project members", () => {
+    it("Given the detail panel is open and members are loaded, when clicking the assignee, then a dropdown with project members should appear", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await waitFor(() => {
+        expect(within(panel).getByLabelText("Edit assignee")).toBeInTheDocument();
+      });
+
+      await user.click(within(panel).getByLabelText("Edit assignee"));
+
+      const select = within(panel).getByLabelText("assignee");
+      expect(select.tagName).toBe("SELECT");
+      const options = within(select).getAllByRole("option");
+      const optionTexts = options.map((o) => o.textContent);
+      expect(optionTexts).toContain("Alice Martin");
+      expect(optionTexts).toContain("Bob Chen");
+      expect(optionTexts).toContain("Carol Davis");
+    });
+  });
+
+  describe("Scenario: Selecting an assignee sends accountId in PATCH request", () => {
+    it("Given the assignee dropdown is open, when selecting 'Bob Chen', then a PATCH request should be sent with Bob's accountId", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await waitFor(() => {
+        expect(within(panel).getByLabelText("Edit assignee")).toBeInTheDocument();
+      });
+
+      await user.click(within(panel).getByLabelText("Edit assignee"));
+      const select = within(panel).getByLabelText("assignee");
+      await user.selectOptions(select, "def456");
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+        );
+        expect(patchCall).toBeDefined();
+        const body = JSON.parse((patchCall![1] as RequestInit).body as string);
+        expect(body.assignee).toBe("def456");
+      });
+    });
+  });
+
+  describe("Scenario: Assignee dropdown includes Unassigned placeholder", () => {
+    it("Given the assignee dropdown is open, then it should include an 'Unassigned' option", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await waitFor(() => {
+        expect(within(panel).getByLabelText("Edit assignee")).toBeInTheDocument();
+      });
+
+      await user.click(within(panel).getByLabelText("Edit assignee"));
+      const select = within(panel).getByLabelText("assignee");
+      const options = within(select).getAllByRole("option");
+      const optionTexts = options.map((o) => o.textContent);
+      expect(optionTexts).toContain("Unassigned");
+    });
+  });
+});
+
+describe("Feature: Priority dropdown with fetched priorities", () => {
+  describe("Scenario: Priority dropdown shows priorities fetched from API", () => {
+    it("Given the detail panel is open, when clicking edit priority, then the dropdown should list priorities from the API", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const editBtn = within(panel).getByLabelText("Edit priority");
+      await user.click(editBtn);
+
+      const select = within(panel).getByLabelText("priority");
+      const options = within(select).getAllByRole("option");
+      const optionTexts = options.map((o) => o.textContent);
+      expect(optionTexts).toContain("Highest");
+      expect(optionTexts).toContain("High");
+      expect(optionTexts).toContain("Medium");
+      expect(optionTexts).toContain("Low");
+      expect(optionTexts).toContain("Lowest");
+    });
+  });
+
+  describe("Scenario: Priorities API is called when panel opens", () => {
+    it("Given the detail panel is opened, then a GET request should be made to /api/priorities", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      await screen.findByRole("dialog", { name: /Issue detail/ });
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const prioritiesCall = calls.find(
+          (c: unknown[]) => (c[0] as string).includes("/api/priorities")
+        );
+        expect(prioritiesCall).toBeDefined();
+      });
+    });
+  });
+
+  describe("Scenario: Members API is called when panel opens with project context", () => {
+    it("Given the detail panel is opened for an issue with project key, then a GET request should be made to /api/projects/{key}/members", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      await screen.findByRole("dialog", { name: /Issue detail/ });
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const membersCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/projects\/PROJ\/members/)
+        );
+        expect(membersCall).toBeDefined();
+      });
     });
   });
 });

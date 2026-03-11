@@ -32,6 +32,19 @@ interface IssueDetail extends Issue {
   transitions: { id: string; name: string }[];
 }
 
+interface JiraPriority {
+  id: string;
+  name: string;
+  iconUrl: string;
+}
+
+interface ProjectMember {
+  accountId: string;
+  displayName: string;
+  avatarUrl: string;
+  active: boolean;
+}
+
 interface AdfNode {
   type: string;
   version?: number;
@@ -569,16 +582,22 @@ function InlineEditText({
   );
 }
 
+type SelectOption = string | { value: string; label: string };
+
 function InlineEditSelect({
   value,
+  displayValue,
   options,
   onSave,
   label,
+  placeholder,
 }: {
   value: string;
-  options: string[];
+  displayValue?: string;
+  options: SelectOption[];
   onSave: (v: string) => void;
   label: string;
+  placeholder?: string;
 }) {
   const [editing, setEditing] = useState(false);
   const selectRef = useRef<HTMLSelectElement>(null);
@@ -586,6 +605,8 @@ function InlineEditSelect({
   useEffect(() => {
     if (editing) setTimeout(() => selectRef.current?.focus(), 0);
   }, [editing]);
+
+  const shownValue = displayValue || value;
 
   if (!editing) {
     return (
@@ -595,7 +616,7 @@ function InlineEditSelect({
         aria-label={`Edit ${label}`}
         title={`Click to edit ${label}`}
       >
-        {value || <span className="text-zinc-600 italic">None</span>}
+        {shownValue || <span className="text-zinc-600 italic">None</span>}
       </button>
     );
   }
@@ -615,23 +636,28 @@ function InlineEditSelect({
       aria-label={label}
       className={FILTER_SELECT_CLASS}
     >
-      {options.map((o) => (
-        <option key={o} value={o}>{o}</option>
-      ))}
+      {placeholder && <option value="">{placeholder}</option>}
+      {options.map((o) => {
+        const optValue = typeof o === "string" ? o : o.value;
+        const optLabel = typeof o === "string" ? o : o.label;
+        return <option key={optValue} value={optValue}>{optLabel}</option>;
+      })}
     </select>
   );
 }
 
 /* ── Issue Detail Panel ── */
 
-const PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest"];
+const FALLBACK_PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest"];
 
 function IssueDetailPanel({
   issueKey,
   onClose,
+  projectKey,
 }: {
   issueKey: string;
   onClose: () => void;
+  projectKey?: string;
 }) {
   const queryClient = useQueryClient();
 
@@ -643,6 +669,29 @@ function IssueDetailPanel({
       return res.json() as Promise<IssueDetail>;
     },
     enabled: !!issueKey,
+  });
+
+  const resolvedProjectKey = projectKey || issue?.project?.key;
+
+  const { data: priorities } = useQuery({
+    queryKey: ["priorities"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/priorities`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<JiraPriority[]>;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: members } = useQuery({
+    queryKey: ["members", resolvedProjectKey],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/projects/${resolvedProjectKey}/members`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<ProjectMember[]>;
+    },
+    enabled: !!resolvedProjectKey,
+    staleTime: 5 * 60 * 1000,
   });
 
   const updateMutation = useMutation({
@@ -794,7 +843,7 @@ function IssueDetailPanel({
                 <PriorityIcon priority={issue.priority?.name} />
                 <InlineEditSelect
                   value={issue.priority?.name}
-                  options={PRIORITIES}
+                  options={priorities?.map((p) => p.name) || FALLBACK_PRIORITIES}
                   onSave={(v) => updateMutation.mutate({ priority: v })}
                   label="priority"
                 />
@@ -849,11 +898,22 @@ function IssueDetailPanel({
                 {issue.assignee?.avatarUrl && (
                   <img src={issue.assignee.avatarUrl} alt="" className="w-5 h-5 rounded-full" />
                 )}
-                <InlineEditText
-                  value={issue.assignee?.displayName || ""}
-                  onSave={(v) => updateMutation.mutate({ assignee: v })}
-                  label="assignee"
-                />
+                {members ? (
+                  <InlineEditSelect
+                    value={issue.assignee?.accountId || ""}
+                    displayValue={issue.assignee?.displayName || ""}
+                    options={members.map((m) => ({ value: m.accountId, label: m.displayName }))}
+                    onSave={(v) => updateMutation.mutate({ assignee: v })}
+                    label="assignee"
+                    placeholder="Unassigned"
+                  />
+                ) : (
+                  <InlineEditText
+                    value={issue.assignee?.displayName || ""}
+                    onSave={(v) => updateMutation.mutate({ assignee: v })}
+                    label="assignee"
+                  />
+                )}
               </div>
             </div>
 
@@ -1102,7 +1162,7 @@ export default function App() {
 
       {/* Issue Detail Panel */}
       {selectedIssueKey && (
-        <IssueDetailPanel issueKey={selectedIssueKey} onClose={handleCloseDetail} />
+        <IssueDetailPanel issueKey={selectedIssueKey} onClose={handleCloseDetail} projectKey={project || undefined} />
       )}
     </div>
   );
