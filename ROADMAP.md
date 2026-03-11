@@ -45,13 +45,13 @@
 
 ### 5. Keyboard shortcuts
 
-- [ ] **5.1** `j`/`k` navigate up/down in list view
-- [ ] **5.2** `Enter` opens issue detail
-- [ ] **5.3** `Escape` closes detail/modal
-- [ ] **5.4** `b`/`l` switch between board and list views
-- [ ] **5.5** `?` shows shortcut help overlay
+- [x] **5.1** `j`/`k` navigate up/down in list view — *BDD tests: `App.test.tsx` (6 scenarios)*
+- [x] **5.2** `Enter` opens issue detail — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **5.3** `Escape` closes detail/modal — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **5.4** `b`/`l` switch between board and list views — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **5.5** `?` shows shortcut help overlay — *BDD tests: `App.test.tsx` (3 scenarios)*
 
-**Tech**: `useEffect` keydown listeners or `hotkeys-js`. Context-aware shortcuts (disabled when typing in inputs).
+**Tech**: `useEffect` keydown listeners, context-aware (disabled when typing in inputs/textareas/selects). `isInputFocused()` helper checks `document.activeElement`.
 
 ### 6. Quick create modal
 

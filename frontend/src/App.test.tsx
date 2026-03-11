@@ -2329,3 +2329,243 @@ describe("Feature: Command palette (Ctrl+K)", () => {
     });
   });
 });
+
+/* ── Feature: Keyboard shortcuts (tasks 5.1–5.5) ── */
+
+describe("Feature: Keyboard shortcuts — j/k navigation in list view", () => {
+  describe("Scenario: Pressing j highlights the first row", () => {
+    it("Given the list view is displayed, when pressing j, then the first row should be highlighted", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("j");
+
+      const tbody = screen.getAllByRole("rowgroup")[1];
+      const rows = within(tbody).getAllByRole("row");
+      expect(rows[0].className).toContain("bg-blue-900");
+    });
+  });
+
+  describe("Scenario: Pressing j twice highlights the second row", () => {
+    it("Given the list view is displayed, when pressing j twice, then the second row should be highlighted", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("j");
+      await userEvent.keyboard("j");
+
+      const tbody = screen.getAllByRole("rowgroup")[1];
+      const rows = within(tbody).getAllByRole("row");
+      expect(rows[0].className).not.toContain("bg-blue-900");
+      expect(rows[1].className).toContain("bg-blue-900");
+    });
+  });
+
+  describe("Scenario: Pressing k moves highlight up", () => {
+    it("Given the second row is highlighted, when pressing k, then the first row should be highlighted", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("j");
+      await userEvent.keyboard("j");
+      await userEvent.keyboard("k");
+
+      const tbody = screen.getAllByRole("rowgroup")[1];
+      const rows = within(tbody).getAllByRole("row");
+      expect(rows[0].className).toContain("bg-blue-900");
+      expect(rows[1].className).not.toContain("bg-blue-900");
+    });
+  });
+
+  describe("Scenario: j does not go past the last row", () => {
+    it("Given there are 3 rows, when pressing j 10 times, then the last row should be highlighted", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      for (let i = 0; i < 10; i++) await userEvent.keyboard("j");
+
+      const tbody = screen.getAllByRole("rowgroup")[1];
+      const rows = within(tbody).getAllByRole("row");
+      expect(rows[2].className).toContain("bg-blue-900");
+    });
+  });
+
+  describe("Scenario: k does not go above the first row", () => {
+    it("Given the first row is highlighted, when pressing k, then the first row should remain highlighted", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("j");
+      await userEvent.keyboard("k");
+      await userEvent.keyboard("k");
+
+      const tbody = screen.getAllByRole("rowgroup")[1];
+      const rows = within(tbody).getAllByRole("row");
+      expect(rows[0].className).toContain("bg-blue-900");
+    });
+  });
+
+  describe("Scenario: Shortcuts disabled when typing in an input", () => {
+    it("Given focus is on a select input, when pressing j, then no row should be highlighted", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      const typeFilter = screen.getByLabelText("Filter by type");
+      await user.click(typeFilter);
+      // Focus is now on the select element
+      await userEvent.keyboard("j");
+
+      const tbody = screen.getAllByRole("rowgroup")[1];
+      const rows = within(tbody).getAllByRole("row");
+      for (const row of rows) {
+        expect(row.className).not.toContain("bg-blue-900");
+      }
+    });
+  });
+});
+
+describe("Feature: Keyboard shortcuts — Enter opens issue detail", () => {
+  describe("Scenario: Pressing Enter opens the highlighted issue", () => {
+    it("Given the first row is highlighted, when pressing Enter, then the issue detail panel should open", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("j");
+      await userEvent.keyboard("{Enter}");
+
+      expect(await screen.findByRole("dialog", { name: /issue detail/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Enter does nothing without a highlighted row", () => {
+    it("Given no row is highlighted, when pressing Enter, then no detail panel should open", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("{Enter}");
+
+      expect(screen.queryByRole("dialog", { name: /issue detail/i })).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Keyboard shortcuts — Escape closes detail/modal", () => {
+  describe("Scenario: Escape closes the issue detail panel", () => {
+    it("Given the detail panel is open, when pressing Escape, then the panel should close", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      const tbody = screen.getAllByRole("rowgroup")[1];
+      const firstRow = within(tbody).getAllByRole("row")[0];
+      await user.click(firstRow);
+
+      expect(await screen.findByRole("dialog", { name: /issue detail/i })).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /issue detail/i })).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Scenario: Escape closes the shortcut help overlay", () => {
+    it("Given the shortcut help overlay is open, when pressing Escape, then it should close", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("?");
+      expect(screen.getByRole("dialog", { name: /keyboard shortcuts/i })).toBeInTheDocument();
+
+      await userEvent.keyboard("{Escape}");
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /keyboard shortcuts/i })).not.toBeInTheDocument();
+      });
+    });
+  });
+});
+
+describe("Feature: Keyboard shortcuts — b/l switch views", () => {
+  describe("Scenario: Pressing b switches to board view", () => {
+    it("Given the list view is displayed, when pressing b, then the board view should be shown", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("b");
+
+      expect(await screen.findByRole("region", { name: /kanban board/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Pressing l switches to list view", () => {
+    it("Given the board view is displayed, when pressing l, then the list view should be shown", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("b");
+      expect(await screen.findByRole("region", { name: /kanban board/i })).toBeInTheDocument();
+
+      await userEvent.keyboard("l");
+
+      await waitFor(() => {
+        expect(screen.queryByRole("region", { name: /kanban board/i })).not.toBeInTheDocument();
+      });
+      expect(screen.getAllByRole("rowgroup").length).toBeGreaterThan(0);
+    });
+  });
+});
+
+describe("Feature: Keyboard shortcuts — ? shows shortcut help overlay", () => {
+  describe("Scenario: Pressing ? opens the shortcut help overlay", () => {
+    it("Given the list view is displayed, when pressing ?, then a help overlay listing all shortcuts should appear", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("?");
+
+      const dialog = screen.getByRole("dialog", { name: /keyboard shortcuts/i });
+      expect(dialog).toBeInTheDocument();
+      expect(within(dialog).getByText("Keyboard Shortcuts")).toBeInTheDocument();
+      expect(within(dialog).getByText("Move down in list view")).toBeInTheDocument();
+      expect(within(dialog).getByText("Move up in list view")).toBeInTheDocument();
+      expect(within(dialog).getByText("Open highlighted issue")).toBeInTheDocument();
+      expect(within(dialog).getByText("Close detail panel / modal")).toBeInTheDocument();
+      expect(within(dialog).getByText("Switch to board view")).toBeInTheDocument();
+      expect(within(dialog).getByText("Switch to list view")).toBeInTheDocument();
+      expect(within(dialog).getByText("Show this help")).toBeInTheDocument();
+      expect(within(dialog).getByText("Open command palette")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Help overlay can be closed via the close button", () => {
+    it("Given the shortcut help is open, when clicking the close button, then it should close", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("?");
+      expect(screen.getByRole("dialog", { name: /keyboard shortcuts/i })).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: /close shortcuts help/i }));
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /keyboard shortcuts/i })).not.toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Scenario: Help overlay can be opened via the header button", () => {
+    it("Given the app is loaded, when clicking the ? button in the header, then the help overlay should open", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /show shortcuts/i }));
+
+      expect(screen.getByRole("dialog", { name: /keyboard shortcuts/i })).toBeInTheDocument();
+    });
+  });
+});

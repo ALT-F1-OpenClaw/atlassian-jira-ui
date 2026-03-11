@@ -1654,10 +1654,11 @@ function BoardView({
 
 const PAGE_SIZE = 50;
 
-function ListView({ project, filters, onIssuesLoaded, onSelectIssue }: { project: string; filters: Filters; onIssuesLoaded?: (issues: Issue[]) => void; onSelectIssue?: (key: string) => void }) {
+function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlightedIndex, onHighlightChange }: { project: string; filters: Filters; onIssuesLoaded?: (issues: Issue[]) => void; onSelectIssue?: (key: string) => void; highlightedIndex: number; onHighlightChange: (i: number) => void }) {
   const [sortBy, setSortBy] = useState<SortField>("updated");
   const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
   const [page, setPage] = useState(0);
+  const rowRefs = useRef<(HTMLTableRowElement | null)[]>([]);
 
   const handleSort = (field: SortField) => {
     if (field === sortBy) {
@@ -1693,6 +1694,18 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue }: { project
     if (data?.issues) onIssuesLoaded?.(data.issues);
   }, [data?.issues, onIssuesLoaded]);
 
+  // Scroll highlighted row into view
+  useEffect(() => {
+    if (highlightedIndex >= 0 && rowRefs.current[highlightedIndex]) {
+      rowRefs.current[highlightedIndex]?.scrollIntoView?.({ block: "nearest" });
+    }
+  }, [highlightedIndex]);
+
+  // Reset highlight when data changes
+  useEffect(() => {
+    onHighlightChange(-1);
+  }, [page, sortBy, sortOrder, filters.status, filters.type, filters.assignee]);
+
   if (isLoading)
     return <div className="p-8 text-zinc-500">Loading issues...</div>;
   if (error)
@@ -1720,10 +1733,11 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue }: { project
           </tr>
         </thead>
         <tbody className="block sm:table-row-group">
-          {data?.issues.map((issue) => (
+          {data?.issues.map((issue, idx) => (
             <tr
               key={issue.id}
-              className="flex flex-wrap sm:table-row items-center gap-x-3 gap-y-0.5 sm:gap-0 border-b border-zinc-800 sm:border-zinc-900 px-4 sm:px-0 py-3 sm:py-0 transition-colors hover:bg-zinc-900/50 cursor-pointer"
+              ref={(el) => { rowRefs.current[idx] = el; }}
+              className={`flex flex-wrap sm:table-row items-center gap-x-3 gap-y-0.5 sm:gap-0 border-b border-zinc-800 sm:border-zinc-900 px-4 sm:px-0 py-3 sm:py-0 transition-colors cursor-pointer ${idx === highlightedIndex ? "bg-blue-900/30 ring-1 ring-blue-500/40" : "hover:bg-zinc-900/50"}`}
               onClick={() => onSelectIssue?.(issue.key)}
             >
               <td className="w-full sm:w-auto sm:table-cell sm:px-4 sm:py-3 font-mono text-blue-400 text-base sm:text-sm order-1 sm:order-none">
@@ -2001,6 +2015,74 @@ function CommandPalette({
   );
 }
 
+/* ── Shortcut Help Overlay ── */
+
+const SHORTCUTS: { key: string; description: string }[] = [
+  { key: "j", description: "Move down in list view" },
+  { key: "k", description: "Move up in list view" },
+  { key: "Enter", description: "Open highlighted issue" },
+  { key: "Escape", description: "Close detail panel / modal" },
+  { key: "b", description: "Switch to board view" },
+  { key: "l", description: "Switch to list view" },
+  { key: "?", description: "Show this help" },
+  { key: "Ctrl+K / ⌘K", description: "Open command palette" },
+];
+
+function ShortcutHelpOverlay({ onClose }: { onClose: () => void }) {
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" || e.key === "?") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={backdropRef}
+      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/60"
+      onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
+      role="dialog"
+      aria-label="Keyboard shortcuts"
+    >
+      <div className="w-full max-w-md mx-4 rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl overflow-hidden">
+        <div className="flex items-center justify-between border-b border-zinc-700 px-4 py-3">
+          <h2 className="text-sm font-semibold text-zinc-200">Keyboard Shortcuts</h2>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+            aria-label="Close shortcuts help"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="px-4 py-3 space-y-1">
+          {SHORTCUTS.map((s) => (
+            <div key={s.key} className="flex items-center justify-between py-1.5">
+              <span className="text-sm text-zinc-300">{s.description}</span>
+              <kbd className="rounded border border-zinc-700 bg-zinc-800 px-2 py-0.5 text-xs font-mono text-zinc-400">
+                {s.key}
+              </kbd>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function isInputFocused(): boolean {
+  const tag = document.activeElement?.tagName;
+  if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
+  if (document.activeElement?.getAttribute("contenteditable") === "true") return true;
+  return false;
+}
+
 export default function App() {
   const [view, setView] = useState<View>("list");
   const [project, setProject] = useState("");
@@ -2008,20 +2090,81 @@ export default function App() {
   const [issuesForFilters, setIssuesForFilters] = useState<Issue[]>([]);
   const [selectedIssueKey, setSelectedIssueKey] = useState<string | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
+  const [showShortcutHelp, setShowShortcutHelp] = useState(false);
+  const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const handleCloseDetail = useCallback(() => setSelectedIssueKey(null), []);
+  const handleCloseShortcutHelp = useCallback(() => setShowShortcutHelp(false), []);
 
-  // Global Ctrl+K / Cmd+K listener
+  // Global keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Ctrl+K / Cmd+K always works
       if ((e.metaKey || e.ctrlKey) && e.key === "k") {
         e.preventDefault();
         setCommandPaletteOpen((prev) => !prev);
+        return;
+      }
+
+      // Skip single-key shortcuts when typing in inputs or when modals are open
+      if (isInputFocused()) return;
+      if (commandPaletteOpen) return;
+      if (showShortcutHelp) return; // handled by ShortcutHelpOverlay itself
+
+      // Escape: close detail panel
+      if (e.key === "Escape") {
+        if (selectedIssueKey) {
+          setSelectedIssueKey(null);
+          e.preventDefault();
+        }
+        return;
+      }
+
+      // ? — show shortcut help
+      if (e.key === "?") {
+        e.preventDefault();
+        setShowShortcutHelp(true);
+        return;
+      }
+
+      // b / l — switch views (only when detail panel is not open)
+      if (!selectedIssueKey) {
+        if (e.key === "b") {
+          e.preventDefault();
+          setView("board");
+          return;
+        }
+        if (e.key === "l") {
+          e.preventDefault();
+          setView("list");
+          return;
+        }
+      }
+
+      // j / k — navigate list view
+      if (view === "list" && !selectedIssueKey) {
+        const issueCount = issuesForFilters.length;
+        if (e.key === "j") {
+          e.preventDefault();
+          setHighlightedIndex((prev) => Math.min(prev + 1, issueCount - 1));
+          return;
+        }
+        if (e.key === "k") {
+          e.preventDefault();
+          setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+          return;
+        }
+        // Enter — open highlighted issue
+        if (e.key === "Enter" && highlightedIndex >= 0 && highlightedIndex < issueCount) {
+          e.preventDefault();
+          setSelectedIssueKey(issuesForFilters[highlightedIndex].key);
+          return;
+        }
       }
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [commandPaletteOpen, showShortcutHelp, selectedIssueKey, view, highlightedIndex, issuesForFilters]);
 
   const { data: projects } = useQuery({
     queryKey: ["projects"],
@@ -2053,6 +2196,14 @@ export default function App() {
               <span>🔍</span>
               <span className="hidden sm:inline">Search</span>
               <kbd className="hidden sm:inline rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px]">⌘K</kbd>
+            </button>
+            <button
+              onClick={() => setShowShortcutHelp(true)}
+              className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-400 cursor-pointer"
+              aria-label="Show shortcuts"
+              title="Shortcuts (?)"
+            >
+              ?
             </button>
             <nav className="flex gap-1">
               {(["board", "list"] as View[]).map((v) => (
@@ -2090,7 +2241,7 @@ export default function App() {
 
       {/* Main */}
       <main className="flex-1 overflow-auto">
-        {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} />}
+        {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} highlightedIndex={highlightedIndex} onHighlightChange={setHighlightedIndex} />}
         {view === "board" && (
           <BoardView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} />
         )}
@@ -2108,6 +2259,9 @@ export default function App() {
         onSelectIssue={(key) => setSelectedIssueKey(key)}
         project={project}
       />
+
+      {/* Shortcut Help Overlay */}
+      {showShortcutHelp && <ShortcutHelpOverlay onClose={handleCloseShortcutHelp} />}
     </div>
   );
 }

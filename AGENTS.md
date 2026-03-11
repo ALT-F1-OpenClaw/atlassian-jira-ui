@@ -36,6 +36,7 @@ Tasks are tracked in `ROADMAP.md` with numbered IDs (e.g., `2.1`, `3.3`). When a
 - Reset pagination to page 0 when filters, sort, or project change
 - Board view uses `@dnd-kit/core` for drag-and-drop; mobile fallback uses ← → arrow buttons (`sm:hidden`)
 - Mobile-only UI patterns: use `sm:hidden` to show on mobile, `hidden sm:block` to show on desktop
+- Keyboard shortcuts: global `useEffect` keydown listener in `App()`, `isInputFocused()` helper to skip shortcuts when typing in inputs/textareas/selects/contenteditable. Shortcuts: j/k (list nav), Enter (open issue), Escape (close panel), b/l (view switch), ? (help overlay)
 
 ### Testing (Vitest + Testing Library)
 
