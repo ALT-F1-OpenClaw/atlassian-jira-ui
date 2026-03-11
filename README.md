@@ -118,109 +118,96 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **Vitest** — fast unit testing
 - **Testing Library** — BDD-style component tests (248 scenarios)
 
-## Quick Start
+## Getting Started
+
+### Prerequisites
+
+- A [Jira Cloud](https://www.atlassian.com/software/jira) account
+- An [API token](https://id.atlassian.com/manage-profile/security/api-tokens) for your Jira account
+- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed
+
+### 🚀 Quick Start (Docker — recommended)
+
+Run in **3 steps**, no build required. Pre-built multi-arch images (amd64 + arm64) from GitHub Container Registry:
 
 ```bash
-# Clone
-git clone https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui.git
-cd atlassian-jira-ui
+# 1. Download the compose file
+curl -O https://raw.githubusercontent.com/ALT-F1-OpenClaw/atlassian-jira-ui/main/docker-compose.ghcr.yml
 
-# Backend
-cd backend
-python -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
-cp .env.example .env
-# Edit .env with your Jira credentials
-uvicorn app.main:app --reload --port 35400
-
-# Frontend (new terminal)
-cd frontend
-npm install
-cp .env.example .env
-npm run dev
-```
-
-Open http://localhost:5173
-
-## Setup
-
-### Jira Credentials
-
-1. Go to https://id.atlassian.com/manage-profile/security/api-tokens
-2. Create an API token
-3. Configure `.env`:
-
-```env
+# 2. Create your credentials file
+mkdir -p backend
+cat > backend/.env << EOF
 JIRA_HOST=https://yourcompany.atlassian.net
 JIRA_EMAIL=you@company.com
-JIRA_API_TOKEN=your-api-token
-```
+JIRA_API_TOKEN=your-api-token-here
+APP_SECRET_KEY=$(openssl rand -base64 32)
+EOF
 
-### App Secret Key
-
-Generate a secure random key for `APP_SECRET_KEY`:
-
-```bash
-python -c "import secrets; print(secrets.token_urlsafe(32))"
-# or
-openssl rand -base64 32
-```
-
-## Docker
-
-### Option 1: Pre-built images (recommended)
-
-Pull pre-built multi-arch images from GitHub Container Registry (amd64 + arm64):
-
-```bash
-# 1. Create your Jira credentials file
-mkdir -p backend
-cp backend/.env.example backend/.env
-# Edit backend/.env with your Jira credentials and APP_SECRET_KEY
-
-# 2. Pull and run
+# 3. Start
 docker compose -f docker-compose.ghcr.yml up -d
 ```
+
+Open **http://localhost:5173** — done! 🎉
 
 Images:
 - `ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend:latest`
 - `ghcr.io/alt-f1-openclaw/atlassian-jira-ui-frontend:latest`
 
-Tagged versions also available (e.g. `:1.39.2`, `:1.39`).
+Pinned versions also available (e.g. `:1.40.0`, `:1.40`).
 
-### Option 2: Build from source
+### Alternative: Build from source (Docker)
 
 ```bash
-# 1. Clone the repo
+git clone https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui.git
+cd atlassian-jira-ui
+cp backend/.env.example backend/.env
+# Edit backend/.env with your Jira credentials
+docker compose up --build -d
+```
+
+### Alternative: Local development (no Docker)
+
+```bash
 git clone https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui.git
 cd atlassian-jira-ui
 
-# 2. Configure your environment
-cp backend/.env.example backend/.env
-# Edit backend/.env with your Jira credentials and APP_SECRET_KEY
+# Backend
+cd backend
+python -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # Edit with your Jira credentials
+uvicorn app.main:app --reload --port 35400
 
-# 3. Build and start both services
-docker compose up --build -d
+# Frontend (new terminal)
+cd frontend
+npm install
+npm run dev
 ```
+
+Open http://localhost:5173
 
 ### Access
 
 - **Frontend** — <http://localhost:5173>
 - **Backend API** — <http://localhost:35400>
+- **API docs** — <http://localhost:35400/docs> (FastAPI auto-generated)
 
 ### Manage containers
 
 ```bash
-# Stop services
-docker compose down
-
-# View logs
-docker compose logs -f
-
-# Rebuild after code changes
-docker compose up --build
+docker compose down           # Stop
+docker compose logs -f        # Logs
+docker compose up --build     # Rebuild after code changes
 ```
+
+### Jira Credentials
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `JIRA_HOST` | Your Jira Cloud URL | `https://yourcompany.atlassian.net` |
+| `JIRA_EMAIL` | Your Jira account email | `you@company.com` |
+| `JIRA_API_TOKEN` | [API token](https://id.atlassian.com/manage-profile/security/api-tokens) | `ABCdef123...` |
+| `APP_SECRET_KEY` | Random secret for sessions | `openssl rand -base64 32` |
 
 ## Project Structure
 
