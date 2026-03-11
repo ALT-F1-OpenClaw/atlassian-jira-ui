@@ -229,9 +229,9 @@ Before going production-grade, re-enable these:
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
 |---|---------|--------|
-| 42 | AI-powered CI auto-fix: agent monitors failures, diagnoses errors, opens fix PRs | Planned |
-| 43 | GitHub Actions `on: workflow_run` trigger on CI failure → notify AI agent | Planned |
-| 44 | Structured error log extraction (test output, build errors, lint warnings) | Planned |
+| 42 | AI-powered CI auto-fix: agent monitors failures, diagnoses errors, opens fix PRs | In Progress |
+| 43 | GitHub Actions `on: workflow_run` trigger on CI failure → create issue + notify | Complete |
+| 44 | Structured error log extraction + category detection (7 categories) | Complete |
 | 45 | Auto-fix PR with conventional commit, linked issue, and CI re-run | Planned |
 
 #### Phase 4b Details

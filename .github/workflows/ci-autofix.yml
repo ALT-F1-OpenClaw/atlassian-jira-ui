@@ -1,0 +1,168 @@
+name: CI Auto-Fix
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  actions: read
+
+concurrency:
+  group: ci-autofix-${{ github.event.workflow_run.head_branch }}
+  cancel-in-progress: true
+
+jobs:
+  diagnose-and-fix:
+    name: Diagnose & Auto-Fix
+    runs-on: ubuntu-latest
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_branch == 'main'
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: Extract failed job logs
+        id: extract
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RUN_ID="${{ github.event.workflow_run.id }}"
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+          echo "run_url=${{ github.event.workflow_run.html_url }}" >> "$GITHUB_OUTPUT"
+          echo "commit_sha=${{ github.event.workflow_run.head_sha }}" >> "$GITHUB_OUTPUT"
+          echo "commit_msg=$(git log -1 --format='%s' ${{ github.event.workflow_run.head_sha }})" >> "$GITHUB_OUTPUT"
+
+          # Get failed job logs
+          echo "--- Extracting failed job logs ---"
+          gh run view "$RUN_ID" --log-failed > /tmp/failed-logs.txt 2>&1 || true
+
+          # Truncate to 4000 chars for issue body (GitHub has limits)
+          LOGS=$(head -c 4000 /tmp/failed-logs.txt)
+          echo "logs<<LOGS_EOF" >> "$GITHUB_OUTPUT"
+          echo "$LOGS" >> "$GITHUB_OUTPUT"
+          echo "LOGS_EOF" >> "$GITHUB_OUTPUT"
+
+          # Detect error category
+          CATEGORY="unknown"
+          if grep -qi "playwright.*test.*did not expect" /tmp/failed-logs.txt; then
+            CATEGORY="test-runner-conflict"
+          elif grep -qi "Cannot find module\|Module not found" /tmp/failed-logs.txt; then
+            CATEGORY="missing-module"
+          elif grep -qi "TS[0-9]\{4\}" /tmp/failed-logs.txt; then
+            CATEGORY="typescript-error"
+          elif grep -qi "FAIL.*test\|AssertionError\|expect(" /tmp/failed-logs.txt; then
+            CATEGORY="test-failure"
+          elif grep -qi "npm ERR!\|pip.*error\|dependency" /tmp/failed-logs.txt; then
+            CATEGORY="dependency-error"
+          elif grep -qi "lint\|eslint\|prettier" /tmp/failed-logs.txt; then
+            CATEGORY="lint-error"
+          elif grep -qi "build.*fail\|rollup\|vite.*error" /tmp/failed-logs.txt; then
+            CATEGORY="build-error"
+          fi
+          echo "category=$CATEGORY" >> "$GITHUB_OUTPUT"
+          echo "Detected category: $CATEGORY"
+
+      - name: Check for existing auto-fix issue
+        id: check_issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Don't create duplicate issues
+          EXISTING=$(gh issue list --label "ci-autofix" --state open --limit 1 --json number -q '.[0].number // empty')
+          echo "existing=$EXISTING" >> "$GITHUB_OUTPUT"
+          if [ -n "$EXISTING" ]; then
+            echo "Open auto-fix issue already exists: #$EXISTING"
+          fi
+
+      - name: Create auto-fix issue
+        if: steps.check_issue.outputs.existing == ''
+        id: create_issue
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TITLE="fix(ci): auto-detected failure — ${{ steps.extract.outputs.category }}"
+          BODY=$(cat <<'ISSUE_EOF'
+          ## CI Failure Auto-Detected
+
+          | Field | Value |
+          |-------|-------|
+          | **Run** | [CI #${{ steps.extract.outputs.run_id }}](${{ steps.extract.outputs.run_url }}) |
+          | **Commit** | `${{ steps.extract.outputs.commit_sha }}` |
+          | **Message** | ${{ steps.extract.outputs.commit_msg }} |
+          | **Category** | `${{ steps.extract.outputs.category }}` |
+          | **Branch** | `main` |
+
+          ## Failed Job Logs
+
+          ```
+          ${{ steps.extract.outputs.logs }}
+          ```
+
+          ## Auto-Fix Instructions
+
+          This issue was created automatically by the CI Auto-Fix workflow.
+
+          **For AI agent**: Read the logs above, reproduce the failure locally, write a fix,
+          run tests to verify, and open a PR with a `fix:` conventional commit referencing
+          this issue (`fixes #<number>`).
+
+          **Error category**: `${{ steps.extract.outputs.category }}`
+
+          Common fixes by category:
+          - `test-runner-conflict`: Vitest picking up Playwright specs → fix test.dir/exclude config
+          - `missing-module`: Dependency not installed or import path wrong → fix imports or package.json
+          - `typescript-error`: Type mismatch → fix types
+          - `test-failure`: Assertion failed → fix test or code
+          - `dependency-error`: Package install failed → fix versions or lockfile
+          - `lint-error`: Code style → run formatter
+          - `build-error`: Compilation failed → fix source code
+          ISSUE_EOF
+
+          ISSUE_NUM=$(gh issue create \
+            --title "$TITLE" \
+            --body "$BODY" \
+            --label "ci-autofix,bug,ci" \
+            --json number -q '.number')
+
+          echo "issue_number=$ISSUE_NUM" >> "$GITHUB_OUTPUT"
+          echo "Created issue #$ISSUE_NUM"
+
+      - name: Comment on existing issue
+        if: steps.check_issue.outputs.existing != ''
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh issue comment "${{ steps.check_issue.outputs.existing }}" \
+            --body "## New CI failure on same branch
+
+          | Field | Value |
+          |-------|-------|
+          | **Run** | [CI #${{ steps.extract.outputs.run_id }}](${{ steps.extract.outputs.run_url }}) |
+          | **Commit** | \`${{ steps.extract.outputs.commit_sha }}\` |
+          | **Category** | \`${{ steps.extract.outputs.category }}\` |
+
+          \`\`\`
+          $(head -c 2000 /tmp/failed-logs.txt)
+          \`\`\`"
+
+      - name: Notify Discord
+        if: steps.create_issue.outputs.issue_number != ''
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_CI_WEBHOOK }}
+        run: |
+          if [ -z "$DISCORD_WEBHOOK" ]; then
+            echo "No Discord webhook configured, skipping notification"
+            exit 0
+          fi
+          curl -s -H "Content-Type: application/json" \
+            -d "{\"content\": \"🔴 **CI failed** on \`main\` — auto-fix issue created: https://github.com/${{ github.repository }}/issues/${{ steps.create_issue.outputs.issue_number }}\\nCategory: \`${{ steps.extract.outputs.category }}\`\\nCommit: \`${{ steps.extract.outputs.commit_msg }}\`\"}" \
+            "$DISCORD_WEBHOOK" || true
