@@ -94,14 +94,24 @@
 
 **Tech**: Backend `GET /api/sprints`, `GET /api/sprints/{id}/issues`, `GET /api/sprints/{id}/burndown`, `GET /api/sprints/{id}/velocity`. `recharts` for charts (PieChart, LineChart, BarChart). `SprintDashboard` component in `App.tsx`. `s` keyboard shortcut to switch to sprint view. Sprint selector dropdown when multiple sprints exist.
 
+### 9b. Sprint CRUD
+
+- [ ] **9b.1** Create sprint — modal with name, goal, start/end dates; `POST /api/sprints`
+- [ ] **9b.2** Edit sprint — inline edit name, goal, dates on sprint dashboard; `PATCH /api/sprints/{id}`
+- [ ] **9b.3** Start / Complete sprint — action buttons with confirmation; `POST /api/sprints/{id}/start`, `POST /api/sprints/{id}/complete`
+- [ ] **9b.4** Delete sprint — confirm dialog, moves issues back to backlog; `DELETE /api/sprints/{id}`
+- [ ] **9b.5** Manage sprint scope — drag issues in/out of sprint backlog; `POST /api/sprints/{id}/issues`, `DELETE /api/sprints/{id}/issues/{key}`
+
+**Tech**: Jira Agile API `POST /rest/agile/1.0/sprint`, `PUT /rest/agile/1.0/sprint/{id}`, `POST /rest/agile/1.0/sprint/{id}/issue`, `DELETE /rest/agile/1.0/sprint/{id}`. New backend endpoints needed.
+
 ### 10. Time tracking
 
-- [ ] **10.1** Built-in timer per issue (start/stop/pause)
-- [ ] **10.2** Log work from board or detail view
-- [ ] **10.3** Display logged vs estimated time
-- [ ] **10.4** Work log history
+- [x] **10.1** Built-in timer per issue (start/stop/pause) — *BDD tests: `App.test.tsx` (4 scenarios)*
+- [x] **10.2** Log work from board or detail view — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **10.3** Display logged vs estimated time — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **10.4** Work log history — *BDD tests: `App.test.tsx` (3 scenarios)*
 
-**Tech**: Jira REST API `POST /rest/api/3/issue/{key}/worklog`. New backend endpoint needed. Timer state in React (persisted in `localStorage`).
+**Tech**: Backend `POST /api/issues/{key}/worklog`, `GET /api/issues/{key}/worklog`. `GET /api/issues/{key}` includes `timeTracking` field. `IssueTimer` component with start/stop/pause, state persisted in `localStorage` (`jira-ui-timers` key). `LogWorkModal` for manual time entry. `TimeTrackingBar` progress bar (logged vs estimated). `WorklogHistory` shows previous entries.
 
 ### 11. Dark/light mode toggle
 
@@ -147,6 +157,7 @@
 | 7 | Bulk actions | 2 | Complete |
 | 8 | Saved filters | 2 | Complete |
 | 9 | Sprint dashboard | 3 | Complete |
+| 9b | Sprint CRUD | 3 | Not started |
 | 10 | Dark/light mode toggle | 3 | Partial |
 | 11 | Time tracking | 3 | Not started |
 | 12 | Offline mode | 3 | Not started |
