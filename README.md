@@ -62,25 +62,36 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 | Search is broken | Fast fuzzy search + JQL |
 | Can't see what matters | Priority-sorted, status-colored |
 
-## Features (Planned)
+## Features
 
-### Phase 1 — Core Views
-- [ ] **Board view** — Kanban with drag & drop transitions
-- [ ] **List view** — Dense, sortable, filterable table
-- [ ] **Issue detail** — Clean layout, inline editing
-- [ ] **Quick search** — Fuzzy + JQL with autocomplete
+### Phase 1 — Core Views (Complete)
+- [x] **List view** — Dense, sortable, filterable table with column sorting, filter dropdowns (type/status/assignee), pagination
+- [x] **Issue detail panel** — Slide-in side panel with ADF rendering, inline editing (summary, description, assignee, priority, status, due date, labels), status transitions
+- [x] **Board view / Kanban** — Columns by status category, issue cards, drag-and-drop transitions, swimlanes (assignee/priority)
+- [x] **Command palette** — `Ctrl+K`/`Cmd+K` overlay, debounced fuzzy search, arrow key navigation, recent searches in localStorage
 
-### Phase 2 — Productivity
-- [ ] **Keyboard shortcuts** — Vim-style navigation
-- [ ] **Bulk actions** — Multi-select, bulk transition/assign
-- [ ] **Quick create** — `Ctrl+K` → type → done
-- [ ] **Saved filters** — Personal quick-access views
+### Phase 2 — Productivity (Complete)
+- [x] **Keyboard shortcuts** — `j`/`k` list navigation, `Enter` opens issue, `Escape` closes panels, `b`/`l` view switching, `?` help overlay, context-aware (disabled in inputs)
+- [x] **Quick create** — `c` key or `+ Create` button, project/summary/type/priority/assignee/description fields, form validation, optimistic UI update
+- [x] **Bulk actions** — Checkbox selection, select all/deselect all, floating action bar with bulk transition/assign/priority, batch API calls via `Promise.allSettled`
+- [x] **Saved filters** — Save filter combinations as named views, quick-access dropdown, inline rename/delete, localStorage persistence
 
-### Phase 3 — Power Features
+### Phase 3 — Power Features (In Progress)
 - [ ] **Sprint dashboard** — Burndown, velocity, at a glance
 - [ ] **Time tracking** — Built-in timer, log from board
-- [ ] **Dark mode** — Because it's 2026
+- [x] **Dark mode** — Default dark theme
+- [ ] **Light mode toggle** — Switch between dark/light, persist preference
 - [ ] **Offline mode** — Cache + sync when back online
+
+### Additional Features
+- **Responsive design** — Mobile-first layout, stacked filters, adaptive pagination, works on phone/tablet/desktop
+- **Rich text editor** — TipTap-based ADF editor with toolbar (bold, italic, headings, lists, links, code blocks)
+- **Smart dropdowns** — Assignee from Jira project members, priority from Jira API, status transitions
+- **Date picker** — Native date widget for due date (add/clear)
+- **Editable labels** — Add/remove with autocomplete from Jira labels
+- **Mobile Kanban arrows** — Arrow buttons on cards for status transitions (mobile only)
+- **PWA** — Web app manifest, service worker, installable on mobile
+- **174 BDD tests** — Comprehensive test coverage with Vitest + Testing Library
 
 ## Tech Stack
 
@@ -93,14 +104,15 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 
 ### Frontend (React)
 - **React 19** — latest, with server components ready
-- **Vite** — instant HMR, fast builds
-- **TypeScript** — type safety
+- **Vite 6** — instant HMR, fast builds
+- **TypeScript 5.7** (strict) — type safety
 - **Tailwind CSS 4** — utility-first, clean
 - **TanStack Query** — data fetching + caching
+- **TipTap** — rich text editor for ADF descriptions
 - **dnd-kit** — drag & drop for board
 - **cmdk** — command palette
 - **Vitest** — fast unit testing
-- **Testing Library** — BDD-style component tests
+- **Testing Library** — BDD-style component tests (174 scenarios)
 
 ## Quick Start
 
@@ -208,31 +220,29 @@ atlassian-jira-ui/
 │   │   ├── main.py              # FastAPI app + CORS
 │   │   ├── config.py            # Settings via Pydantic
 │   │   ├── jira_client.py       # Async Jira API wrapper
+│   │   ├── version.py           # Single version source
 │   │   └── routers/
-│   │       ├── issues.py        # Work package endpoints
+│   │       ├── issues.py        # Issue CRUD + transitions
 │   │       ├── boards.py        # Board/sprint endpoints
-│   │       ├── projects.py      # Project endpoints
-│   │       └── search.py        # Search + JQL
+│   │       ├── projects.py      # Projects + members
+│   │       ├── search.py        # Search + JQL
+│   │       ├── priorities.py    # Jira priorities
+│   │       ├── labels.py        # Jira labels
+│   │       └── sprints.py       # Sprint data + burndown
 │   ├── requirements.txt
 │   ├── .env.example
 │   └── Dockerfile
 ├── frontend/
 │   ├── src/
-│   │   ├── App.tsx
-│   │   ├── components/
-│   │   │   ├── Board/           # Kanban board
-│   │   │   ├── List/            # Table view
-│   │   │   ├── Detail/          # Issue detail
-│   │   │   ├── Search/          # Command palette
-│   │   │   └── Layout/          # Shell, nav, sidebar
-│   │   ├── hooks/               # API hooks (TanStack Query)
-│   │   ├── stores/              # State management
-│   │   └── types/               # TypeScript types
+│   │   ├── App.tsx              # Single-file UI (all views)
+│   │   └── App.test.tsx         # 174 BDD test scenarios
 │   ├── package.json
 │   ├── vite.config.ts
-│   ├── tailwind.config.ts
 │   ├── .env.example
 │   └── Dockerfile
+├── scripts/
+│   ├── bump-version.mjs         # Version sync + changelog
+│   └── screenshots.mjs          # Playwright screenshots
 ├── docker-compose.yml
 ├── LICENSE
 └── README.md
@@ -244,13 +254,21 @@ atlassian-jira-ui/
 |--------|----------|-------------|
 | GET | `/api/projects` | List projects |
 | GET | `/api/projects/{key}` | Project details |
+| GET | `/api/projects/{key}/members` | Project members (assignable users) |
 | GET | `/api/issues` | List/filter issues |
 | GET | `/api/issues/{key}` | Issue detail |
 | POST | `/api/issues` | Create issue |
 | PATCH | `/api/issues/{key}` | Update issue |
 | POST | `/api/issues/{key}/transition` | Transition issue |
+| GET | `/api/boards` | List boards |
 | GET | `/api/boards/{id}` | Board with columns |
 | GET | `/api/boards/{id}/sprint` | Active sprint |
+| GET | `/api/priorities` | List Jira priorities |
+| GET | `/api/labels` | List Jira labels |
+| GET | `/api/sprints` | List boards with active sprints |
+| GET | `/api/sprints/{id}/issues` | Sprint issues with status counts |
+| GET | `/api/sprints/{id}/burndown` | Sprint burndown data |
+| GET | `/api/sprints/{id}/velocity` | Velocity (points per sprint) |
 | GET | `/api/search` | JQL search |
 | GET | `/api/search/quick` | Fuzzy text search |
 
@@ -266,13 +284,13 @@ npm test
 npm run test:watch
 ```
 
-Tests use [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) with BDD-style scenarios (`describe`/`it` blocks following Given/When/Then).
+174 BDD test scenarios using [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) with `describe`/`it` blocks following Given/When/Then naming.
 
 ### Test structure
 
 ```text
 frontend/src/
-├── App.test.tsx              # List view BDD tests
+├── App.test.tsx              # 174 BDD test scenarios
 ├── test/
 │   └── setup.ts              # Testing Library + jest-dom setup
 └── vitest.config.ts          # Vitest configuration
