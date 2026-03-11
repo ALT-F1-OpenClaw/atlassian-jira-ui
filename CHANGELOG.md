@@ -1,3 +1,8 @@
+## [1.20.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.20.0...v1.20.1) (2026-03-11)
+
+### Bug Fixes
+
+* ADF conversion stripping invalid attrs, backend returns Jira error details ([e6af5e2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/e6af5e2c9b6ac9bbe79e5b4bb286cda56d8e66dc))
 ## [1.20.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.19.0...v1.20.0) (2026-03-11)
 
 ### Features
