@@ -3068,7 +3068,7 @@ function CreateIssueModal({
     queryFn: async () => {
       const res = await fetch(`${API}/api/projects`);
       if (!res.ok) throw new Error(`${res.status}`);
-      return res.json() as Promise<{ key: string; name: string; id: string }[]>;
+      return res.json() as Promise<{ key: string; name: string; id: string; avatarUrl?: string }[]>;
     },
     staleTime: CACHE_STATIC,
   });
@@ -4144,7 +4144,7 @@ function Sidebar({
 }: {
   open: boolean;
   onClose: () => void;
-  projects: { key: string; name: string; id: string }[] | undefined;
+  projects: { key: string; name: string; id: string; avatarUrl?: string }[] | undefined;
   currentProject: string;
   onSelectProject: (key: string) => void;
   savedFilters: SavedFilter[];
@@ -4252,7 +4252,11 @@ function Sidebar({
                   currentProject === p.key ? "bg-blue-600/20 text-blue-400 font-medium" : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
                 }`}
               >
-                <span className="flex h-5 w-5 items-center justify-center rounded bg-zinc-800 text-[10px] font-bold text-zinc-300">{p.key.slice(0, 2)}</span>
+                {p.avatarUrl ? (
+                  <img src={p.avatarUrl} alt="" className="h-5 w-5 rounded" />
+                ) : (
+                  <span className="flex h-5 w-5 items-center justify-center rounded bg-zinc-800 text-[10px] font-bold text-zinc-300">{p.key.slice(0, 2)}</span>
+                )}
                 {p.name}
               </button>
             ))}
@@ -4291,7 +4295,7 @@ function Breadcrumbs({
 }: {
   view: View;
   project: string;
-  projects: { key: string; name: string; id: string }[] | undefined;
+  projects: { key: string; name: string; id: string; avatarUrl?: string }[] | undefined;
   selectedIssueKey: string | null;
   onNavigate: (view: View) => void;
 }) {
@@ -4350,7 +4354,7 @@ function DashboardPage({
   onCreateIssue,
   onOpenSearch,
 }: {
-  projects: { key: string; name: string; id: string }[] | undefined;
+  projects: { key: string; name: string; id: string; avatarUrl?: string }[] | undefined;
   onSelectProject: (key: string) => void;
   onSetView: (v: View) => void;
   onCreateIssue: () => void;
@@ -4512,7 +4516,11 @@ function DashboardPage({
                 onClick={() => { onSelectProject(p.key); onSetView("list"); }}
                 className="flex items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 text-left transition-colors hover:border-blue-600 hover:bg-blue-600/10 cursor-pointer"
               >
-                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-700 text-sm font-bold text-zinc-200">{p.key.slice(0, 2)}</span>
+                {p.avatarUrl ? (
+                  <img src={p.avatarUrl} alt="" className="h-10 w-10 rounded-lg" />
+                ) : (
+                  <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-700 text-sm font-bold text-zinc-200">{p.key.slice(0, 2)}</span>
+                )}
                 <div>
                   <p className="font-medium text-zinc-200">{p.name}</p>
                   <p className="text-xs text-zinc-500">{p.key}</p>
@@ -4855,7 +4863,7 @@ export default function App() {
       const res = await fetch(`${API}/api/projects`);
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<
-        { key: string; name: string; id: string }[]
+        { key: string; name: string; id: string; avatarUrl?: string }[]
       >;
     },
     staleTime: CACHE_STATIC,
