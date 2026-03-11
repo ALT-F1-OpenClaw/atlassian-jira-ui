@@ -164,9 +164,41 @@ const mockIssueDetail = {
     { id: "21", name: "To Do" },
     { id: "31", name: "Done" },
   ],
+  timeTracking: {
+    originalEstimate: "4h",
+    remainingEstimate: "2h",
+    timeSpent: "2h",
+    originalEstimateSeconds: 14400,
+    remainingEstimateSeconds: 7200,
+    timeSpentSeconds: 7200,
+  },
 };
 
 const mockLabels = ["frontend", "auth", "backend", "bug", "enhancement", "documentation"];
+
+const mockWorklogs = {
+  worklogs: [
+    {
+      id: "w1",
+      timeSpent: "1h",
+      timeSpentSeconds: 3600,
+      comment: "Worked on login form",
+      created: "2026-03-09T10:00:00.000Z",
+      updated: "2026-03-09T10:00:00.000Z",
+      author: { accountId: "abc123", displayName: "Alice Martin", avatarUrl: "" },
+    },
+    {
+      id: "w2",
+      timeSpent: "1h",
+      timeSpentSeconds: 3600,
+      comment: "Code review fixes",
+      created: "2026-03-10T14:00:00.000Z",
+      updated: "2026-03-10T14:00:00.000Z",
+      author: { accountId: "def456", displayName: "Bob Chen", avatarUrl: "" },
+    },
+  ],
+  total: 2,
+};
 
 const mockSprints = {
   sprints: [
@@ -263,6 +295,19 @@ function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: obje
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve(createRes),
+      } as Response);
+    }
+    // Worklogs: GET/POST /api/issues/PROJ-1/worklog
+    if (urlStr.match(/\/api\/issues\/[A-Z]+-\d+\/worklog/) && init?.method === "POST") {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ status: "ok", key: "PROJ-1", worklog: { id: "w3" } }),
+      } as Response);
+    }
+    if (urlStr.match(/\/api\/issues\/[A-Z]+-\d+\/worklog/)) {
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(mockWorklogs),
       } as Response);
     }
     // Issue detail: /api/issues/PROJ-1 (not /api/issues?...)
@@ -3486,6 +3531,216 @@ describe("Feature: Sprint scope change tracking (9.4)", () => {
       await user.click(screen.getByRole("button", { name: /sprint/i }));
       expect(await screen.findByText("PROJ-4")).toBeInTheDocument();
       expect(screen.getByText("Added after sprint start")).toBeInTheDocument();
+    });
+  });
+});
+
+/* ── Time Tracking (10.1-10.4) ── */
+
+describe("Feature: Built-in timer per issue (10.1)", () => {
+  describe("Scenario: Timer UI is displayed in issue detail panel", () => {
+    it("Given the issue detail is open, then a timer with start button is displayed", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      expect(await screen.findByTestId("issue-timer")).toBeInTheDocument();
+      expect(screen.getByTestId("timer-start")).toBeInTheDocument();
+      expect(screen.getByTestId("timer-display")).toHaveTextContent("0s");
+    });
+  });
+
+  describe("Scenario: Timer can be started and paused", () => {
+    it("Given the timer is not running, when start is clicked, then pause button appears", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      await screen.findByTestId("timer-start");
+      await user.click(screen.getByTestId("timer-start"));
+      expect(await screen.findByTestId("timer-pause")).toBeInTheDocument();
+    });
+
+    it("Given the timer is running, when pause is clicked, then resume button appears", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      await screen.findByTestId("timer-start");
+      await user.click(screen.getByTestId("timer-start"));
+      await screen.findByTestId("timer-pause");
+      await user.click(screen.getByTestId("timer-pause"));
+      expect(await screen.findByTestId("timer-start")).toBeInTheDocument();
+      expect(screen.getByTestId("timer-start")).toHaveTextContent(/resume/i);
+    });
+  });
+
+  describe("Scenario: Timer state persists in localStorage", () => {
+    it("Given a timer is started, then timer state is saved to localStorage", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      await screen.findByTestId("timer-start");
+      await user.click(screen.getByTestId("timer-start"));
+      await screen.findByTestId("timer-pause");
+      const stored = localStorage.getItem("jira-ui-timers");
+      expect(stored).not.toBeNull();
+      const timers = JSON.parse(stored!);
+      expect(timers["PROJ-1"]).toBeDefined();
+      expect(timers["PROJ-1"].running).toBe(true);
+    });
+  });
+
+  describe("Scenario: Stop timer opens log work modal with prefilled time", () => {
+    it("Given the timer is running, when stop is clicked, then the log work modal opens", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      await screen.findByTestId("timer-start");
+      await user.click(screen.getByTestId("timer-start"));
+      await screen.findByTestId("timer-stop");
+      await user.click(screen.getByTestId("timer-stop"));
+      expect(await screen.findByRole("dialog", { name: /log work/i })).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Log work from detail view (10.2)", () => {
+  describe("Scenario: Log work button opens modal", () => {
+    it("Given the issue detail is open, when log work button is clicked, then the log work modal opens", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      expect(await screen.findByTestId("log-work-button")).toBeInTheDocument();
+      await user.click(screen.getByTestId("log-work-button"));
+      expect(await screen.findByRole("dialog", { name: /log work/i })).toBeInTheDocument();
+      expect(screen.getByTestId("log-work-time")).toBeInTheDocument();
+      expect(screen.getByTestId("log-work-comment")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Log work validates time spent", () => {
+    it("Given the log work modal is open, when submit is clicked without time, then an error is shown", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      await user.click(await screen.findByTestId("log-work-button"));
+      await screen.findByRole("dialog", { name: /log work/i });
+      await user.click(screen.getByTestId("log-work-submit"));
+      expect(await screen.findByTestId("log-work-error")).toHaveTextContent(/time spent is required/i);
+    });
+  });
+
+  describe("Scenario: Log work submits to API", () => {
+    it("Given the log work modal has valid data, when submit is clicked, then it sends to the API", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      await user.click(await screen.findByTestId("log-work-button"));
+      await screen.findByRole("dialog", { name: /log work/i });
+      await user.type(screen.getByTestId("log-work-time"), "1h 30m");
+      await user.type(screen.getByTestId("log-work-comment"), "Testing");
+      await user.click(screen.getByTestId("log-work-submit"));
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const worklogCall = calls.find(
+          (c: unknown[]) => typeof c[0] === "string" && c[0].includes("/worklog") && (c[1] as RequestInit)?.method === "POST"
+        );
+        expect(worklogCall).toBeDefined();
+        const body = JSON.parse((worklogCall![1] as RequestInit).body as string);
+        expect(body.timeSpent).toBe("1h 30m");
+        expect(body.comment).toBe("Testing");
+      });
+    });
+  });
+});
+
+describe("Feature: Display logged vs estimated time (10.3)", () => {
+  describe("Scenario: Time tracking progress bar is displayed", () => {
+    it("Given the issue has time tracking data, then the progress bar shows logged vs estimated", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      expect(await screen.findByTestId("time-tracking-bar")).toBeInTheDocument();
+      expect(screen.getByTestId("time-logged")).toHaveTextContent("Logged: 2h");
+      expect(screen.getByTestId("time-estimated")).toHaveTextContent("Estimated: 4h");
+    });
+
+    it("Given the issue has time tracking data, then the percentage is shown", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      expect(await screen.findByTestId("time-percent")).toHaveTextContent("50%");
+    });
+  });
+
+  describe("Scenario: Progress bar has correct visual state", () => {
+    it("Given time tracking data exists, then a progressbar element is rendered", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      await screen.findByTestId("time-tracking-bar");
+      expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "50");
+    });
+  });
+});
+
+describe("Feature: Work log history (10.4)", () => {
+  describe("Scenario: Work log entries are displayed", () => {
+    it("Given the issue has work logs, then entries are shown with time and author", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      expect(await screen.findByTestId("worklog-history")).toBeInTheDocument();
+      const entries = screen.getAllByTestId("worklog-entry");
+      expect(entries).toHaveLength(2);
+      expect(entries[0]).toHaveTextContent("1h");
+      expect(entries[0]).toHaveTextContent("Alice Martin");
+      expect(entries[0]).toHaveTextContent("Worked on login form");
+    });
+  });
+
+  describe("Scenario: Work log shows entry count", () => {
+    it("Given the issue has 2 work logs, then the header shows the count", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      expect(await screen.findByText(/Work Log \(2 entries\)/)).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: No work logs shows empty message", () => {
+    it("Given the issue has no work logs, then a message indicates no work logged", async () => {
+      setupFetchMock();
+      // Override worklog response to empty
+      const originalFetch = global.fetch as ReturnType<typeof vi.fn>;
+      const originalImpl = originalFetch.getMockImplementation()!;
+      global.fetch = vi.fn((url: string | URL | Request, init?: RequestInit) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.match(/\/api\/issues\/[A-Z]+-\d+\/worklog/) && (!init?.method || init.method === "GET")) {
+          return Promise.resolve({
+            ok: true,
+            json: () => Promise.resolve({ worklogs: [], total: 0 }),
+          } as Response);
+        }
+        return originalImpl(url, init);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+      const user = userEvent.setup();
+      await user.click(screen.getByText("PROJ-1"));
+      expect(await screen.findByTestId("no-worklogs")).toHaveTextContent("No work logged yet.");
     });
   });
 });

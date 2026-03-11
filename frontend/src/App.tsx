@@ -34,6 +34,32 @@ interface Issue {
   updated: string;
 }
 
+interface TimeTracking {
+  originalEstimate: string;
+  remainingEstimate: string;
+  timeSpent: string;
+  originalEstimateSeconds: number;
+  remainingEstimateSeconds: number;
+  timeSpentSeconds: number;
+}
+
+interface WorklogEntry {
+  id: string;
+  timeSpent: string;
+  timeSpentSeconds: number;
+  comment: string;
+  created: string;
+  updated: string;
+  author: { accountId: string; displayName: string; avatarUrl: string };
+}
+
+interface TimerState {
+  issueKey: string;
+  startedAt: number;
+  elapsed: number; // accumulated ms before current run
+  running: boolean;
+}
+
 interface IssueDetail extends Issue {
   description: string;
   descriptionAdf: AdfNode | null;
@@ -43,6 +69,7 @@ interface IssueDetail extends Issue {
   created: string;
   dueDate: string | null;
   transitions: { id: string; name: string }[];
+  timeTracking?: TimeTracking;
 }
 
 interface JiraPriority {
@@ -1053,6 +1080,331 @@ function InlineEditLabels({
   );
 }
 
+/* ── Time Tracking ── */
+
+const TIMER_STORAGE_KEY = "jira-ui-timers";
+
+function loadTimers(): Record<string, TimerState> {
+  try {
+    const stored = localStorage.getItem(TIMER_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : {};
+  } catch {
+    return {};
+  }
+}
+
+function persistTimers(timers: Record<string, TimerState>) {
+  localStorage.setItem(TIMER_STORAGE_KEY, JSON.stringify(timers));
+}
+
+function formatElapsed(ms: number): string {
+  const totalSeconds = Math.floor(ms / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  if (hours > 0) return `${hours}h ${minutes}m ${seconds}s`;
+  if (minutes > 0) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+}
+
+function formatSecondsToJira(totalSeconds: number): string {
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  if (hours > 0 && minutes > 0) return `${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h`;
+  if (minutes > 0) return `${minutes}m`;
+  return "1m";
+}
+
+function useIssueTimer(issueKey: string) {
+  const [timers, setTimers] = useState<Record<string, TimerState>>(loadTimers);
+  const timer = timers[issueKey];
+  const [now, setNow] = useState(Date.now());
+
+  useEffect(() => {
+    if (!timer?.running) return;
+    const id = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(id);
+  }, [timer?.running]);
+
+  const elapsed = timer
+    ? timer.running
+      ? timer.elapsed + (now - timer.startedAt)
+      : timer.elapsed
+    : 0;
+
+  const updateTimers = (fn: (prev: Record<string, TimerState>) => Record<string, TimerState>) => {
+    setTimers((prev) => {
+      const next = fn(prev);
+      persistTimers(next);
+      return next;
+    });
+  };
+
+  const start = () => {
+    setNow(Date.now());
+    updateTimers((prev) => ({
+      ...prev,
+      [issueKey]: {
+        issueKey,
+        startedAt: Date.now(),
+        elapsed: prev[issueKey]?.elapsed || 0,
+        running: true,
+      },
+    }));
+  };
+
+  const pause = () => {
+    updateTimers((prev) => {
+      const t = prev[issueKey];
+      if (!t || !t.running) return prev;
+      return {
+        ...prev,
+        [issueKey]: {
+          ...t,
+          elapsed: t.elapsed + (Date.now() - t.startedAt),
+          running: false,
+        },
+      };
+    });
+  };
+
+  const stop = () => {
+    updateTimers((prev) => {
+      const copy = { ...prev };
+      delete copy[issueKey];
+      return copy;
+    });
+  };
+
+  return { elapsed, running: timer?.running || false, hasTimer: !!timer, start, pause, stop };
+}
+
+function IssueTimer({ issueKey, onLogWork }: { issueKey: string; onLogWork: (prefill: string) => void }) {
+  const { elapsed, running, hasTimer, start, pause, stop } = useIssueTimer(issueKey);
+
+  const handleStop = () => {
+    const totalSeconds = Math.floor(elapsed / 1000);
+    onLogWork(totalSeconds > 0 ? formatSecondsToJira(totalSeconds) : "");
+    stop();
+  };
+
+  return (
+    <div className="flex items-center gap-2" data-testid="issue-timer">
+      <span className="font-mono text-sm text-zinc-300" data-testid="timer-display">
+        {hasTimer ? formatElapsed(elapsed) : "0s"}
+      </span>
+      {!running ? (
+        <button
+          onClick={start}
+          className="rounded bg-green-700 px-2 py-0.5 text-xs text-white hover:bg-green-600 transition-colors cursor-pointer"
+          aria-label={hasTimer ? "Resume timer" : "Start timer"}
+          data-testid="timer-start"
+        >
+          {hasTimer ? "▶ Resume" : "▶ Start"}
+        </button>
+      ) : (
+        <button
+          onClick={pause}
+          className="rounded bg-yellow-700 px-2 py-0.5 text-xs text-white hover:bg-yellow-600 transition-colors cursor-pointer"
+          aria-label="Pause timer"
+          data-testid="timer-pause"
+        >
+          ⏸ Pause
+        </button>
+      )}
+      {hasTimer && (
+        <button
+          onClick={handleStop}
+          className="rounded bg-red-700 px-2 py-0.5 text-xs text-white hover:bg-red-600 transition-colors cursor-pointer"
+          aria-label="Stop timer and log"
+          data-testid="timer-stop"
+        >
+          ⏹ Stop & Log
+        </button>
+      )}
+    </div>
+  );
+}
+
+function LogWorkModal({
+  issueKey,
+  prefill,
+  onClose,
+  onSuccess,
+}: {
+  issueKey: string;
+  prefill?: string;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [timeSpent, setTimeSpent] = useState(prefill || "");
+  const [comment, setComment] = useState("");
+  const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [onClose]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!timeSpent.trim()) {
+      setError("Time spent is required (e.g. 1h 30m)");
+      return;
+    }
+    setSubmitting(true);
+    setError("");
+    try {
+      const res = await fetch(`${API}/api/issues/${issueKey}/worklog`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ timeSpent: timeSpent.trim(), comment: comment.trim() }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.detail || `Error ${res.status}`);
+      }
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to log work");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/50" role="dialog" aria-label="Log work">
+      <div className="w-full max-w-md mx-4 rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-lg font-semibold text-zinc-100">Log Work — {issueKey}</h3>
+          <button onClick={onClose} className="text-zinc-400 hover:text-zinc-200" aria-label="Close log work modal">✕</button>
+        </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">Time Spent *</label>
+            <input
+              type="text"
+              value={timeSpent}
+              onChange={(e) => setTimeSpent(e.target.value)}
+              placeholder="e.g. 1h 30m, 2h, 45m"
+              className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
+              aria-label="Time spent"
+              autoFocus
+              data-testid="log-work-time"
+            />
+          </div>
+          <div>
+            <label className="block text-xs text-zinc-500 mb-1">Description</label>
+            <textarea
+              value={comment}
+              onChange={(e) => setComment(e.target.value)}
+              placeholder="What did you work on?"
+              rows={3}
+              className="w-full rounded-md border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none resize-none"
+              aria-label="Work description"
+              data-testid="log-work-comment"
+            />
+          </div>
+          {error && <p className="text-xs text-red-400" data-testid="log-work-error">{error}</p>}
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md px-3 py-1.5 text-sm text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="rounded-md bg-blue-600 px-3 py-1.5 text-sm text-white hover:bg-blue-500 disabled:opacity-50 transition-colors cursor-pointer"
+              data-testid="log-work-submit"
+            >
+              {submitting ? "Logging..." : "Log Work"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+function TimeTrackingBar({ timeTracking }: { timeTracking?: TimeTracking }) {
+  if (!timeTracking) return null;
+  const { originalEstimateSeconds, timeSpentSeconds, timeSpent, originalEstimate, remainingEstimate } = timeTracking;
+  if (!originalEstimateSeconds && !timeSpentSeconds) return null;
+
+  const percent = originalEstimateSeconds > 0
+    ? Math.min(100, Math.round((timeSpentSeconds / originalEstimateSeconds) * 100))
+    : 0;
+  const overEstimate = originalEstimateSeconds > 0 && timeSpentSeconds > originalEstimateSeconds;
+
+  return (
+    <div data-testid="time-tracking-bar">
+      <label className="block text-xs text-zinc-500 mb-1">Time Tracking</label>
+      <div className="space-y-1">
+        {originalEstimateSeconds > 0 && (
+          <div className="h-2 w-full rounded-full bg-zinc-800 overflow-hidden" role="progressbar" aria-valuenow={percent} aria-valuemin={0} aria-valuemax={100}>
+            <div
+              className={`h-full rounded-full transition-all ${overEstimate ? "bg-red-500" : "bg-blue-500"}`}
+              style={{ width: `${Math.min(percent, 100)}%` }}
+            />
+          </div>
+        )}
+        <div className="flex justify-between text-xs text-zinc-400">
+          <span data-testid="time-logged">Logged: {timeSpent || "0m"}</span>
+          {originalEstimate && <span data-testid="time-estimated">Estimated: {originalEstimate}</span>}
+          {remainingEstimate && <span>Remaining: {remainingEstimate}</span>}
+        </div>
+        {originalEstimateSeconds > 0 && (
+          <span className="text-xs text-zinc-500" data-testid="time-percent">{percent}%</span>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function WorklogHistory({ issueKey }: { issueKey: string }) {
+  const { data, isLoading } = useQuery({
+    queryKey: ["worklogs", issueKey],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/issues/${issueKey}/worklog`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<{ worklogs: WorklogEntry[]; total: number }>;
+    },
+    enabled: !!issueKey,
+  });
+
+  if (isLoading) return <p className="text-xs text-zinc-500">Loading work logs...</p>;
+  if (!data?.worklogs?.length) return <p className="text-xs text-zinc-500" data-testid="no-worklogs">No work logged yet.</p>;
+
+  return (
+    <div data-testid="worklog-history">
+      <label className="block text-xs text-zinc-500 mb-2">Work Log ({data.total} {data.total === 1 ? "entry" : "entries"})</label>
+      <div className="space-y-2 max-h-48 overflow-y-auto">
+        {data.worklogs.map((w) => (
+          <div key={w.id} className="rounded border border-zinc-800 bg-zinc-900/50 p-2 text-xs" data-testid="worklog-entry">
+            <div className="flex items-center justify-between">
+              <span className="font-medium text-zinc-200">{w.timeSpent}</span>
+              <span className="text-zinc-500">{w.created ? new Date(w.created).toLocaleDateString() : ""}</span>
+            </div>
+            {w.author?.displayName && (
+              <span className="text-zinc-400">{w.author.displayName}</span>
+            )}
+            {w.comment && <p className="mt-1 text-zinc-400">{w.comment}</p>}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 /* ── Issue Detail Panel ── */
 
 const FALLBACK_PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest"];
@@ -1134,11 +1486,15 @@ function IssueDetailPanel({
   });
 
   const [editingDescription, setEditingDescription] = useState(false);
+  const [logWorkOpen, setLogWorkOpen] = useState(false);
+  const [logWorkPrefill, setLogWorkPrefill] = useState("");
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
-        if (editingDescription) {
+        if (logWorkOpen) {
+          setLogWorkOpen(false);
+        } else if (editingDescription) {
           setEditingDescription(false);
         } else {
           onClose();
@@ -1147,7 +1503,7 @@ function IssueDetailPanel({
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [onClose, editingDescription]);
+  }, [onClose, editingDescription, logWorkOpen]);
 
   if (isLoading) {
     return (
@@ -1191,18 +1547,31 @@ function IssueDetailPanel({
       <div className="hidden md:block flex-1 bg-black/50" onClick={onClose} aria-hidden="true" />
       <div className="w-full md:w-[600px] lg:w-[720px] bg-zinc-950 border-l border-zinc-800 overflow-y-auto flex flex-col">
         {/* Panel header */}
-        <div className="flex items-center justify-between border-b border-zinc-800 px-4 sm:px-6 py-3 shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="text-xs text-zinc-500">{issue.type?.name}</span>
-            <span className="font-mono text-blue-400 font-semibold">{issue.key}</span>
+        <div className="border-b border-zinc-800 px-4 sm:px-6 py-3 shrink-0 space-y-2">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-xs text-zinc-500">{issue.type?.name}</span>
+              <span className="font-mono text-blue-400 font-semibold">{issue.key}</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => { setLogWorkPrefill(""); setLogWorkOpen(true); }}
+                className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1 text-xs text-zinc-400 hover:border-blue-600 hover:text-blue-400 transition-colors cursor-pointer"
+                aria-label="Log work"
+                data-testid="log-work-button"
+              >
+                Log Work
+              </button>
+              <button
+                onClick={onClose}
+                className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
+                aria-label="Close detail panel"
+              >
+                ✕
+              </button>
+            </div>
           </div>
-          <button
-            onClick={onClose}
-            className="rounded-md p-1.5 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors"
-            aria-label="Close detail panel"
-          >
-            ✕
-          </button>
+          <IssueTimer issueKey={issueKey} onLogWork={(prefill) => { setLogWorkPrefill(prefill); setLogWorkOpen(true); }} />
         </div>
 
         {/* Panel body */}
@@ -1367,11 +1736,30 @@ function IssueDetailPanel({
             </div>
           </div>
 
+          {/* Time Tracking */}
+          <TimeTrackingBar timeTracking={issue.timeTracking} />
+
+          {/* Work Log History */}
+          <WorklogHistory issueKey={issueKey} />
+
           {/* Mutation feedback */}
           {updateMutation.isPending && <p className="text-xs text-zinc-500">Saving changes...</p>}
           {updateMutation.isError && <p className="text-xs text-red-400">Failed to save changes.</p>}
         </div>
       </div>
+
+      {/* Log Work Modal */}
+      {logWorkOpen && (
+        <LogWorkModal
+          issueKey={issueKey}
+          prefill={logWorkPrefill}
+          onClose={() => setLogWorkOpen(false)}
+          onSuccess={() => {
+            queryClient.invalidateQueries({ queryKey: ["issue", issueKey] });
+            queryClient.invalidateQueries({ queryKey: ["worklogs", issueKey] });
+          }}
+        />
+      )}
     </div>
   );
 }

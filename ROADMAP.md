@@ -158,7 +158,7 @@
 | 8 | Saved filters | 2 | Complete |
 | 9 | Sprint dashboard | 3 | Complete |
 | 9b | Sprint CRUD | 3 | Not started |
-| 10 | Dark/light mode toggle | 3 | Partial |
-| 11 | Time tracking | 3 | Not started |
+| 10 | Time tracking | 3 | Complete |
+| 11 | Dark/light mode toggle | 3 | Partial |
 | 12 | Offline mode | 3 | Not started |
 | 13 | About / Features page | 3 | Not started |

@@ -107,7 +107,8 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **Bulk Actions** (tasks 7.1–7.5): checkbox selection on list rows, select all/deselect all, floating action bar with bulk transition/assign/priority dropdowns, `Promise.allSettled` batch API calls, success/failure result display, responsive layout
 - **Saved Filters** (tasks 8.1–8.4): save current filter combination (project + status + type + assignee) as named view, quick-access dropdown in header, inline rename/delete, localStorage persistence (`jira-ui-saved-filters`)
 - **Sprint Dashboard** (tasks 9.1–9.4): active sprint overview with issue counts by status (pie chart), burndown chart (remaining vs ideal), velocity chart (committed vs completed points across sprints), sprint scope change tracking, `s` keyboard shortcut, sprint selector dropdown, responsive layout
-- **Total: 186 BDD tests**
+- **Time Tracking** (tasks 10.1–10.4): built-in timer per issue (start/stop/pause) with localStorage persistence, log work modal (time spent + description), time tracking progress bar (logged vs estimated), worklog history display, backend `POST/GET /api/issues/{key}/worklog`
+- **Total: 200 BDD tests**
 
-Phase 1 complete. Phase 2 complete. Phase 3 in progress — Sprint dashboard done. Next up: tasks 10.1–10.4.
+Phase 1 complete. Phase 2 complete. Phase 3 in progress — Sprint dashboard and time tracking done.
 See `ROADMAP.md` for full status.

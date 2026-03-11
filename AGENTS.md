@@ -40,6 +40,7 @@ Tasks are tracked in `ROADMAP.md` with numbered IDs (e.g., `2.1`, `3.3`). When a
 - Create issue modal: `CreateIssueModal` component with project/summary/type/priority/assignee/description fields, form validation, `useMutation` + optimistic cache update via `setQueriesData`, `+ Create` button in header
 - Saved filters: `SavedFiltersDropdown` component with save/apply/rename/delete, `SavedFilter` interface (`id`, `name`, `project`, `filters`), persisted via `localStorage` (`jira-ui-saved-filters` key), save button appears only when filters are active
 - Sprint dashboard: `SprintDashboard` component with `recharts` (PieChart, LineChart, BarChart). Fetches from `/api/sprints`, `/api/sprints/{id}/issues`, `/api/sprints/{id}/burndown`, `/api/sprints/{id}/velocity`. Sprint selector dropdown, issue counts by status category, progress bar, burndown chart, velocity chart, scope change tracking. `s` shortcut switches to sprint view
+- Time tracking: `IssueTimer` component (start/stop/pause) in issue detail header. Timer state persisted in `localStorage` (`jira-ui-timers` key) via `useIssueTimer` hook. `LogWorkModal` for manual time entry (sends `POST /api/issues/{key}/worklog`). `TimeTrackingBar` shows logged vs estimated progress. `WorklogHistory` fetches and displays `GET /api/issues/{key}/worklog` entries. Issue detail response includes `timeTracking` object
 
 ### Testing (Vitest + Testing Library)
 
@@ -59,7 +60,7 @@ Backend returns normalized shapes — not raw Jira format:
 { issues: Issue[], total: number }
 
 // Issue detail: GET /api/issues/{key}
-Issue & { transitions: { id: string, name: string }[] }
+Issue & { transitions: { id: string, name: string }[], timeTracking: { originalEstimate: string, remainingEstimate: string, timeSpent: string, originalEstimateSeconds: number, remainingEstimateSeconds: number, timeSpentSeconds: number } }
 
 // Create issue: POST /api/issues
 // Body: { project: string, summary: string, issue_type?: string, priority?: string, assignee?: string, description?: string }
@@ -88,6 +89,13 @@ string[]
 
 // Sprint velocity: GET /api/sprints/{id}/velocity?board_id=
 { velocity: { sprintId: number, sprintName: string, state: string, committedPoints: number, completedPoints: number, committedCount: number, completedCount: number }[] }
+
+// Log work: POST /api/issues/{key}/worklog
+// Body: { timeSpent: string, comment?: string }
+// Returns: { status: string, key: string, worklog: object }
+
+// Worklogs: GET /api/issues/{key}/worklog
+{ worklogs: { id: string, timeSpent: string, timeSpentSeconds: number, comment: string, created: string, updated: string, author: { accountId: string, displayName: string, avatarUrl: string } }[], total: number }
 ```
 
 ### Screenshots

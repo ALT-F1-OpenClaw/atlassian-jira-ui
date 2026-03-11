@@ -138,6 +138,17 @@ async def get_issue(key: str):
         {"id": t["id"], "name": t["name"]}
         for t in (data or {}).get("transitions", [])
     ]
+    # Include time tracking fields
+    fields = (data or {}).get("fields", {})
+    tt = fields.get("timetracking", {}) or {}
+    issue["timeTracking"] = {
+        "originalEstimate": tt.get("originalEstimate", ""),
+        "remainingEstimate": tt.get("remainingEstimate", ""),
+        "timeSpent": tt.get("timeSpent", ""),
+        "originalEstimateSeconds": tt.get("originalEstimateSeconds", 0),
+        "remainingEstimateSeconds": tt.get("remainingEstimateSeconds", 0),
+        "timeSpentSeconds": tt.get("timeSpentSeconds", 0),
+    }
     return issue
 
 
@@ -238,3 +249,57 @@ async def transition_issue(key: str, req: TransitionRequest):
         json={"transition": {"id": req.transition_id}},
     )
     return {"status": "ok", "key": key}
+
+
+class LogWorkRequest(BaseModel):
+    timeSpent: str
+    comment: str = ""
+
+
+@router.post("/{key}/worklog")
+async def log_work(key: str, req: LogWorkRequest):
+    """Log work on an issue."""
+    payload: dict = {"timeSpent": req.timeSpent}
+    if req.comment:
+        payload["comment"] = {
+            "type": "doc",
+            "version": 1,
+            "content": [
+                {
+                    "type": "paragraph",
+                    "content": [{"type": "text", "text": req.comment}],
+                }
+            ],
+        }
+    try:
+        result = await jira_request("POST", f"/issue/{key}/worklog", json=payload)
+        return {"status": "ok", "key": key, "worklog": result}
+    except httpx.HTTPStatusError as e:
+        logger.error("Failed to log work on %s: %s", key, e.response.text)
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
+
+
+def _format_worklog(entry: dict) -> dict:
+    """Normalize a Jira worklog entry."""
+    author = entry.get("author", {})
+    return {
+        "id": entry.get("id", ""),
+        "timeSpent": entry.get("timeSpent", ""),
+        "timeSpentSeconds": entry.get("timeSpentSeconds", 0),
+        "comment": _extract_adf_text(entry.get("comment")),
+        "created": entry.get("created", ""),
+        "updated": entry.get("updated", ""),
+        "author": {
+            "accountId": author.get("accountId", ""),
+            "displayName": author.get("displayName", ""),
+            "avatarUrl": author.get("avatarUrls", {}).get("48x48", ""),
+        },
+    }
+
+
+@router.get("/{key}/worklog")
+async def get_worklogs(key: str):
+    """Get work logs for an issue."""
+    data = await jira_request("GET", f"/issue/{key}/worklog")
+    worklogs = [_format_worklog(w) for w in (data or {}).get("worklogs", [])]
+    return {"worklogs": worklogs, "total": (data or {}).get("total", len(worklogs))}
