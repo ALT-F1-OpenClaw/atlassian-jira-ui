@@ -1,3 +1,8 @@
+## [1.35.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.34.0...v1.35.0) (2026-03-11)
+
+### Features
+
+* offline mode with mutation queue and auto-sync (tasks 12.1-12.5) ([2e6f3a8](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/2e6f3a84cc2afdd2e7f10d6c8ca4e76b05791ac8))
 ## [1.34.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.33.0...v1.34.0) (2026-03-11)
 
 ### Features
