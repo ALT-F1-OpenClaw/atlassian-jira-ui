@@ -133,12 +133,22 @@
 
 **Tech**: `vite-plugin-pwa` (Workbox), IndexedDB for offline mutation queue, `navigator.onLine` event listeners.
 
-### 13. About / Features page
+### 13. UI visibility & navigation improvements
 
-- [ ] **13.1** Dedicated "About" page accessible from header (? or info icon)
-- [ ] **13.2** List all features with their corresponding release versions (e.g. "Kanban Board — v1.25.0")
-- [ ] **13.3** Show current app version, build date, and link to GitHub repo/changelog
-- [ ] **13.4** Responsive layout, dark themed
+- [ ] **13.1** Prominent view switcher — replace text buttons with icon tabs or segmented control (List / Board / Sprint) with active indicator
+- [ ] **13.2** Sidebar navigation — persistent sidebar with project list, sprint backlog, saved filters, and view shortcuts
+- [ ] **13.3** Breadcrumbs — show current context path (Project → Sprint → Issue) for orientation
+- [ ] **13.4** Dashboard landing page — overview cards showing active sprint status, recent issues, quick actions
+- [ ] **13.5** Empty states — helpful illustrations and CTAs when no sprint/issues exist (e.g. "Create your first sprint")
+
+**Tech**: Sidebar as a collapsible panel. Breadcrumb component in header. Dashboard aggregates existing API data. Empty states with inline action buttons.
+
+### 14. About / Features page
+
+- [ ] **14.1** Dedicated "About" page accessible from header (? or info icon)
+- [ ] **14.2** List all features with their corresponding release versions (e.g. "Kanban Board — v1.25.0")
+- [ ] **14.3** Show current app version, build date, and link to GitHub repo/changelog
+- [ ] **14.4** Responsive layout, dark themed
 
 **Tech**: Static data derived from CHANGELOG.md / hardcoded feature-version map. No API needed.
 
@@ -161,4 +171,5 @@
 | 10 | Time tracking | 3 | Complete |
 | 11 | Dark/light mode toggle | 3 | Complete |
 | 12 | Offline mode | 3 | Not started |
-| 13 | About / Features page | 3 | Not started |
+| 13 | UI visibility & navigation | 3 | Not started |
+| 14 | About / Features page | 3 | Not started |
