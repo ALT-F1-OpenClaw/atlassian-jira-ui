@@ -1,3 +1,8 @@
+## [1.43.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.42.0...v1.43.0) (2026-03-11)
+
+### Features
+
+* loading spinner while fetching data from backend ([ed3e73d](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/ed3e73d1e3b340dc48bc77562bcb23b15e06c7c9)), closes [#15](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/15)
 ## [1.42.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.41.0...v1.42.0) (2026-03-11)
 
 ### Features
