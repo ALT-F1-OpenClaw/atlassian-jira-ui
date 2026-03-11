@@ -1,3 +1,8 @@
+## [1.47.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.47.0...v1.47.1) (2026-03-11)
+
+### Bug Fixes
+
+* vitest no longer picks up Playwright e2e specs ([#29](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/29)) ([52b7887](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/52b7887ca71e6508a6290caae0ba9c10e856c988))
 ## [1.47.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.46.0...v1.47.0) (2026-03-11)
 
 ### Features
