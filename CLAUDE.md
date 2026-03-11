@@ -90,11 +90,16 @@ VITE_API_URL=http://localhost:35400
 
 ## Current State
 
-Phase 1, Sections 1–2 complete:
-- **List View** (tasks 1.1–1.4): table, sorting, filters, pagination — 32 BDD tests
+Phase 1, Sections 1–2 complete + enhancements:
+- **List View** (tasks 1.1–1.4): table, sorting, filters, pagination
 - **Responsive design**: mobile-first cards, stacked filters, adaptive pagination
-- **Issue Detail Panel** (tasks 2.1–2.5): slide-in side panel, ADF rendering, inline editing (summary, description, assignee, priority), status transitions, metadata display, ADF edit button — 25 BDD tests
-- **Total: 57 BDD tests**
+- **Issue Detail Panel** (tasks 2.1–2.5): slide-in side panel, ADF rendering, inline editing, status transitions, metadata display
+- **Rich text editor**: TipTap-based ADF editor with toolbar (bold, italic, headings, lists, links, code blocks)
+- **Smart dropdowns**: Assignee (from Jira project members), Priority (from Jira priorities), Status transitions
+- **Date picker**: Native date widget for due date (add/clear)
+- **Editable labels**: Add/remove with autocomplete from Jira labels
+- **PWA**: Web app manifest, service worker, installable on mobile
+- **Total: 79 BDD tests**
 
 Next up: Board view / Kanban (tasks 3.1–3.4), then Command palette (tasks 4.1–4.4).
 See `ROADMAP.md` for full status.

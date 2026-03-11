@@ -57,6 +57,15 @@ Issue & { transitions: { id: string, name: string }[] }
 
 // Projects: GET /api/projects
 { key: string, name: string, id: string }[]
+
+// Project members: GET /api/projects/{key}/members
+{ accountId: string, displayName: string, avatarUrl: string, active: boolean }[]
+
+// Priorities: GET /api/priorities
+{ id: string, name: string, iconUrl: string }[]
+
+// Labels: GET /api/labels
+string[]
 ```
 
 ### Screenshots
