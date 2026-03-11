@@ -1,3 +1,8 @@
+## [1.29.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.28.0...v1.29.0) (2026-03-11)
+
+### Features
+
+* quick create modal with form validation and optimistic UI (tasks 6.1-6.4) ([fa3d3ed](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/fa3d3ed04383511e3b6f7c5b5dbe766bf6ecfcc3))
 ## [1.28.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.27.0...v1.28.0) (2026-03-11)
 
 ### Features
