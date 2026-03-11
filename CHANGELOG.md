@@ -1,3 +1,8 @@
+## [1.32.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.31.0...v1.32.0) (2026-03-11)
+
+### Features
+
+* sprint dashboard with burndown and velocity charts (tasks 9.1-9.4) ([b120634](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/b120634b5fb46c01a0adef3074e95bbfb963e313))
 ## [1.31.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.30.0...v1.31.0) (2026-03-11)
 
 ### Features
