@@ -1,3 +1,12 @@
+## [1.41.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.40.0...v1.41.0) (2026-03-11)
+
+### Features
+
+* clickable issue keys in Manage Sprint Scope modal ([a92e945](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/a92e945c16d03d81199df2511e224d80c90e337b)), closes [#14](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/14)
+
+### Bug Fixes
+
+* bump-version script skips no-commit-to-branch pre-commit hook ([7a31517](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/7a3151706359cac8041d894db9074426d1ffb876))
 ## [1.40.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.39.2...v1.40.0) (2026-03-11)
 
 ### Features
