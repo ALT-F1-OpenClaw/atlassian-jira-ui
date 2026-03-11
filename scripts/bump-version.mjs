@@ -87,7 +87,7 @@ console.log(`\nCommitting and tagging v${newVersion}...`);
 execSync("git add package.json frontend/package.json backend/app/version.py CHANGELOG.md", {
   cwd: root,
 });
-execSync(`git commit -m "chore(release): v${newVersion}"`, { cwd: root, stdio: "inherit" });
+execSync(`git commit -m "chore(release): v${newVersion}"`, { cwd: root, stdio: "inherit", env: { ...process.env, SKIP: "no-commit-to-branch" } });
 execSync(`git tag v${newVersion}`, { cwd: root });
 
 console.log(`\nDone! Released v${newVersion}`);
