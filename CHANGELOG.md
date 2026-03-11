@@ -1,3 +1,8 @@
+## [1.46.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.45.0...v1.46.0) (2026-03-11)
+
+### Features
+
+* add 25 backend pytest tests for all API endpoints ([c393f7e](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/c393f7e95c549b4182ccae5dafc7409b6725bdce)), closes [#26](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/26)
 ## [1.45.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.44.3...v1.45.0) (2026-03-11)
 
 ### Features
