@@ -1160,8 +1160,8 @@ describe("Feature: Rich text description editing", () => {
     });
   });
 
-  describe("Scenario: No Edit button when description is plain text only", () => {
-    it("Given the issue has no ADF description, then no Edit button should appear next to Description label", async () => {
+  describe("Scenario: Edit button always shown for description", () => {
+    it("Given the issue has no ADF description, then the Edit button still appears and opens the rich text editor", async () => {
       setupFetchMock({
         issueDetail: {
           ...mockIssueDetail,
@@ -1177,10 +1177,12 @@ describe("Feature: Rich text description editing", () => {
       await user.click(issueKey.closest("tr")!);
 
       const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
-      const editButtons = within(panel).queryAllByRole("button").filter(
-        (btn) => btn.textContent?.includes("Edit") && btn.getAttribute("title") === "Edit description"
-      );
-      expect(editButtons).toHaveLength(0);
+      // Edit button should be visible even without ADF
+      const editBtn = within(panel).getByTitle("Edit description");
+      expect(editBtn).toBeInTheDocument();
+      // Clicking opens the rich text editor
+      await user.click(editBtn);
+      expect(within(panel).getByLabelText("Rich text editor")).toBeInTheDocument();
     });
   });
 

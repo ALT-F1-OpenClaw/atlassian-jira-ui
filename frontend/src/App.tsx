@@ -1964,7 +1964,7 @@ function IssueDetailPanel({
           <div>
             <div className="flex items-center gap-2 mb-1">
               <label className="block text-xs text-zinc-500">Description</label>
-              {issue.descriptionAdf && !editingDescription && (
+              {!editingDescription && (
                 <button
                   onClick={() => setEditingDescription(true)}
                   className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors cursor-pointer"
@@ -1985,16 +1985,16 @@ function IssueDetailPanel({
                 onCancel={() => setEditingDescription(false)}
               />
             ) : issue.descriptionAdf ? (
-              <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4">
+              <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 p-4 cursor-pointer hover:border-zinc-700 transition-colors" onClick={() => setEditingDescription(true)}>
                 <AdfRenderer node={issue.descriptionAdf} />
               </div>
             ) : (
-              <InlineEditText
-                value={issue.description || ""}
-                onSave={(v) => updateMutation.mutate({ description: v })}
-                label="description"
-                multiline
-              />
+              <div
+                onClick={() => setEditingDescription(true)}
+                className="rounded-lg border border-dashed border-zinc-700 bg-zinc-900/30 p-4 text-sm text-zinc-500 cursor-pointer hover:border-zinc-600 hover:text-zinc-400 transition-colors"
+              >
+                Click to add a description…
+              </div>
             )}
           </div>
 
