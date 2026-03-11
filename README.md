@@ -169,23 +169,42 @@ openssl rand -base64 32
 
 ## Docker
 
-### Prerequisites
+### Option 1: Pre-built images (recommended)
 
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed
-
-### Run with Docker Compose
+Pull pre-built multi-arch images from GitHub Container Registry (amd64 + arm64):
 
 ```bash
-# 1. Configure your environment
+# 1. Create your Jira credentials file
+mkdir -p backend
 cp backend/.env.example backend/.env
 # Edit backend/.env with your Jira credentials and APP_SECRET_KEY
 
-# 2. Build and start both services
-docker compose up --build
+# 2. Pull and run
+docker compose -f docker-compose.ghcr.yml up -d
+```
 
-# Or run in detached mode
+Images:
+- `ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend:latest`
+- `ghcr.io/alt-f1-openclaw/atlassian-jira-ui-frontend:latest`
+
+Tagged versions also available (e.g. `:1.39.2`, `:1.39`).
+
+### Option 2: Build from source
+
+```bash
+# 1. Clone the repo
+git clone https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui.git
+cd atlassian-jira-ui
+
+# 2. Configure your environment
+cp backend/.env.example backend/.env
+# Edit backend/.env with your Jira credentials and APP_SECRET_KEY
+
+# 3. Build and start both services
 docker compose up --build -d
 ```
+
+### Access
 
 - **Frontend** — <http://localhost:5173>
 - **Backend API** — <http://localhost:35400>
@@ -201,18 +220,6 @@ docker compose logs -f
 
 # Rebuild after code changes
 docker compose up --build
-```
-
-### Run services individually
-
-```bash
-# Backend only
-docker build -t jira-ui-backend ./backend
-docker run -p 35400:35400 --env-file ./backend/.env jira-ui-backend
-
-# Frontend only
-docker build -t jira-ui-frontend ./frontend
-docker run -p 5173:80 jira-ui-frontend
 ```
 
 ## Project Structure

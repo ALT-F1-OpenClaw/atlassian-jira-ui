@@ -116,4 +116,5 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **Total: 253 BDD tests**
 
 Phase 1 complete. Phase 2 complete. Phase 3 complete — Sprint dashboard, sprint CRUD, time tracking, dark/light mode, offline mode, UI navigation, and about page done.
+CI/CD: GitHub Actions (CI, release, Docker build, CodeQL, Dependabot). Docker images published to GHCR on tag push (multi-arch amd64+arm64).
 See `ROADMAP.md` for full status.

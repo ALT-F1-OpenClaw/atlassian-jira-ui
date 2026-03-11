@@ -158,8 +158,10 @@
 - [x] **15.2** Release workflow — build + create GitHub Release with changelog on tag push
 - [x] **15.3** Docker workflow — build and verify Docker images on push/PR to main
 - [x] **15.4** Node.js 24 compatibility — upgraded to `checkout@v6`, `setup-node@v5`, `setup-python@v6`
+- [x] **15.5** Publish Docker images to GHCR — multi-arch (amd64 + arm64) on tag push
+- [x] **15.6** `docker-compose.ghcr.yml` — pull pre-built images without building from source
 
-**Tech**: GitHub Actions, `ubuntu-latest` runners, npm/pip caching, matrix builds. Dummy env vars for CI backend validation. All actions Node.js 24 compatible.
+**Tech**: GitHub Actions, `ubuntu-latest` runners, npm/pip caching, matrix builds. Dummy env vars for CI backend validation. All actions Node.js 24 compatible. GHCR publishing with `docker/build-push-action@v6` + QEMU for multi-arch.
 
 ---
 

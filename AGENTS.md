@@ -152,3 +152,6 @@ string[]
 - CI/CD: backend/.env is gitignored — never commit real credentials
 - CI/CD: use latest GitHub Actions versions — `actions/checkout@v6`, `actions/setup-node@v5`, `actions/setup-python@v6` (Node.js 24 compatible)
 - CI/CD: `softprops/action-gh-release@v2` is latest for release workflow
+- Docker: images published to GHCR on tag push (`ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend` + `-frontend`)
+- Docker: multi-arch builds (linux/amd64 + linux/arm64) via QEMU + Buildx
+- Docker: `docker-compose.ghcr.yml` for pulling pre-built images; `docker-compose.yml` for building from source
