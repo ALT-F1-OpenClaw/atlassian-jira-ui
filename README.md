@@ -58,7 +58,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 | 3-5s page loads | Instant (SPA + API caching) |
 | Cluttered sidebars | Clean, focused views |
 | Tiny text, wasted space | Readable, dense when needed |
-| Confusing navigation | 3 views: Board, List, Detail |
+| Confusing navigation | Dashboard, Board, List, Sprint views + sidebar |
 | Search is broken | Fast fuzzy search + JQL |
 | Can't see what matters | Priority-sorted, status-colored |
 
@@ -82,6 +82,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - [x] **Time tracking** — Built-in timer per issue, log work modal, progress bar, worklog history
 - [x] **Dark/Light mode** — Toggle in header (sun/moon), CSS variable theme switching, localStorage persistence, system preference detection
 - [x] **Offline mode** — Service worker caching, IndexedDB mutation queue, auto-sync on reconnect, offline indicator
+- [x] **UI navigation** — Segmented view switcher with icons, collapsible sidebar (projects/filters/views), breadcrumbs, dashboard landing page, empty states with CTAs
 
 ### Additional Features
 - **Responsive design** — Mobile-first layout, stacked filters, adaptive pagination, works on phone/tablet/desktop
@@ -91,7 +92,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **Editable labels** — Add/remove with autocomplete from Jira labels
 - **Mobile Kanban arrows** — Arrow buttons on cards for status transitions (mobile only)
 - **PWA** — Web app manifest, service worker, installable on mobile
-- **229 BDD tests** — Comprehensive test coverage with Vitest + Testing Library
+- **248 BDD tests** — Comprehensive test coverage with Vitest + Testing Library
 
 ## Tech Stack
 
@@ -112,7 +113,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **dnd-kit** — drag & drop for board
 - **cmdk** — command palette
 - **Vitest** — fast unit testing
-- **Testing Library** — BDD-style component tests (229 scenarios)
+- **Testing Library** — BDD-style component tests (248 scenarios)
 
 ## Quick Start
 
@@ -235,7 +236,7 @@ atlassian-jira-ui/
 ├── frontend/
 │   ├── src/
 │   │   ├── App.tsx              # Single-file UI (all views)
-│   │   └── App.test.tsx         # 214 BDD test scenarios
+│   │   └── App.test.tsx         # 248 BDD test scenarios
 │   ├── package.json
 │   ├── vite.config.ts
 │   ├── .env.example
@@ -291,13 +292,13 @@ npm test
 npm run test:watch
 ```
 
-214 BDD test scenarios using [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) with `describe`/`it` blocks following Given/When/Then naming.
+248 BDD test scenarios using [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) with `describe`/`it` blocks following Given/When/Then naming.
 
 ### Test structure
 
 ```text
 frontend/src/
-├── App.test.tsx              # 208 BDD test scenarios
+├── App.test.tsx              # 248 BDD test scenarios
 ├── test/
 │   └── setup.ts              # Testing Library + jest-dom setup
 └── vitest.config.ts          # Vitest configuration

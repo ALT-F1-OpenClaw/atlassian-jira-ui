@@ -1886,7 +1886,7 @@ describe("Feature: Board view displays issues in Kanban columns", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      const boardBtn = screen.getByRole("button", { name: /board/i });
+      const boardBtn = screen.getByRole("tab", { name: /board/i });
       await user.click(boardBtn);
 
       const board = await screen.findByRole("region", { name: /Kanban board/ });
@@ -1901,7 +1901,7 @@ describe("Feature: Board view displays issues in Kanban columns", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const todoColumn = await screen.findByTestId("board-column-new");
       expect(within(todoColumn).getByText("PROJ-2")).toBeInTheDocument();
@@ -1911,7 +1911,7 @@ describe("Feature: Board view displays issues in Kanban columns", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const inProgressColumn = await screen.findByTestId("board-column-indeterminate");
       expect(within(inProgressColumn).getByText("PROJ-1")).toBeInTheDocument();
@@ -1921,7 +1921,7 @@ describe("Feature: Board view displays issues in Kanban columns", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const doneColumn = await screen.findByTestId("board-column-done");
       expect(within(doneColumn).getByText("PROJ-3")).toBeInTheDocument();
@@ -1933,7 +1933,7 @@ describe("Feature: Board view displays issues in Kanban columns", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       await screen.findByTestId("board-column-new");
 
@@ -1951,7 +1951,7 @@ describe("Feature: Board view issue cards display key, summary, priority, assign
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
       expect(within(card).getByText("PROJ-1")).toBeInTheDocument();
@@ -1964,7 +1964,7 @@ describe("Feature: Board view issue cards display key, summary, priority, assign
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
       expect(within(card).getByTitle("High")).toBeInTheDocument();
@@ -1976,7 +1976,7 @@ describe("Feature: Board view issue cards display key, summary, priority, assign
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
       expect(within(card).getByTitle("Alice Martin")).toBeInTheDocument();
@@ -1989,7 +1989,7 @@ describe("Feature: Board view issue cards display key, summary, priority, assign
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-2/ });
       // No avatar initials element
@@ -2004,7 +2004,7 @@ describe("Feature: Board view issue cards display key, summary, priority, assign
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
       await user.click(card);
@@ -2022,7 +2022,7 @@ describe("Feature: Board view supports swimlanes", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const swimlaneSelect = await screen.findByLabelText("Swimlane grouping");
       expect(swimlaneSelect).toHaveValue("none");
@@ -2034,7 +2034,7 @@ describe("Feature: Board view supports swimlanes", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
       const swimlaneSelect = await screen.findByLabelText("Swimlane grouping");
       await user.selectOptions(swimlaneSelect, "assignee");
 
@@ -2048,7 +2048,7 @@ describe("Feature: Board view supports swimlanes", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
       const swimlaneSelect = await screen.findByLabelText("Swimlane grouping");
       await user.selectOptions(swimlaneSelect, "priority");
 
@@ -2064,7 +2064,7 @@ describe("Feature: Board view supports swimlanes", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
       const swimlaneSelect = await screen.findByLabelText("Swimlane grouping");
       await user.selectOptions(swimlaneSelect, "priority");
 
@@ -2086,7 +2086,7 @@ describe("Feature: Board view supports swimlanes", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
       const swimlaneSelect = await screen.findByLabelText("Swimlane grouping");
       await user.selectOptions(swimlaneSelect, "assignee");
 
@@ -2100,15 +2100,15 @@ describe("Feature: Board view drag-and-drop triggers status transition", () => {
     it("Given the app is loaded, then both Board and List view buttons should be visible", async () => {
       render(<App />, { wrapper: createWrapper() });
 
-      expect(screen.getByRole("button", { name: /board/i })).toBeInTheDocument();
-      expect(screen.getByRole("button", { name: /list/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /board/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /list/i })).toBeInTheDocument();
     });
 
     it("Given the user clicks Board, then the board view should be shown and List view hidden", async () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       expect(await screen.findByRole("region", { name: /Kanban board/ })).toBeInTheDocument();
       // List table should not be present
@@ -2121,7 +2121,7 @@ describe("Feature: Board view drag-and-drop triggers status transition", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
       expect(within(card).getByText("Story")).toBeInTheDocument();
@@ -2135,7 +2135,7 @@ describe("Feature: Board view quick-action arrows for mobile", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
       expect(within(card).getByRole("button", { name: /Move PROJ-1 left/ })).toBeInTheDocument();
@@ -2148,7 +2148,7 @@ describe("Feature: Board view quick-action arrows for mobile", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-2/ });
       expect(within(card).queryByRole("button", { name: /Move PROJ-2 left/ })).not.toBeInTheDocument();
@@ -2161,7 +2161,7 @@ describe("Feature: Board view quick-action arrows for mobile", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-3/ });
       expect(within(card).getByRole("button", { name: /Move PROJ-3 left/ })).toBeInTheDocument();
@@ -2174,7 +2174,7 @@ describe("Feature: Board view quick-action arrows for mobile", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
       await user.click(within(card).getByRole("button", { name: /Move PROJ-1 right/ }));
@@ -2202,7 +2202,7 @@ describe("Feature: Board view quick-action arrows for mobile", () => {
       render(<App />, { wrapper: createWrapper() });
       const user = userEvent.setup();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
       expect(within(card).getByRole("group", { name: /Move PROJ-1/ })).toBeInTheDocument();
@@ -3269,7 +3269,7 @@ describe("Feature: Bulk actions on selected issues", () => {
       await user.click(screen.getByLabelText("Select PROJ-1"));
       expect(screen.getByRole("toolbar", { name: /bulk actions/i })).toBeInTheDocument();
 
-      await user.click(screen.getByRole("button", { name: /board/i }));
+      await user.click(screen.getByRole("tab", { name: /board/i }));
       expect(screen.queryByRole("toolbar", { name: /bulk actions/i })).not.toBeInTheDocument();
     });
   });
@@ -3455,13 +3455,13 @@ describe("Feature: Sprint dashboard shows active sprint overview", () => {
   describe("Scenario: Sprint view is accessible from nav", () => {
     it("Given the app is rendered, then there should be a Sprint nav button", async () => {
       render(<App />, { wrapper: createWrapper() });
-      expect(screen.getByRole("button", { name: /sprint/i })).toBeInTheDocument();
+      expect(screen.getByRole("tab", { name: /sprint/i })).toBeInTheDocument();
     });
 
     it("Given the app is rendered, when the user clicks Sprint, then the sprint dashboard loads", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       expect(await screen.findByTestId("sprint-dashboard")).toBeInTheDocument();
     });
 
@@ -3478,14 +3478,14 @@ describe("Feature: Sprint dashboard shows active sprint overview", () => {
     it("Given the sprint view is active, then the sprint name is displayed", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       expect(await screen.findByTestId("sprint-name")).toHaveTextContent("Sprint 42");
     });
 
     it("Given the sprint view is active, then issue counts by status category are shown", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       const dashboard = await screen.findByTestId("sprint-dashboard");
       // Total issues = 4
       expect(within(dashboard).getByText("4")).toBeInTheDocument();
@@ -3497,7 +3497,7 @@ describe("Feature: Sprint dashboard shows active sprint overview", () => {
     it("Given the sprint view is active, then completion percentage is shown", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       expect(await screen.findByTestId("sprint-completion")).toHaveTextContent("25% complete");
     });
   });
@@ -3529,7 +3529,7 @@ describe("Feature: Sprint dashboard shows active sprint overview", () => {
       });
 
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       expect(await screen.findByTestId("no-active-sprint")).toBeInTheDocument();
       expect(screen.getByText("No active sprint")).toBeInTheDocument();
     });
@@ -3541,7 +3541,7 @@ describe("Feature: Burndown chart shows remaining work over time (9.2)", () => {
     it("Given the sprint view is active, then the burndown chart section is displayed", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       expect(await screen.findByText("Burndown Chart")).toBeInTheDocument();
     });
   });
@@ -3552,7 +3552,7 @@ describe("Feature: Velocity chart shows story points per sprint (9.3)", () => {
     it("Given the sprint view is active, then the velocity chart section is displayed", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       expect(await screen.findByText("Velocity Chart")).toBeInTheDocument();
     });
   });
@@ -3563,21 +3563,21 @@ describe("Feature: Sprint scope change tracking (9.4)", () => {
     it("Given the sprint view is active, then the scope changes section is displayed", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       expect(await screen.findByText("Scope Changes")).toBeInTheDocument();
     });
 
     it("Given sprint has issues added after start, then scope change count is shown", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       expect(await screen.findByTestId("scope-change-count")).toHaveTextContent("+1");
     });
 
     it("Given sprint has scope changes, then added issue keys are listed", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       expect(await screen.findByText("PROJ-4")).toBeInTheDocument();
       expect(screen.getByText("Added after sprint start")).toBeInTheDocument();
     });
@@ -3591,14 +3591,14 @@ describe("Feature: Create sprint (9b.1)", () => {
     it("Given the sprint dashboard is active, then a Create Sprint button is visible", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       expect(await screen.findByTestId("create-sprint-btn")).toBeInTheDocument();
     });
 
     it("Given the sprint dashboard is active, when user clicks Create Sprint, then the create modal opens", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("create-sprint-btn"));
       expect(await screen.findByTestId("create-sprint-modal")).toBeInTheDocument();
@@ -3611,7 +3611,7 @@ describe("Feature: Create sprint (9b.1)", () => {
     it("Given the create sprint modal is open, when user fills name and submits, then the API is called", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("create-sprint-btn"));
       await screen.findByTestId("create-sprint-modal");
@@ -3629,7 +3629,7 @@ describe("Feature: Create sprint (9b.1)", () => {
     it("Given the create sprint modal is open, when user clicks Cancel, then the modal closes", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("create-sprint-btn"));
       await screen.findByTestId("create-sprint-modal");
@@ -3646,7 +3646,7 @@ describe("Feature: Edit sprint (9b.2)", () => {
     it("Given the sprint dashboard is active, when user clicks Edit, then the edit modal opens with current sprint data", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("edit-sprint-btn"));
       expect(await screen.findByTestId("edit-sprint-modal")).toBeInTheDocument();
@@ -3657,7 +3657,7 @@ describe("Feature: Edit sprint (9b.2)", () => {
     it("Given the edit modal is open, when user changes name and submits, then the PATCH API is called", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("edit-sprint-btn"));
       await screen.findByTestId("edit-sprint-modal");
@@ -3699,7 +3699,7 @@ describe("Feature: Start/Complete sprint (9b.3)", () => {
 
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       expect(screen.getByTestId("start-sprint-btn")).toBeInTheDocument();
       await user.click(screen.getByTestId("start-sprint-btn"));
@@ -3713,7 +3713,7 @@ describe("Feature: Start/Complete sprint (9b.3)", () => {
     it("Given an active sprint, when user clicks Complete Sprint, then a confirmation dialog appears", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       expect(screen.getByTestId("complete-sprint-btn")).toBeInTheDocument();
       await user.click(screen.getByTestId("complete-sprint-btn"));
@@ -3725,7 +3725,7 @@ describe("Feature: Start/Complete sprint (9b.3)", () => {
     it("Given the complete confirmation dialog is open, when user confirms, then the API is called", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("complete-sprint-btn"));
       await screen.findByTestId("confirm-dialog");
@@ -3744,7 +3744,7 @@ describe("Feature: Delete sprint (9b.4)", () => {
     it("Given the sprint dashboard is active, when user clicks Delete, then a confirmation dialog appears", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("delete-sprint-btn"));
       const dialog = await screen.findByTestId("confirm-dialog");
@@ -3756,7 +3756,7 @@ describe("Feature: Delete sprint (9b.4)", () => {
     it("Given the delete confirmation is open, when user confirms, then the DELETE API is called", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("delete-sprint-btn"));
       await screen.findByTestId("confirm-dialog");
@@ -3771,7 +3771,7 @@ describe("Feature: Delete sprint (9b.4)", () => {
     it("Given the delete confirmation is open, when user clicks Cancel, then the dialog closes", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("delete-sprint-btn"));
       await screen.findByTestId("confirm-dialog");
@@ -3788,7 +3788,7 @@ describe("Feature: Manage sprint scope (9b.5)", () => {
     it("Given the sprint dashboard is active, when user clicks Manage Scope, then the scope modal opens with current issues", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("manage-scope-btn"));
       expect(await screen.findByTestId("manage-scope-modal")).toBeInTheDocument();
@@ -3799,7 +3799,7 @@ describe("Feature: Manage sprint scope (9b.5)", () => {
     it("Given the scope modal is open, when user types an issue key and clicks Add, then the POST API is called", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("manage-scope-btn"));
       await screen.findByTestId("manage-scope-modal");
@@ -3817,7 +3817,7 @@ describe("Feature: Manage sprint scope (9b.5)", () => {
     it("Given the scope modal shows issues, when user clicks Remove on an issue, then the DELETE API is called", async () => {
       const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
-      await user.click(screen.getByRole("button", { name: /sprint/i }));
+      await user.click(screen.getByRole("tab", { name: /sprint/i }));
       await screen.findByTestId("sprint-dashboard");
       await user.click(screen.getByTestId("manage-scope-btn"));
       await screen.findByTestId("manage-scope-modal");
@@ -4230,6 +4230,340 @@ describe("Feature: Offline mode", () => {
       await waitFor(() => {
         expect(screen.queryByRole("alert", { name: "Offline mode" })).not.toBeInTheDocument();
       });
+    });
+  });
+});
+
+// ─── 13. UI Visibility & Navigation ─────────────────────────────────
+
+describe("Feature: View switcher with segmented control (13.1)", () => {
+  describe("Scenario: View switcher displays as segmented control with icons", () => {
+    it("Given the app loads, then a tablist with Home, List, Board, Sprint tabs is visible", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const tablist = screen.getByRole("tablist", { name: "View switcher" });
+      expect(tablist).toBeInTheDocument();
+
+      const tabs = within(tablist).getAllByRole("tab");
+      expect(tabs).toHaveLength(4);
+      expect(tabs[0]).toHaveTextContent("Home");
+      expect(tabs[1]).toHaveTextContent("List");
+      expect(tabs[2]).toHaveTextContent("Board");
+      expect(tabs[3]).toHaveTextContent("Sprint");
+    });
+  });
+
+  describe("Scenario: Active view tab is highlighted", () => {
+    it("Given the list view is active, then the List tab has aria-selected true", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const listTab = screen.getByRole("tab", { name: /List/ });
+      expect(listTab).toHaveAttribute("aria-selected", "true");
+    });
+  });
+
+  describe("Scenario: Clicking a tab switches the view", () => {
+    it("Given the list view is shown, when clicking Home tab, then the dashboard is displayed", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("tab", { name: /Home/ }));
+
+      expect(await screen.findByTestId("dashboard-page")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Sidebar navigation (13.2)", () => {
+  describe("Scenario: Sidebar can be opened with hamburger button", () => {
+    it("Given the app loads, when clicking the sidebar toggle, then the sidebar with navigation is visible", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByLabelText("Toggle sidebar"));
+
+      const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
+      expect(sidebar).toBeInTheDocument();
+      expect(within(sidebar).getByText("Views")).toBeInTheDocument();
+      expect(within(sidebar).getByText("Dashboard")).toBeInTheDocument();
+      expect(within(sidebar).getByText("List View")).toBeInTheDocument();
+      expect(within(sidebar).getByText("Board View")).toBeInTheDocument();
+      expect(within(sidebar).getByText("Sprint Dashboard")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Sidebar shows projects", () => {
+    it("Given the sidebar is open, then the project list from the API is displayed", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByLabelText("Toggle sidebar"));
+
+      expect(screen.getByText("Projects")).toBeInTheDocument();
+      expect(screen.getByText("My Project")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Sidebar shows saved filters", () => {
+    it("Given saved filters exist, when the sidebar is opened, then the saved filters section is shown", async () => {
+      localStorageMock.setItem("jira-ui-saved-filters", JSON.stringify([
+        { id: "1", name: "My Sidebar Filter", project: "PROJ", filters: { status: "To Do", type: "", assignee: "" } },
+      ]));
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByLabelText("Toggle sidebar"));
+
+      const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
+      expect(within(sidebar).getByText("Saved Filters")).toBeInTheDocument();
+      expect(within(sidebar).getByText("My Sidebar Filter")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Sidebar navigation switches view", () => {
+    it("Given the sidebar is open, when clicking List View, then the list view is shown and sidebar closes", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByLabelText("Toggle sidebar"));
+
+      const sidebar = screen.getByRole("navigation", { name: "Sidebar navigation" });
+      await user.click(within(sidebar).getByText("List View"));
+
+      // Should switch to list and show issues
+      expect(await screen.findByText("PROJ-1")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Sidebar can be closed", () => {
+    it("Given the sidebar is open, when clicking close, then the sidebar content is hidden", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByLabelText("Toggle sidebar"));
+      expect(screen.getByText("Views")).toBeInTheDocument();
+
+      await user.click(screen.getByLabelText("Close sidebar"));
+      await waitFor(() => {
+        expect(screen.queryByText("Views")).not.toBeInTheDocument();
+      });
+    });
+  });
+});
+
+describe("Feature: Breadcrumbs (13.3)", () => {
+  describe("Scenario: Breadcrumbs show current context", () => {
+    it("Given the list view is loaded, then breadcrumbs show Home and List View", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+      expect(breadcrumb).toBeInTheDocument();
+      expect(within(breadcrumb).getByText(/Home/)).toBeInTheDocument();
+      expect(within(breadcrumb).getByText("List View")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Breadcrumbs update when switching views", () => {
+    it("Given the user switches to board view, then breadcrumbs show Home > Board View", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("tab", { name: /Board/ }));
+
+      const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+      expect(within(breadcrumb).getByText(/Home/)).toBeInTheDocument();
+      expect(within(breadcrumb).getByText("Board View")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Breadcrumbs allow navigation back to dashboard", () => {
+    it("Given the user is on list view, when clicking Home in breadcrumbs, then the dashboard is shown", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      const user = userEvent.setup();
+      const breadcrumb = screen.getByRole("navigation", { name: "Breadcrumb" });
+      await user.click(within(breadcrumb).getByText(/Home/));
+
+      expect(await screen.findByTestId("dashboard-page")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Dashboard landing page (13.4)", () => {
+  describe("Scenario: Dashboard is accessible via Home tab", () => {
+    it("Given the app loads, when clicking the Home tab, then the dashboard landing page is displayed", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("tab", { name: /Home/ }));
+
+      expect(await screen.findByTestId("dashboard-page")).toBeInTheDocument();
+      expect(screen.getByText("Welcome to Jira UI")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Dashboard shows quick action buttons", () => {
+    it("Given the dashboard is loaded, then quick action buttons for Create Issue, Search, Board, and Sprints are shown", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("tab", { name: /Home/ }));
+      await screen.findByTestId("dashboard-page");
+
+      expect(screen.getByTestId("quick-action-create")).toBeInTheDocument();
+      expect(screen.getByTestId("quick-action-search")).toBeInTheDocument();
+      expect(screen.getByTestId("quick-action-board")).toBeInTheDocument();
+      expect(screen.getByTestId("quick-action-sprint")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Dashboard shows recent issues", () => {
+    it("Given the API returns issues, then the dashboard displays recent issues", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("tab", { name: /Home/ }));
+      await screen.findByTestId("dashboard-page");
+
+      expect(await screen.findByText("Recent Issues")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Dashboard shows projects", () => {
+    it("Given projects exist, then the dashboard displays project cards", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("tab", { name: /Home/ }));
+      await screen.findByTestId("dashboard-page");
+
+      expect(await screen.findByText("My Project")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Dashboard quick action navigates to board view", () => {
+    it("Given the dashboard is shown, when clicking Board View quick action, then board view is displayed", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("tab", { name: /Home/ }));
+      await screen.findByTestId("dashboard-page");
+
+      await user.click(screen.getByTestId("quick-action-board"));
+
+      const boardTab = screen.getByRole("tab", { name: /Board/ });
+      expect(boardTab).toHaveAttribute("aria-selected", "true");
+    });
+  });
+});
+
+describe("Feature: Empty states (13.5)", () => {
+  describe("Scenario: Sprint dashboard shows empty state with CTA", () => {
+    it("Given no sprints exist, when viewing the sprint dashboard, then an empty state with 'Create your first sprint' button is shown", async () => {
+      global.fetch = vi.fn((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        }
+        if (urlStr.includes("/api/sprints")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ sprints: [] }) } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ issues: [], total: 0 }) } as Response);
+        }
+        if (urlStr.includes("/api/priorities")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockPriorities) } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("tab", { name: /Sprint/ }));
+
+      const emptyState = await screen.findByTestId("no-active-sprint");
+      expect(emptyState).toBeInTheDocument();
+      expect(screen.getByText("No active sprint")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Dashboard shows empty sprints state with CTA", () => {
+    it("Given no active sprints exist, when navigating to dashboard, then an empty sprints card is shown", async () => {
+      global.fetch = vi.fn((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        }
+        if (urlStr.includes("/api/sprints")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ sprints: [] }) } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ issues: [], total: 0 }) } as Response);
+        }
+        if (urlStr.includes("/api/priorities")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockPriorities) } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("tab", { name: /Home/ }));
+
+      expect(await screen.findByTestId("empty-sprints-dashboard")).toBeInTheDocument();
+      expect(screen.getByText("No active sprints")).toBeInTheDocument();
+      expect(screen.getByText("Go to Sprint Dashboard")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Dashboard shows empty issues state with CTA", () => {
+    it("Given no issues exist, when navigating to dashboard, then an empty issues card with create button is shown", async () => {
+      global.fetch = vi.fn((url: string | URL | Request) => {
+        const urlStr = typeof url === "string" ? url : url.toString();
+        if (urlStr.includes("/api/projects")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
+        }
+        if (urlStr.includes("/api/sprints")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ sprints: [] }) } as Response);
+        }
+        if (urlStr.includes("/api/issues")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve({ issues: [], total: 0 }) } as Response);
+        }
+        if (urlStr.includes("/api/priorities")) {
+          return Promise.resolve({ ok: true, json: () => Promise.resolve(mockPriorities) } as Response);
+        }
+        return Promise.resolve({ ok: false, status: 404, json: () => Promise.resolve({}) } as Response);
+      });
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("Jira UI");
+
+      const user = userEvent.setup();
+      await user.click(screen.getByRole("tab", { name: /Home/ }));
+
+      expect(await screen.findByTestId("empty-issues-dashboard")).toBeInTheDocument();
+      expect(screen.getByText("Create your first issue")).toBeInTheDocument();
     });
   });
 });

@@ -111,7 +111,8 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **Dark/Light Mode** (tasks 11.1–11.5): CSS variable-based theme switching (zinc palette override), sun/moon toggle button in header, localStorage persistence (`jira-ui-theme`), system preference detection via `prefers-color-scheme`, inline script in `index.html` prevents flash of wrong theme
 - **Offline Mode** (tasks 12.1–12.5): Workbox service worker for static asset + API response caching (NetworkFirst strategy), IndexedDB mutation queue for offline creates/updates/transitions, auto-sync on reconnect with error handling, offline banner with dismiss + header dot indicator
 - **Sprint CRUD** (tasks 9b.1–9b.5): create sprint modal (name/goal/dates), edit sprint modal, start/complete sprint with confirmation dialogs, delete sprint with confirmation, manage sprint scope (add/remove issues), backend CRUD endpoints via Jira Agile API
-- **Total: 229 BDD tests**
+- **UI Visibility & Navigation** (tasks 13.1–13.5): segmented view switcher with icons (Home/List/Board/Sprint), collapsible sidebar navigation (projects, saved filters, view shortcuts), breadcrumb bar (Home → View → Issue), dashboard landing page (quick actions, active sprints, recent issues, projects), empty states with CTAs
+- **Total: 248 BDD tests**
 
-Phase 1 complete. Phase 2 complete. Phase 3 in progress — Sprint dashboard, sprint CRUD, time tracking, dark/light mode, and offline mode done.
+Phase 1 complete. Phase 2 complete. Phase 3 in progress — Sprint dashboard, sprint CRUD, time tracking, dark/light mode, offline mode, and UI navigation done.
 See `ROADMAP.md` for full status.

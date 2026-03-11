@@ -135,11 +135,11 @@
 
 ### 13. UI visibility & navigation improvements
 
-- [ ] **13.1** Prominent view switcher — replace text buttons with icon tabs or segmented control (List / Board / Sprint) with active indicator
-- [ ] **13.2** Sidebar navigation — persistent sidebar with project list, sprint backlog, saved filters, and view shortcuts
-- [ ] **13.3** Breadcrumbs — show current context path (Project → Sprint → Issue) for orientation
-- [ ] **13.4** Dashboard landing page — overview cards showing active sprint status, recent issues, quick actions
-- [ ] **13.5** Empty states — helpful illustrations and CTAs when no sprint/issues exist (e.g. "Create your first sprint")
+- [x] **13.1** Prominent view switcher — segmented control with icons (Home/List/Board/Sprint) and aria-selected active indicator — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **13.2** Sidebar navigation — collapsible sidebar with project list, saved filters, and view shortcuts — *BDD tests: `App.test.tsx` (5 scenarios)*
+- [x] **13.3** Breadcrumbs — show current context path (Home → View → Issue) in breadcrumb bar — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **13.4** Dashboard landing page — overview cards with active sprint status, recent issues, projects, quick actions — *BDD tests: `App.test.tsx` (5 scenarios)*
+- [x] **13.5** Empty states — helpful text and CTAs when no sprint/issues exist (e.g. "Create your first sprint") — *BDD tests: `App.test.tsx` (3 scenarios)*
 
 **Tech**: Sidebar as a collapsible panel. Breadcrumb component in header. Dashboard aggregates existing API data. Empty states with inline action buttons.
 
@@ -171,5 +171,5 @@
 | 10 | Time tracking | 3 | Complete |
 | 11 | Dark/light mode toggle | 3 | Complete |
 | 12 | Offline mode | 3 | Complete |
-| 13 | UI visibility & navigation | 3 | Not started |
+| 13 | UI visibility & navigation | 3 | Complete |
 | 14 | About / Features page | 3 | Not started |

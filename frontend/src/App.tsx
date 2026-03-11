@@ -21,7 +21,7 @@ import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 const API = import.meta.env.VITE_API_URL || "";
 const APP_VERSION = __APP_VERSION__;
 
-type View = "board" | "list" | "detail" | "sprint";
+type View = "dashboard" | "board" | "list" | "detail" | "sprint";
 
 interface Issue {
   id: string;
@@ -1847,11 +1847,6 @@ function IssueDetailPanel({
     );
   }
 
-  const formatDate = (d: string | null) => {
-    if (!d) return "—";
-    return d.substring(0, 10);
-  };
-
   const formatDateTime = (d: string | null) => {
     if (!d) return "—";
     try {
@@ -2474,6 +2469,17 @@ function BoardView({
   if (error) return <div className="p-8 text-red-400">Error: {(error as Error).message}</div>;
 
   const issues = data?.issues || [];
+
+  if (issues.length === 0) {
+    return (
+      <EmptyState
+        icon="▦"
+        title="Board is empty"
+        description="No issues to display on the board. Create an issue to get started."
+      />
+    );
+  }
+
   const columns: Record<StatusCategory, Issue[]> = { new: [], indeterminate: [], done: [] };
   for (const issue of issues) {
     const cat = (issue.status?.category || "new") as StatusCategory;
@@ -2595,6 +2601,18 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlighted
         Error: {(error as Error).message}
       </div>
     );
+
+  if (data && data.issues.length === 0) {
+    return (
+      <EmptyState
+        icon="📋"
+        title="No issues found"
+        description={project ? `No issues match your current filters in project ${project}.` : "No issues match your current filters. Try adjusting your filters or create a new issue."}
+        actionLabel="Clear filters"
+        onAction={() => {}}
+      />
+    );
+  }
 
   return (
     <div className="overflow-x-auto">
@@ -3836,15 +3854,14 @@ function SprintDashboard({ project }: { project: string }) {
 
   if (sprints.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-20 text-zinc-500" data-testid="no-active-sprint">
-        <span className="text-4xl mb-4">🏃</span>
-        <p className="text-lg font-medium">No active sprint</p>
-        <p className="text-sm mt-1">Create a new sprint to get started.</p>
-        {createBoardId > 0 && (
-          <button onClick={() => setShowCreateModal(true)} className="mt-4 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 cursor-pointer" data-testid="create-sprint-empty">
-            + Create Sprint
-          </button>
-        )}
+      <div data-testid="no-active-sprint">
+        <EmptyState
+          icon="🏃"
+          title="No active sprint"
+          description="Create a new sprint to start tracking your team's progress."
+          actionLabel={createBoardId > 0 ? "Create your first sprint" : undefined}
+          onAction={createBoardId > 0 ? () => setShowCreateModal(true) : undefined}
+        />
         {showCreateModal && createBoardId > 0 && <CreateSprintModal boardId={createBoardId} onClose={() => setShowCreateModal(false)} />}
       </div>
     );
@@ -4085,6 +4102,425 @@ function SprintDashboard({ project }: { project: string }) {
   );
 }
 
+/* ── Sidebar Navigation (13.2) ── */
+
+function Sidebar({
+  open,
+  onClose,
+  projects,
+  currentProject,
+  onSelectProject,
+  savedFilters,
+  onApplySavedFilter,
+  view,
+  onSetView,
+}: {
+  open: boolean;
+  onClose: () => void;
+  projects: { key: string; name: string; id: string }[] | undefined;
+  currentProject: string;
+  onSelectProject: (key: string) => void;
+  savedFilters: SavedFilter[];
+  onApplySavedFilter: (sf: SavedFilter) => void;
+  view: View;
+  onSetView: (v: View) => void;
+}) {
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target as Node)) {
+        onClose();
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [open, onClose]);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    document.addEventListener("keydown", handleKey);
+    return () => document.removeEventListener("keydown", handleKey);
+  }, [open, onClose]);
+
+  const navItems: { id: View; label: string; icon: string }[] = [
+    { id: "dashboard", label: "Dashboard", icon: "\u2302" },
+    { id: "list", label: "List View", icon: "\u2630" },
+    { id: "board", label: "Board View", icon: "\u25A6" },
+    { id: "sprint", label: "Sprint Dashboard", icon: "\u23F1" },
+  ];
+
+  if (!open) {
+    return (
+      <aside
+        ref={sidebarRef}
+        className="fixed inset-y-0 left-0 z-50 w-64 -translate-x-full border-r border-zinc-700 bg-zinc-900 lg:hidden"
+        role="navigation"
+        aria-label="Sidebar navigation"
+      />
+    );
+  }
+
+  return (
+    <>
+      <div className="fixed inset-0 z-40 bg-black/50 lg:hidden" aria-hidden="true" />
+      <aside
+        ref={sidebarRef}
+        className="fixed inset-y-0 left-0 z-50 w-64 translate-x-0 border-r border-zinc-700 bg-zinc-900 lg:relative"
+        role="navigation"
+        aria-label="Sidebar navigation"
+      >
+        <div className="flex h-full flex-col overflow-y-auto">
+          <div className="flex items-center justify-between border-b border-zinc-700 px-4 py-3">
+            <span className="text-sm font-semibold text-zinc-200">Navigation</span>
+            <button
+              onClick={onClose}
+              className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 cursor-pointer lg:hidden"
+              aria-label="Close sidebar"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* View shortcuts */}
+          <div className="px-3 py-3">
+            <p className="mb-2 px-1 text-xs font-medium uppercase tracking-wider text-zinc-500">Views</p>
+            {navItems.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => { onSetView(item.id); onClose(); }}
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors cursor-pointer ${
+                  view === item.id
+                    ? "bg-blue-600/20 text-blue-400 font-medium"
+                    : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                }`}
+              >
+                <span aria-hidden="true">{item.icon}</span>
+                {item.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Projects */}
+          <div className="border-t border-zinc-800 px-3 py-3">
+            <p className="mb-2 px-1 text-xs font-medium uppercase tracking-wider text-zinc-500">Projects</p>
+            <button
+              onClick={() => { onSelectProject(""); onClose(); }}
+              className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors cursor-pointer ${
+                !currentProject ? "bg-blue-600/20 text-blue-400 font-medium" : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+              }`}
+            >
+              All Projects
+            </button>
+            {projects?.map((p) => (
+              <button
+                key={p.key}
+                onClick={() => { onSelectProject(p.key); onSetView("list"); onClose(); }}
+                className={`flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm transition-colors cursor-pointer ${
+                  currentProject === p.key ? "bg-blue-600/20 text-blue-400 font-medium" : "text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                }`}
+              >
+                <span className="flex h-5 w-5 items-center justify-center rounded bg-zinc-800 text-[10px] font-bold text-zinc-300">{p.key.slice(0, 2)}</span>
+                {p.name}
+              </button>
+            ))}
+          </div>
+
+          {/* Saved Filters */}
+          {savedFilters.length > 0 && (
+            <div className="border-t border-zinc-800 px-3 py-3">
+              <p className="mb-2 px-1 text-xs font-medium uppercase tracking-wider text-zinc-500">Saved Filters</p>
+              {savedFilters.map((sf) => (
+                <button
+                  key={sf.id}
+                  onClick={() => { onApplySavedFilter(sf); onSetView("list"); onClose(); }}
+                  className="flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-800 hover:text-zinc-200 cursor-pointer"
+                >
+                  <span aria-hidden="true">\u2605</span>
+                  {sf.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      </aside>
+    </>
+  );
+}
+
+/* ── Breadcrumbs (13.3) ── */
+
+function Breadcrumbs({
+  view,
+  project,
+  projects,
+  selectedIssueKey,
+  onNavigate,
+}: {
+  view: View;
+  project: string;
+  projects: { key: string; name: string; id: string }[] | undefined;
+  selectedIssueKey: string | null;
+  onNavigate: (view: View) => void;
+}) {
+  const projectName = projects?.find((p) => p.key === project)?.name;
+  const viewLabels: Record<string, string> = {
+    dashboard: "Dashboard",
+    list: "List View",
+    board: "Board View",
+    sprint: "Sprint Dashboard",
+    detail: "Detail",
+  };
+
+  const crumbs: { label: string; onClick?: () => void }[] = [];
+
+  // Home always first
+  crumbs.push({ label: "\u2302 Home", onClick: () => onNavigate("dashboard") });
+
+  // Project context
+  if (project && projectName) {
+    crumbs.push({ label: `${project} — ${projectName}` });
+  }
+
+  // Current view (if not dashboard)
+  if (view !== "dashboard") {
+    crumbs.push({ label: viewLabels[view] || view, onClick: () => onNavigate(view) });
+  }
+
+  // Selected issue
+  if (selectedIssueKey) {
+    crumbs.push({ label: selectedIssueKey });
+  }
+
+  return (
+    <nav className="flex items-center gap-1 px-4 sm:px-6 py-1.5 text-xs text-zinc-500 border-b border-zinc-800 overflow-x-auto" aria-label="Breadcrumb">
+      {crumbs.map((c, i) => (
+        <span key={i} className="flex items-center gap-1 whitespace-nowrap">
+          {i > 0 && <span className="text-zinc-600" aria-hidden="true">/</span>}
+          {c.onClick && i < crumbs.length - 1 ? (
+            <button onClick={c.onClick} className="hover:text-zinc-300 transition-colors cursor-pointer">{c.label}</button>
+          ) : (
+            <span className={i === crumbs.length - 1 ? "text-zinc-300" : ""}>{c.label}</span>
+          )}
+        </span>
+      ))}
+    </nav>
+  );
+}
+
+/* ── Dashboard Landing Page (13.4) ── */
+
+function DashboardPage({
+  projects,
+  onSelectProject,
+  onSetView,
+  onCreateIssue,
+  onOpenSearch,
+}: {
+  projects: { key: string; name: string; id: string }[] | undefined;
+  onSelectProject: (key: string) => void;
+  onSetView: (v: View) => void;
+  onCreateIssue: () => void;
+  onOpenSearch: () => void;
+}) {
+  const { data: sprintsData } = useQuery({
+    queryKey: ["dashboard-sprints"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/sprints?state=active`);
+      if (!res.ok) return { sprints: [] };
+      return res.json() as Promise<{ sprints: { id: number; name: string; state: string; startDate: string; endDate: string; goal: string; boardId: number; boardName: string }[] }>;
+    },
+  });
+
+  const { data: recentIssues } = useQuery({
+    queryKey: ["dashboard-recent-issues"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/issues?sort_by=updated&sort_order=DESC&max_results=5`);
+      if (!res.ok) return { issues: [], total: 0 };
+      return res.json() as Promise<{ issues: Issue[]; total: number }>;
+    },
+  });
+
+  const activeSprints = sprintsData?.sprints?.filter((s) => s.state === "active") || [];
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-6" data-testid="dashboard-page">
+      <div>
+        <h2 className="text-xl font-bold text-zinc-100">Welcome to Jira UI</h2>
+        <p className="mt-1 text-sm text-zinc-400">Quick overview of your work</p>
+      </div>
+
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <button
+          onClick={onCreateIssue}
+          className="flex flex-col items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 text-sm text-zinc-300 transition-colors hover:border-blue-600 hover:bg-blue-600/10 cursor-pointer"
+          data-testid="quick-action-create"
+        >
+          <span className="text-2xl">+</span>
+          <span>Create Issue</span>
+        </button>
+        <button
+          onClick={onOpenSearch}
+          className="flex flex-col items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 text-sm text-zinc-300 transition-colors hover:border-blue-600 hover:bg-blue-600/10 cursor-pointer"
+          data-testid="quick-action-search"
+        >
+          <span className="text-2xl">\uD83D\uDD0D</span>
+          <span>Search</span>
+        </button>
+        <button
+          onClick={() => onSetView("board")}
+          className="flex flex-col items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 text-sm text-zinc-300 transition-colors hover:border-blue-600 hover:bg-blue-600/10 cursor-pointer"
+          data-testid="quick-action-board"
+        >
+          <span className="text-2xl">{"\u25A6"}</span>
+          <span>Board View</span>
+        </button>
+        <button
+          onClick={() => onSetView("sprint")}
+          className="flex flex-col items-center gap-2 rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 text-sm text-zinc-300 transition-colors hover:border-blue-600 hover:bg-blue-600/10 cursor-pointer"
+          data-testid="quick-action-sprint"
+        >
+          <span className="text-2xl">{"\u23F1"}</span>
+          <span>Sprints</span>
+        </button>
+      </div>
+
+      {/* Active Sprints */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-zinc-300 uppercase tracking-wider">Active Sprints</h3>
+        {activeSprints.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-zinc-700 p-6 text-center" data-testid="empty-sprints-dashboard">
+            <p className="text-3xl mb-2">{"\u23F1"}</p>
+            <p className="text-sm text-zinc-400">No active sprints</p>
+            <button
+              onClick={() => onSetView("sprint")}
+              className="mt-3 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500 cursor-pointer"
+            >
+              Go to Sprint Dashboard
+            </button>
+          </div>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2">
+            {activeSprints.map((sprint) => {
+              const start = sprint.startDate ? new Date(sprint.startDate) : null;
+              const end = sprint.endDate ? new Date(sprint.endDate) : null;
+              const now = new Date();
+              const totalDays = start && end ? Math.max(1, Math.ceil((end.getTime() - start.getTime()) / 86400000)) : 1;
+              const elapsed = start ? Math.max(0, Math.ceil((now.getTime() - start.getTime()) / 86400000)) : 0;
+              const pct = Math.min(100, Math.round((elapsed / totalDays) * 100));
+              return (
+                <div key={sprint.id} className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="font-medium text-zinc-200">{sprint.name}</h4>
+                    <span className="rounded-full bg-green-900 px-2 py-0.5 text-xs text-green-300">Active</span>
+                  </div>
+                  {sprint.goal && <p className="text-xs text-zinc-400 mb-2">{sprint.goal}</p>}
+                  <div className="mt-2">
+                    <div className="flex justify-between text-xs text-zinc-500 mb-1">
+                      <span>{start?.toLocaleDateString()}</span>
+                      <span>{pct}% elapsed</span>
+                      <span>{end?.toLocaleDateString()}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-zinc-700">
+                      <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Recent Issues */}
+      <div>
+        <h3 className="mb-3 text-sm font-semibold text-zinc-300 uppercase tracking-wider">Recent Issues</h3>
+        {(!recentIssues || recentIssues.issues.length === 0) ? (
+          <div className="rounded-lg border border-dashed border-zinc-700 p-6 text-center" data-testid="empty-issues-dashboard">
+            <p className="text-3xl mb-2">{"\uD83D\uDCCB"}</p>
+            <p className="text-sm text-zinc-400">No issues found</p>
+            <button
+              onClick={onCreateIssue}
+              className="mt-3 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-500 cursor-pointer"
+            >
+              Create your first issue
+            </button>
+          </div>
+        ) : (
+          <div className="divide-y divide-zinc-800 rounded-lg border border-zinc-700">
+            {recentIssues.issues.map((issue) => (
+              <div key={issue.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+                <span className="font-mono text-xs text-blue-400">{issue.key}</span>
+                <span className="flex-1 truncate text-zinc-200">{issue.summary}</span>
+                <StatusBadge status={issue.status?.name} />
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Projects */}
+      {projects && projects.length > 0 && (
+        <div>
+          <h3 className="mb-3 text-sm font-semibold text-zinc-300 uppercase tracking-wider">Projects</h3>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {projects.map((p) => (
+              <button
+                key={p.key}
+                onClick={() => { onSelectProject(p.key); onSetView("list"); }}
+                className="flex items-center gap-3 rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 text-left transition-colors hover:border-blue-600 hover:bg-blue-600/10 cursor-pointer"
+              >
+                <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-zinc-700 text-sm font-bold text-zinc-200">{p.key.slice(0, 2)}</span>
+                <div>
+                  <p className="font-medium text-zinc-200">{p.name}</p>
+                  <p className="text-xs text-zinc-500">{p.key}</p>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ── Empty States (13.5) ── */
+
+function EmptyState({
+  icon,
+  title,
+  description,
+  actionLabel,
+  onAction,
+}: {
+  icon: string;
+  title: string;
+  description: string;
+  actionLabel?: string;
+  onAction?: () => void;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center" data-testid="empty-state">
+      <span className="text-5xl mb-4">{icon}</span>
+      <h3 className="text-lg font-semibold text-zinc-200 mb-1">{title}</h3>
+      <p className="text-sm text-zinc-400 max-w-md mb-4">{description}</p>
+      {actionLabel && onAction && (
+        <button
+          onClick={onAction}
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500 cursor-pointer"
+        >
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function isInputFocused(): boolean {
   const tag = document.activeElement?.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
@@ -4119,6 +4555,7 @@ export default function App() {
   const [theme, toggleTheme] = useTheme();
   const { isOnline, queueCount, syncing, syncQueue, queueMutation, lastSyncResult, dismissSyncResult } = useOfflineQueue();
   const [view, setView] = useState<View>("list");
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [project, setProject] = useState("");
   const [filters, setFilters] = useState<Filters>({ status: "", type: "", assignee: "" });
   const [issuesForFilters, setIssuesForFilters] = useState<Issue[]>([]);
@@ -4212,7 +4649,7 @@ export default function App() {
         return;
       }
 
-      // b / l — switch views (only when detail panel is not open)
+      // b / l / d — switch views (only when detail panel is not open)
       if (!selectedIssueKey) {
         if (e.key === "b") {
           e.preventDefault();
@@ -4227,6 +4664,11 @@ export default function App() {
         if (e.key === "s") {
           e.preventDefault();
           setView("sprint");
+          return;
+        }
+        if (e.key === "d") {
+          e.preventDefault();
+          setView("dashboard");
           return;
         }
       }
@@ -4282,13 +4724,22 @@ export default function App() {
       {/* Header */}
       <header className="border-b border-zinc-800 px-4 sm:px-6 py-3">
         <div className="flex items-center justify-between">
-          <h1 className="text-lg font-bold">
-            ⚡ <span className="text-zinc-300">Jira UI</span>
-            <span className="ml-2 text-xs font-normal text-zinc-600">v{APP_VERSION}</span>
-            {!isOnline && (
-              <span className="ml-2 inline-block h-2 w-2 rounded-full bg-amber-500" title="Offline" aria-label="Offline status indicator" />
-            )}
-          </h1>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSidebarOpen(!sidebarOpen)}
+              className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-sm text-zinc-400 transition-colors hover:border-zinc-600 hover:text-zinc-200 cursor-pointer"
+              aria-label="Toggle sidebar"
+            >
+              ☰
+            </button>
+            <h1 className="text-lg font-bold">
+              ⚡ <span className="text-zinc-300">Jira UI</span>
+              <span className="ml-2 text-xs font-normal text-zinc-600">v{APP_VERSION}</span>
+              {!isOnline && (
+                <span className="ml-2 inline-block h-2 w-2 rounded-full bg-amber-500" title="Offline" aria-label="Offline status indicator" />
+              )}
+            </h1>
+          </div>
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowCreateModal(true)}
@@ -4325,56 +4776,91 @@ export default function App() {
             >
               {theme === "dark" ? "☀️" : "🌙"}
             </button>
-            <nav className="flex gap-1">
-              {(["board", "list", "sprint"] as View[]).map((v) => (
+            <nav className="hidden sm:flex items-center rounded-lg border border-zinc-700 bg-zinc-900 p-0.5" role="tablist" aria-label="View switcher">
+              {([
+                { id: "dashboard" as View, label: "Home", icon: "\u2302" },
+                { id: "list" as View, label: "List", icon: "\u2630" },
+                { id: "board" as View, label: "Board", icon: "\u25A6" },
+                { id: "sprint" as View, label: "Sprint", icon: "\u23F1" },
+              ]).map((v) => (
                 <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
-                    view === v
-                      ? "bg-blue-600 text-white"
-                      : "text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-200"
+                  key={v.id}
+                  role="tab"
+                  aria-selected={view === v.id}
+                  onClick={() => setView(v.id)}
+                  className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors ${
+                    view === v.id
+                      ? "bg-blue-600 text-white shadow-sm"
+                      : "text-zinc-500 hover:text-zinc-900 hover:bg-zinc-800 dark:text-zinc-400 dark:hover:text-zinc-200"
                   }`}
                 >
-                  {v}
+                  <span aria-hidden="true">{v.icon}</span>
+                  {v.label}
                 </button>
               ))}
             </nav>
           </div>
         </div>
-        <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 lg:items-center">
-          <select
-            value={project}
-            onChange={(e) => setProject(e.target.value)}
-            className="col-span-2 sm:col-span-1 w-full lg:w-auto rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
-          >
-            <option value="">All Projects</option>
-            {projects?.map((p) => (
-              <option key={p.key} value={p.key}>
-                {p.key} — {p.name}
-              </option>
-            ))}
-          </select>
-          <FilterBar filters={filters} onChange={setFilters} issues={issuesForFilters} />
-          <SavedFiltersDropdown
-            savedFilters={savedFilters}
-            onApply={handleApplySavedFilter}
-            onSave={handleSaveFilter}
-            onRename={handleRenameSavedFilter}
-            onDelete={handleDeleteSavedFilter}
-            hasActiveFilters={hasActiveFilters}
-          />
-        </div>
+        {view !== "dashboard" && (
+          <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 lg:items-center">
+            <select
+              value={project}
+              onChange={(e) => setProject(e.target.value)}
+              className="col-span-2 sm:col-span-1 w-full lg:w-auto rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
+            >
+              <option value="">All Projects</option>
+              {projects?.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.key} — {p.name}
+                </option>
+              ))}
+            </select>
+            <FilterBar filters={filters} onChange={setFilters} issues={issuesForFilters} />
+            <SavedFiltersDropdown
+              savedFilters={savedFilters}
+              onApply={handleApplySavedFilter}
+              onSave={handleSaveFilter}
+              onRename={handleRenameSavedFilter}
+              onDelete={handleDeleteSavedFilter}
+              hasActiveFilters={hasActiveFilters}
+            />
+          </div>
+        )}
       </header>
 
-      {/* Main */}
-      <main className="flex-1 overflow-auto">
-        {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} highlightedIndex={highlightedIndex} onHighlightChange={setHighlightedIndex} selectedIssueIds={selectedIssueIds} onSelectionChange={setSelectedIssueIds} />}
-        {view === "board" && (
-          <BoardView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} isOnline={isOnline} queueMutation={queueMutation} />
-        )}
-        {view === "sprint" && <SprintDashboard project={project} />}
-      </main>
+      {/* Breadcrumbs */}
+      <Breadcrumbs view={view} project={project} projects={projects} selectedIssueKey={selectedIssueKey} onNavigate={setView} />
+
+      {/* Sidebar + Main */}
+      <div className="flex flex-1 overflow-hidden">
+        <Sidebar
+          open={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+          projects={projects}
+          currentProject={project}
+          onSelectProject={setProject}
+          savedFilters={savedFilters}
+          onApplySavedFilter={handleApplySavedFilter}
+          view={view}
+          onSetView={setView}
+        />
+        <main className="flex-1 overflow-auto">
+          {view === "dashboard" && (
+            <DashboardPage
+              projects={projects}
+              onSelectProject={setProject}
+              onSetView={setView}
+              onCreateIssue={() => setShowCreateModal(true)}
+              onOpenSearch={() => setCommandPaletteOpen(true)}
+            />
+          )}
+          {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} highlightedIndex={highlightedIndex} onHighlightChange={setHighlightedIndex} selectedIssueIds={selectedIssueIds} onSelectionChange={setSelectedIssueIds} />}
+          {view === "board" && (
+            <BoardView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} isOnline={isOnline} queueMutation={queueMutation} />
+          )}
+          {view === "sprint" && <SprintDashboard project={project} />}
+        </main>
+      </div>
 
       {/* Issue Detail Panel */}
       {selectedIssueKey && (
