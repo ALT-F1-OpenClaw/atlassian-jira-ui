@@ -1,0 +1,28 @@
+name: Docker
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build Docker images
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build backend image
+        run: docker build -t jira-ui-backend ./backend
+
+      - name: Build frontend image
+        run: docker build -t jira-ui-frontend ./frontend
+
+      - name: Verify docker-compose config
+        run: docker compose config --quiet
