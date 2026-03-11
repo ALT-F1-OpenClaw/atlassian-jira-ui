@@ -1,3 +1,8 @@
+## [1.47.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.46.0...v1.47.0) (2026-03-11)
+
+### Features
+
+* add 22 Playwright E2E tests with full API mocking ([f4ba3d5](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/f4ba3d54ebd6d89e220c5570d4e84a3679bf5a5f)), closes [#27](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/27)
 ## [1.46.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.45.0...v1.46.0) (2026-03-11)
 
 ### Features
