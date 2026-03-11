@@ -1,3 +1,8 @@
+## [1.44.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.44.2...v1.44.3) (2026-03-11)
+
+### Bug Fixes
+
+* always show rich text editor for description editing ([4555451](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/4555451530f4131ac30a9b7ba2b9de197668702a)), closes [#23](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/23)
 ## [1.44.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.44.1...v1.44.2) (2026-03-11)
 
 ### Features
