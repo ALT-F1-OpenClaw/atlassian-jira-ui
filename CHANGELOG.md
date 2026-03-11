@@ -1,3 +1,8 @@
+## [1.33.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.32.0...v1.33.0) (2026-03-11)
+
+### Features
+
+* time tracking with timer, worklog, and progress bar (tasks 10.1-10.4) ([265cf38](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/265cf3887ba4793168d86837ff072a1072fd7618))
 ## [1.32.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.31.0...v1.32.0) (2026-03-11)
 
 ### Features
