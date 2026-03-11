@@ -1,3 +1,8 @@
+## [1.26.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.25.1...v1.26.0) (2026-03-11)
+
+### Features
+
+* mobile quick-action arrows on Kanban cards for status transitions ([3042614](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/30426145ce7dcd1134dcfd48485a2ca55bd1d3d6))
 ## [1.25.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.25.0...v1.25.1) (2026-03-11)
 
 ### Bug Fixes
