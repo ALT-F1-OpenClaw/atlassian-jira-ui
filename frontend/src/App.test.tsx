@@ -4705,13 +4705,13 @@ describe("Feature: Empty states (13.5)", () => {
       // GitHub link
       const githubLink = screen.getByTestId("about-github-link");
       expect(githubLink).toBeInTheDocument();
-      expect(githubLink).toHaveAttribute("href", "https://github.com/anthropics/jira-ui");
+      expect(githubLink).toHaveAttribute("href", "https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui");
       expect(githubLink).toHaveAttribute("target", "_blank");
 
       // Changelog link
       const changelogLink = screen.getByTestId("about-changelog-link");
       expect(changelogLink).toBeInTheDocument();
-      expect(changelogLink).toHaveAttribute("href", "https://github.com/anthropics/jira-ui/blob/main/CHANGELOG.md");
+      expect(changelogLink).toHaveAttribute("href", "https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/blob/main/CHANGELOG.md");
     });
   });
 

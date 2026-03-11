@@ -4013,7 +4013,8 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Status breakdown pie chart */}
         <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
-          <h3 className="text-sm font-medium text-zinc-300 mb-3">Issues by Status</h3>
+          <h3 className="text-sm font-medium text-zinc-300">Issues by Status</h3>
+          <p className="text-xs text-zinc-500 mb-3">Distribution of issues across statuses. <span className="text-green-400">✓ Best:</span> mostly Done (green). <span className="text-red-400">✗ Worst:</span> mostly To Do near sprint end.</p>
           {issuesLoading ? (
             <LoadingSpinner message="Loading chart…" />
           ) : statusCounts.length > 0 ? (
@@ -4042,7 +4043,8 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
 
         {/* Burndown chart */}
         <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
-          <h3 className="text-sm font-medium text-zinc-300 mb-3">Burndown Chart</h3>
+          <h3 className="text-sm font-medium text-zinc-300">Burndown Chart</h3>
+          <p className="text-xs text-zinc-500 mb-3">Remaining work over time. <span className="text-green-400">✓ Best:</span> blue line follows or beats the dashed ideal line. <span className="text-red-400">✗ Worst:</span> blue line stays flat or goes up (scope creep).</p>
           {burndown.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <LineChart data={burndown}>
@@ -4062,7 +4064,8 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
 
         {/* Velocity chart */}
         <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
-          <h3 className="text-sm font-medium text-zinc-300 mb-3">Velocity Chart</h3>
+          <h3 className="text-sm font-medium text-zinc-300">Velocity Chart</h3>
+          <p className="text-xs text-zinc-500 mb-3">Issues completed per sprint. <span className="text-green-400">✓ Best:</span> steady or increasing bars. <span className="text-red-400">✗ Worst:</span> declining bars or zero completions.</p>
           {velocity.length > 0 ? (
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={velocity}>
@@ -4082,7 +4085,7 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
 
         {/* Scope change tracking */}
         <div className="rounded-lg bg-zinc-900 border border-zinc-800 p-4">
-          <h3 className="text-sm font-medium text-zinc-300 mb-3">
+          <h3 className="text-sm font-medium text-zinc-300">
             Scope Changes
             {scopeChanges.length > 0 && (
               <span className="ml-2 rounded-full bg-yellow-600 px-2 py-0.5 text-xs font-medium text-white" data-testid="scope-change-count">
@@ -4090,6 +4093,7 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
               </span>
             )}
           </h3>
+          <p className="text-xs text-zinc-500 mb-3">Issues added after sprint start. <span className="text-green-400">✓ Best:</span> no changes (on track). <span className="text-red-400">✗ Worst:</span> many additions mid-sprint (scope creep).</p>
           {scopeChanges.length > 0 ? (
             <div className="space-y-2 max-h-[230px] overflow-y-auto">
               {scopeChanges.map((issue) => (
