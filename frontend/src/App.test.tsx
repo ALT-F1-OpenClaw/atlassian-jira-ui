@@ -1,4 +1,4 @@
-import { render, screen, within, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, it, expect, beforeEach, vi } from "vitest";
@@ -1331,6 +1331,108 @@ describe("Feature: Priority dropdown with fetched priorities", () => {
         );
         expect(membersCall).toBeDefined();
       });
+    });
+  });
+});
+
+describe("Feature: Editable due date", () => {
+  describe("Scenario: Due date is displayed and clickable", () => {
+    it("Given the issue has due date '2026-03-15', then an edit button with the date should be visible", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const editBtn = within(panel).getByLabelText("Edit due date");
+      expect(editBtn).toHaveTextContent("2026-03-15");
+    });
+  });
+
+  describe("Scenario: Clicking due date shows a date input", () => {
+    it("Given the detail panel is open, when clicking the due date, then a date input should appear pre-filled with the current value", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Edit due date"));
+
+      const input = within(panel).getByLabelText("due date") as HTMLInputElement;
+      expect(input).toBeInTheDocument();
+      expect(input.type).toBe("date");
+      expect(input.value).toBe("2026-03-15");
+    });
+  });
+
+  describe("Scenario: Changing due date sends PATCH with duedate field", () => {
+    it("Given the due date input is shown, when changing the date, then a PATCH request should be sent with the new duedate", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Edit due date"));
+
+      const input = within(panel).getByLabelText("due date");
+      fireEvent.change(input, { target: { value: "2026-04-01" } });
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+        );
+        expect(patchCall).toBeDefined();
+        const body = JSON.parse((patchCall![1] as RequestInit).body as string);
+        expect(body.duedate).toBe("2026-04-01");
+      });
+    });
+  });
+
+  describe("Scenario: Clearing due date sends null duedate", () => {
+    it("Given the due date input is shown and a date exists, when clicking the clear button, then a PATCH request should be sent with duedate=null", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      await user.click(within(panel).getByLabelText("Edit due date"));
+
+      const clearBtn = within(panel).getByLabelText("Clear due date");
+      await user.click(clearBtn);
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCall = calls.find(
+          (c: unknown[]) => (c[0] as string).match(/\/api\/issues\/PROJ-1$/) && (c[1] as RequestInit)?.method === "PATCH"
+        );
+        expect(patchCall).toBeDefined();
+        const body = JSON.parse((patchCall![1] as RequestInit).body as string);
+        expect(body.duedate).toBeNull();
+      });
+    });
+  });
+
+  describe("Scenario: Issue with no due date shows dash", () => {
+    it("Given the issue has no due date, then a dash should be displayed", async () => {
+      const user = userEvent.setup();
+      setupFetchMock({ issueDetail: { ...mockIssueDetail, dueDate: null } });
+
+      render(<App />, { wrapper: createWrapper() });
+
+      const issueKey = await screen.findByText("PROJ-1");
+      await user.click(issueKey.closest("tr")!);
+
+      const panel = await screen.findByRole("dialog", { name: /Issue detail/ });
+      const editBtn = within(panel).getByLabelText("Edit due date");
+      expect(editBtn).toHaveTextContent("—");
     });
   });
 });

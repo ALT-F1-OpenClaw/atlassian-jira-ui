@@ -646,6 +646,76 @@ function InlineEditSelect({
   );
 }
 
+function InlineEditDate({
+  value,
+  onSave,
+  label,
+}: {
+  value: string | null;
+  onSave: (v: string | null) => void;
+  label: string;
+}) {
+  const [editing, setEditing] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (editing) setTimeout(() => inputRef.current?.focus(), 0);
+  }, [editing]);
+
+  const formatDisplay = (d: string | null) => {
+    if (!d) return "—";
+    return d.substring(0, 10);
+  };
+
+  if (!editing) {
+    return (
+      <button
+        onClick={() => setEditing(true)}
+        className="w-full text-left rounded px-1 -mx-1 hover:bg-zinc-800 transition-colors cursor-pointer text-zinc-300"
+        aria-label={`Edit ${label}`}
+        title={`Click to edit ${label}`}
+      >
+        {formatDisplay(value)}
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex items-center gap-1">
+      <input
+        ref={inputRef}
+        type="date"
+        value={value?.substring(0, 10) || ""}
+        onChange={(e) => {
+          const newVal = e.target.value || null;
+          onSave(newVal);
+          setEditing(false);
+        }}
+        onBlur={() => setEditing(false)}
+        onKeyDown={(e) => {
+          if (e.key === "Escape") setEditing(false);
+        }}
+        aria-label={label}
+        className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none [color-scheme:dark]"
+      />
+      {value && (
+        <button
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => {
+            onSave(null);
+            setEditing(false);
+          }}
+          className="rounded px-1.5 py-0.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors cursor-pointer"
+          aria-label="Clear due date"
+          title="Clear date"
+        >
+          ✕
+        </button>
+      )}
+    </div>
+  );
+}
+
 /* ── Issue Detail Panel ── */
 
 const FALLBACK_PRIORITIES = ["Highest", "High", "Medium", "Low", "Lowest"];
@@ -695,7 +765,7 @@ function IssueDetailPanel({
   });
 
   const updateMutation = useMutation({
-    mutationFn: async (fields: { summary?: string; description?: string; description_adf?: AdfNode; priority?: string; assignee?: string }) => {
+    mutationFn: async (fields: { summary?: string; description?: string; description_adf?: AdfNode; priority?: string; assignee?: string; duedate?: string | null }) => {
       const res = await fetch(`${API}/api/issues/${issueKey}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -938,10 +1008,14 @@ function IssueDetailPanel({
               </div>
             </div>
 
-            {/* Due Date */}
+            {/* Due Date (editable) */}
             <div>
               <label className="block text-xs text-zinc-500 mb-1">Due Date</label>
-              <span className="text-zinc-300">{formatDate(issue.dueDate)}</span>
+              <InlineEditDate
+                value={issue.dueDate}
+                onSave={(v) => updateMutation.mutate({ duedate: v })}
+                label="due date"
+              />
             </div>
 
             {/* Created */}

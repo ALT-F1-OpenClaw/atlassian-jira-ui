@@ -185,6 +185,7 @@ class UpdateIssueRequest(BaseModel):
     description_adf: dict | None = None
     priority: str | None = None
     assignee: str | None = None
+    duedate: str | None = "__unset__"
 
 
 @router.patch("/{key}")
@@ -210,6 +211,8 @@ async def update_issue(key: str, req: UpdateIssueRequest):
         fields["priority"] = {"name": req.priority}
     if req.assignee:
         fields["assignee"] = {"accountId": req.assignee}
+    if req.duedate != "__unset__":
+        fields["duedate"] = req.duedate
 
     try:
         await jira_request("PUT", f"/issue/{key}", json={"fields": fields})
