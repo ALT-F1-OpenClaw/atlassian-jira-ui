@@ -12,6 +12,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     port: 5173,
+    allowedHosts: ["atlf1be-raspberry-pi-4.tail981e59.ts.net"],
     proxy: {
       "/api": {
         target: "http://localhost:35400",
