@@ -38,6 +38,92 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 └─────────────────────────────────────────────┘
 ```
 
+## CI/CD Pipeline
+
+```
+  ┌──────────────┐
+  │   git push   │
+  │   to main    │
+  └──────┬───────┘
+         │
+         ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │                        CI Workflow                           │
+  │                  (.github/workflows/ci.yml)                  │
+  │                                                              │
+  │  ┌─────────────────────┐    ┌──────────────────────────┐    │
+  │  │  Frontend (Node 20) │    │  Backend (Python 3.11)   │    │
+  │  │  Frontend (Node 22) │    │  Backend (Python 3.12)   │    │
+  │  │                     │    │  Backend (Python 3.13)   │    │
+  │  │  • npm ci           │    │                          │    │
+  │  │  • tsc --noEmit     │    │  • pip install           │    │
+  │  │  • vitest (255)     │    │  • pytest (25)           │    │
+  │  │  • vite build       │    │  • import verification   │    │
+  │  └─────────┬───────────┘    └────────────┬─────────────┘    │
+  │            │                              │                  │
+  └────────────┼──────────────────────────────┼──────────────────┘
+               │                              │
+               ▼                              ▼
+        ┌──────────┐                  ┌──────────────┐
+        │  PASS ✅  │                  │   FAIL ❌     │
+        └──────┬───┘                  └──────┬───────┘
+               │                              │
+               │                              ▼
+               │                 ┌────────────────────────┐
+               │                 │  CI Auto-Fix Workflow   │
+               │                 │  (ci-autofix.yml)       │
+               │                 │                         │
+               │                 │  • Extract failed logs  │
+               │                 │  • Categorize error     │
+               │                 │  • Create GitHub issue  │
+               │                 │  • Notify Discord       │
+               │                 └────────────────────────┘
+               │
+        ┌──────┴──────────────────────────┐
+        │         git push --tags         │
+        │           (v1.x.x)              │
+        └──────┬──────────────────────────┘
+               │
+      ┌────────┼────────────────────┐
+      ▼        ▼                    ▼
+┌───────────┐ ┌──────────┐  ┌────────────────────┐
+│  Release  │ │  Docker  │  │  Publish Docker    │
+│ Workflow  │ │ Validate │  │  (GHCR)            │
+│           │ │          │  │                    │
+│ • Create  │ │ • Build  │  │ • Multi-arch       │
+│   GitHub  │ │   check  │  │   amd64 + arm64    │
+│   release │ │ • Compose│  │ • Push to GHCR     │
+│ • Upload  │ │   verify │  │ • Tag: latest,     │
+│   assets  │ │          │  │   1.x.0, 1.x       │
+└───────────┘ └──────────┘  └────────────────────┘
+
+  ┌──────────────────────────────────────────────────────────┐
+  │                    Always Running                        │
+  │                                                          │
+  │  ┌─────────────┐    ┌──────────────┐                    │
+  │  │   CodeQL     │    │  Dependabot  │                    │
+  │  │  (weekly)    │    │  (weekly)    │                    │
+  │  │              │    │              │                    │
+  │  │  • JS/TS     │    │  • npm deps  │                    │
+  │  │    analysis  │    │  • pip deps  │                    │
+  │  │  • Python    │    │  • Actions   │                    │
+  │  │    analysis  │    │    versions  │                    │
+  │  └─────────────┘    └──────────────┘                    │
+  └──────────────────────────────────────────────────────────┘
+```
+
+**Error categories detected by CI Auto-Fix:**
+
+| Category | Trigger Pattern | Example |
+|----------|----------------|---------|
+| `test-runner-conflict` | Playwright specs in Vitest | Vitest importing `@playwright/test` |
+| `missing-module` | Cannot find module | Deleted/moved import |
+| `typescript-error` | TS error codes (TS2xxx) | Type mismatch |
+| `test-failure` | Assertion errors | Failed expect() |
+| `dependency-error` | npm/pip install errors | Version conflict |
+| `lint-error` | ESLint/Prettier issues | Code style |
+| `build-error` | Vite/Rollup failure | Bad import/config |
+
 ## Screenshots
 
 ### Kanban Board
@@ -95,7 +181,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **Editable labels** — Add/remove with autocomplete from Jira labels
 - **Mobile Kanban arrows** — Arrow buttons on cards for status transitions (mobile only)
 - **PWA** — Web app manifest, service worker, installable on mobile
-- **248 BDD tests** — Comprehensive test coverage with Vitest + Testing Library
+- **302 tests** — 255 Vitest BDD + 25 pytest backend + 22 Playwright E2E
 
 ## Tech Stack
 
@@ -238,10 +324,24 @@ atlassian-jira-ui/
 │   ├── vite.config.ts
 │   ├── .env.example
 │   └── Dockerfile
+├── frontend/
+│   ├── e2e/
+│   │   ├── app.spec.ts          # 22 E2E test scenarios
+│   │   ├── screenshots.spec.ts  # 17 auto-generated screenshots
+│   │   └── fixtures.ts          # Mock data + mockAllApiRoutes()
+│   └── playwright.config.ts     # Playwright config (Chromium, port 4173)
 ├── scripts/
-│   ├── bump-version.mjs         # Version sync + changelog
-│   └── screenshots.mjs          # Playwright screenshots
+│   └── bump-version.mjs         # Version sync + changelog
+├── .github/
+│   └── workflows/
+│       ├── ci.yml               # Unit + backend tests (Node 20/22, Python 3.11-3.13)
+│       ├── ci-autofix.yml       # Auto-diagnose CI failures → create issue
+│       ├── codeql.yml           # Weekly security scanning
+│       ├── docker.yml           # Docker compose validation
+│       ├── publish-docker.yml   # Multi-arch GHCR publish on tag
+│       └── release.yml          # GitHub release on tag
 ├── docker-compose.yml
+├── docker-compose.ghcr.yml      # Pull pre-built images from GHCR
 ├── LICENSE
 └── README.md
 ```
@@ -289,17 +389,27 @@ npm test
 npm run test:watch
 ```
 
-248 BDD test scenarios using [Vitest](https://vitest.dev/) + [Testing Library](https://testing-library.com/) with `describe`/`it` blocks following Given/When/Then naming.
+**302 total tests** across 3 test suites:
 
-### Test structure
+| Suite | Count | Framework | Location |
+|-------|-------|-----------|----------|
+| Frontend unit | 255 | Vitest + Testing Library | `frontend/src/App.test.tsx` |
+| Backend API | 25 | pytest + pytest-asyncio | `backend/tests/` |
+| E2E integration | 22 | Playwright (Chromium) | `frontend/e2e/app.spec.ts` |
 
-```text
-frontend/src/
-├── App.test.tsx              # 248 BDD test scenarios
-├── test/
-│   └── setup.ts              # Testing Library + jest-dom setup
-└── vitest.config.ts          # Vitest configuration
+All tests use BDD naming (`Given ... when ... then ...`). E2E tests mock all API routes — no real Jira calls.
+
+```bash
+# Run all tests
+cd frontend && npm test          # 255 unit tests (vitest)
+cd backend && python -m pytest tests/ -v   # 25 backend tests
+cd frontend && npm run build && npx playwright test  # 22 E2E tests
 ```
+
+### Auto-generated screenshots
+
+17 screenshots captured by `frontend/e2e/screenshots.spec.ts` using mock data.
+See [APP_SCREENSHOTS.md](docs/APP_SCREENSHOTS.md) for the full gallery.
 
 ## Releasing a New Version
 
