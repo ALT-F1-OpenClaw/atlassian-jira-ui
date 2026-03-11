@@ -456,8 +456,9 @@ describe("Feature: Column sorting", () => {
 
       await screen.findByText("PROJ-1");
       const headers = screen.getAllByRole("columnheader");
-      expect(headers).toHaveLength(7);
-      for (const header of headers) {
+      expect(headers).toHaveLength(8); // 7 data columns + 1 checkbox column
+      // Skip first header (checkbox column), remaining 7 should be sortable
+      for (const header of headers.slice(1)) {
         expect(header.className).toContain("cursor-pointer");
       }
     });
@@ -2856,6 +2857,228 @@ describe("Feature: Quick create modal — optimistic UI update (6.4)", () => {
       const dialog = screen.getByRole("dialog", { name: /create issue/i });
       const projectSelect = within(dialog).getByLabelText(/project/i) as HTMLSelectElement;
       expect(projectSelect.value).toBe("PROJ");
+    });
+  });
+});
+
+/* ── 7. Bulk Actions ── */
+
+describe("Feature: Bulk actions on selected issues", () => {
+  describe("Scenario: Checkbox selection on list view rows (7.1)", () => {
+    it("Given the list view is displayed, then each row should have a checkbox for selection", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      expect(screen.getByLabelText("Select PROJ-1")).toBeInTheDocument();
+      expect(screen.getByLabelText("Select PROJ-2")).toBeInTheDocument();
+      expect(screen.getByLabelText("Select PROJ-3")).toBeInTheDocument();
+    });
+
+    it("Given a row checkbox is clicked, then the issue should be selected and the bulk action bar appears", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+
+      expect(screen.getByLabelText("Select PROJ-1")).toBeChecked();
+      expect(screen.getByRole("toolbar", { name: /bulk actions/i })).toBeInTheDocument();
+      expect(screen.getByText("1 selected")).toBeInTheDocument();
+    });
+
+    it("Given multiple checkboxes are clicked, then the count reflects all selected issues", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+      await user.click(screen.getByLabelText("Select PROJ-3"));
+
+      expect(screen.getByText("2 selected")).toBeInTheDocument();
+    });
+
+    it("Given a selected checkbox is clicked again, then the issue is deselected", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+      expect(screen.getByLabelText("Select PROJ-1")).toBeChecked();
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+      expect(screen.getByLabelText("Select PROJ-1")).not.toBeChecked();
+    });
+  });
+
+  describe("Scenario: Select all / deselect all (7.2)", () => {
+    it("Given the header checkbox is clicked, then all visible issues should be selected", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select all issues"));
+
+      expect(screen.getByLabelText("Select PROJ-1")).toBeChecked();
+      expect(screen.getByLabelText("Select PROJ-2")).toBeChecked();
+      expect(screen.getByLabelText("Select PROJ-3")).toBeChecked();
+      expect(screen.getByText("3 selected")).toBeInTheDocument();
+    });
+
+    it("Given all issues are selected and header checkbox is clicked again, then all should be deselected", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select all issues"));
+      expect(screen.getByText("3 selected")).toBeInTheDocument();
+
+      await user.click(screen.getByLabelText("Select all issues"));
+      expect(screen.getByLabelText("Select PROJ-1")).not.toBeChecked();
+      expect(screen.getByLabelText("Select PROJ-2")).not.toBeChecked();
+      expect(screen.queryByRole("toolbar", { name: /bulk actions/i })).not.toBeInTheDocument();
+    });
+
+    it("Given the deselect all button is clicked, then all issues are deselected and the bar disappears", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+      await user.click(screen.getByLabelText("Select PROJ-2"));
+      expect(screen.getByText("2 selected")).toBeInTheDocument();
+
+      await user.click(screen.getByLabelText("Deselect all"));
+      expect(screen.queryByRole("toolbar", { name: /bulk actions/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Bulk transition (7.3)", () => {
+    it("Given issues are selected and a transition is chosen, then transition API is called for each issue", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+      await user.click(screen.getByLabelText("Select PROJ-2"));
+
+      const transitionSelect = screen.getByLabelText("Bulk transition");
+      await user.selectOptions(transitionSelect, "Done");
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const transitionCalls = calls.filter(
+          ([url, init]: [string, RequestInit | undefined]) =>
+            typeof url === "string" && url.includes("/transition") && init?.method === "POST",
+        );
+        expect(transitionCalls.length).toBe(2);
+      });
+    });
+
+    it("Given bulk transition completes, then a success message is shown", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+
+      const transitionSelect = screen.getByLabelText("Bulk transition");
+      await user.selectOptions(transitionSelect, "Done");
+
+      await waitFor(() => {
+        expect(screen.getByText(/1\/1 succeeded/)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Scenario: Bulk assign (7.4)", () => {
+    it("Given issues are selected and an assignee is chosen, then PATCH is called for each issue", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      // Select a project first to enable members
+      const projectSelect = screen.getAllByDisplayValue("All Projects")[0];
+      await user.selectOptions(projectSelect, "PROJ");
+
+      await waitFor(() => screen.findByText("PROJ-1"));
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+      await user.click(screen.getByLabelText("Select PROJ-2"));
+
+      const assignSelect = screen.getByLabelText("Bulk assign");
+      await user.selectOptions(assignSelect, "abc123");
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCalls = calls.filter(
+          ([url, init]: [string, RequestInit | undefined]) =>
+            typeof url === "string" && url.match(/\/api\/issues\/PROJ-\d+$/) && init?.method === "PATCH",
+        );
+        expect(patchCalls.length).toBe(2);
+        const body = JSON.parse(patchCalls[0][1]?.body as string);
+        expect(body.assignee).toBe("abc123");
+      });
+    });
+  });
+
+  describe("Scenario: Bulk priority change (7.5)", () => {
+    it("Given issues are selected and a priority is chosen, then PATCH is called for each issue with the priority", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+      await user.click(screen.getByLabelText("Select PROJ-3"));
+
+      const prioritySelect = screen.getByLabelText("Bulk priority");
+      await user.selectOptions(prioritySelect, "Highest");
+
+      await waitFor(() => {
+        const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
+        const patchCalls = calls.filter(
+          ([url, init]: [string, RequestInit | undefined]) =>
+            typeof url === "string" && url.match(/\/api\/issues\/PROJ-\d+$/) && init?.method === "PATCH",
+        );
+        expect(patchCalls.length).toBe(2);
+        const body = JSON.parse(patchCalls[0][1]?.body as string);
+        expect(body.priority).toBe("Highest");
+      });
+    });
+
+    it("Given bulk priority change completes successfully, then a success result is shown", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+
+      const prioritySelect = screen.getByLabelText("Bulk priority");
+      await user.selectOptions(prioritySelect, "Low");
+
+      await waitFor(() => {
+        expect(screen.getByText(/1\/1 succeeded/)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Scenario: Bulk action bar visibility", () => {
+    it("Given no issues are selected, then the bulk action bar is not visible", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      expect(screen.queryByRole("toolbar", { name: /bulk actions/i })).not.toBeInTheDocument();
+    });
+
+    it("Given the view switches to board, then the bulk action bar disappears", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByLabelText("Select PROJ-1"));
+      expect(screen.getByRole("toolbar", { name: /bulk actions/i })).toBeInTheDocument();
+
+      await user.click(screen.getByRole("button", { name: /board/i }));
+      expect(screen.queryByRole("toolbar", { name: /bulk actions/i })).not.toBeInTheDocument();
     });
   });
 });

@@ -1654,7 +1654,7 @@ function BoardView({
 
 const PAGE_SIZE = 50;
 
-function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlightedIndex, onHighlightChange }: { project: string; filters: Filters; onIssuesLoaded?: (issues: Issue[]) => void; onSelectIssue?: (key: string) => void; highlightedIndex: number; onHighlightChange: (i: number) => void }) {
+function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlightedIndex, onHighlightChange, selectedIssueIds, onSelectionChange }: { project: string; filters: Filters; onIssuesLoaded?: (issues: Issue[]) => void; onSelectIssue?: (key: string) => void; highlightedIndex: number; onHighlightChange: (i: number) => void; selectedIssueIds: Set<string>; onSelectionChange: (ids: Set<string>) => void }) {
   const [sortBy, setSortBy] = useState<SortField>("updated");
   const [sortOrder, setSortOrder] = useState<SortOrder>("DESC");
   const [page, setPage] = useState(0);
@@ -1720,6 +1720,23 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlighted
       <table className="block sm:table w-full text-left text-sm">
         <thead className="hidden sm:table-header-group border-b border-zinc-800 text-zinc-400">
           <tr>
+            <th className="px-2 py-3 w-8">
+              <input
+                type="checkbox"
+                aria-label="Select all issues"
+                checked={data?.issues != null && data.issues.length > 0 && data.issues.every((i) => selectedIssueIds.has(i.key))}
+                onChange={(e) => {
+                  if (e.target.checked && data?.issues) {
+                    onSelectionChange(new Set([...selectedIssueIds, ...data.issues.map((i) => i.key)]));
+                  } else if (data?.issues) {
+                    const next = new Set(selectedIssueIds);
+                    data.issues.forEach((i) => next.delete(i.key));
+                    onSelectionChange(next);
+                  }
+                }}
+                className="accent-blue-600 cursor-pointer"
+              />
+            </th>
             {COLUMNS.map((col) => (
               <th
                 key={col.field}
@@ -1737,9 +1754,25 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlighted
             <tr
               key={issue.id}
               ref={(el) => { rowRefs.current[idx] = el; }}
-              className={`flex flex-wrap sm:table-row items-center gap-x-3 gap-y-0.5 sm:gap-0 border-b border-zinc-800 sm:border-zinc-900 px-4 sm:px-0 py-3 sm:py-0 transition-colors cursor-pointer ${idx === highlightedIndex ? "bg-blue-900/30 ring-1 ring-blue-500/40" : "hover:bg-zinc-900/50"}`}
+              className={`flex flex-wrap sm:table-row items-center gap-x-3 gap-y-0.5 sm:gap-0 border-b border-zinc-800 sm:border-zinc-900 px-4 sm:px-0 py-3 sm:py-0 transition-colors cursor-pointer ${selectedIssueIds.has(issue.key) ? "bg-blue-900/20" : ""} ${idx === highlightedIndex ? "bg-blue-900/30 ring-1 ring-blue-500/40" : "hover:bg-zinc-900/50"}`}
               onClick={() => onSelectIssue?.(issue.key)}
             >
+              <td className="sm:table-cell sm:px-2 sm:py-3 order-first sm:order-none">
+                <input
+                  type="checkbox"
+                  aria-label={`Select ${issue.key}`}
+                  checked={selectedIssueIds.has(issue.key)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    const next = new Set(selectedIssueIds);
+                    if (e.target.checked) next.add(issue.key);
+                    else next.delete(issue.key);
+                    onSelectionChange(next);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="accent-blue-600 cursor-pointer"
+                />
+              </td>
               <td className="w-full sm:w-auto sm:table-cell sm:px-4 sm:py-3 font-mono text-blue-400 text-base sm:text-sm order-1 sm:order-none">
                 {issue.key}
               </td>
@@ -2361,6 +2394,199 @@ function CreateIssueModal({
   );
 }
 
+/* ── Bulk Action Bar ── */
+
+interface BulkActionResult {
+  total: number;
+  succeeded: number;
+  failed: number;
+}
+
+function BulkActionBar({
+  selectedIds,
+  onDeselect,
+  project,
+}: {
+  selectedIds: Set<string>;
+  onDeselect: () => void;
+  project: string;
+}) {
+  const queryClient = useQueryClient();
+  const [busy, setBusy] = useState(false);
+  const [result, setResult] = useState<BulkActionResult | null>(null);
+
+  const { data: priorities } = useQuery({
+    queryKey: ["priorities"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/priorities`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<JiraPriority[]>;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: members } = useQuery({
+    queryKey: ["members", project],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/projects/${project}/members`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<ProjectMember[]>;
+    },
+    enabled: !!project,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const showResult = (r: BulkActionResult) => {
+    setResult(r);
+    setTimeout(() => setResult(null), 3000);
+  };
+
+  const handleBulkTransition = async (transitionName: string) => {
+    setBusy(true);
+    const keys = [...selectedIds];
+    const results = await Promise.allSettled(
+      keys.map(async (key) => {
+        const detailRes = await fetch(`${API}/api/issues/${key}`);
+        if (!detailRes.ok) throw new Error(`Failed to fetch ${key}`);
+        const detail = (await detailRes.json()) as IssueDetail;
+        const transition = detail.transitions.find(
+          (t) => t.name.toLowerCase() === transitionName.toLowerCase(),
+        );
+        if (!transition) throw new Error(`No transition "${transitionName}" for ${key}`);
+        const res = await fetch(`${API}/api/issues/${key}/transition`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ transition_id: transition.id }),
+        });
+        if (!res.ok) throw new Error(`Transition failed for ${key}`);
+      }),
+    );
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    showResult({ total: keys.length, succeeded, failed: keys.length - succeeded });
+    queryClient.invalidateQueries({ queryKey: ["issues"] });
+    setBusy(false);
+  };
+
+  const handleBulkAssign = async (accountId: string) => {
+    setBusy(true);
+    const keys = [...selectedIds];
+    const results = await Promise.allSettled(
+      keys.map(async (key) => {
+        const res = await fetch(`${API}/api/issues/${key}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ assignee: accountId || null }),
+        });
+        if (!res.ok) throw new Error(`Assign failed for ${key}`);
+      }),
+    );
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    showResult({ total: keys.length, succeeded, failed: keys.length - succeeded });
+    queryClient.invalidateQueries({ queryKey: ["issues"] });
+    setBusy(false);
+  };
+
+  const handleBulkPriority = async (priorityName: string) => {
+    setBusy(true);
+    const keys = [...selectedIds];
+    const results = await Promise.allSettled(
+      keys.map(async (key) => {
+        const res = await fetch(`${API}/api/issues/${key}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ priority: priorityName }),
+        });
+        if (!res.ok) throw new Error(`Priority failed for ${key}`);
+      }),
+    );
+    const succeeded = results.filter((r) => r.status === "fulfilled").length;
+    showResult({ total: keys.length, succeeded, failed: keys.length - succeeded });
+    queryClient.invalidateQueries({ queryKey: ["issues"] });
+    setBusy(false);
+  };
+
+  if (selectedIds.size === 0) return null;
+
+  const COMMON_TRANSITIONS = ["To Do", "In Progress", "Done"];
+
+  return (
+    <div
+      className="fixed bottom-0 inset-x-0 z-40 border-t border-zinc-700 bg-zinc-900/95 backdrop-blur-sm px-4 py-3 shadow-lg"
+      role="toolbar"
+      aria-label="Bulk actions"
+    >
+      <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3">
+        <span className="text-sm font-medium text-zinc-200 shrink-0">
+          {selectedIds.size} selected
+        </span>
+
+        {busy ? (
+          <span className="text-sm text-zinc-400">Processing...</span>
+        ) : (
+          <>
+            {/* Transition */}
+            <select
+              aria-label="Bulk transition"
+              value=""
+              onChange={(e) => { if (e.target.value) handleBulkTransition(e.target.value); }}
+              className={FILTER_SELECT_CLASS}
+              disabled={busy}
+            >
+              <option value="" disabled>Transition...</option>
+              {COMMON_TRANSITIONS.map((t) => (
+                <option key={t} value={t}>{t}</option>
+              ))}
+            </select>
+
+            {/* Assign */}
+            <select
+              aria-label="Bulk assign"
+              value=""
+              onChange={(e) => { if (e.target.value !== "") handleBulkAssign(e.target.value); }}
+              className={FILTER_SELECT_CLASS}
+              disabled={busy || !project}
+            >
+              <option value="" disabled>Assign...</option>
+              <option value="__unassign__">Unassigned</option>
+              {members?.filter((m) => m.active).map((m) => (
+                <option key={m.accountId} value={m.accountId}>{m.displayName}</option>
+              ))}
+            </select>
+
+            {/* Priority */}
+            <select
+              aria-label="Bulk priority"
+              value=""
+              onChange={(e) => { if (e.target.value) handleBulkPriority(e.target.value); }}
+              className={FILTER_SELECT_CLASS}
+              disabled={busy}
+            >
+              <option value="" disabled>Priority...</option>
+              {(priorities || FALLBACK_PRIORITIES.map((p) => ({ id: p, name: p, iconUrl: "" }))).map((p) => (
+                <option key={p.id} value={p.name}>{p.name}</option>
+              ))}
+            </select>
+          </>
+        )}
+
+        {result && (
+          <span className={`text-sm ${result.failed > 0 ? "text-yellow-400" : "text-green-400"}`}>
+            {result.succeeded}/{result.total} succeeded{result.failed > 0 ? `, ${result.failed} failed` : ""}
+          </span>
+        )}
+
+        <button
+          onClick={onDeselect}
+          className="rounded-md border border-zinc-700 px-3 py-1.5 text-xs text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors cursor-pointer sm:ml-auto"
+          aria-label="Deselect all"
+        >
+          Deselect all
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function isInputFocused(): boolean {
   const tag = document.activeElement?.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
@@ -2378,6 +2604,7 @@ export default function App() {
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [selectedIssueIds, setSelectedIssueIds] = useState<Set<string>>(new Set());
 
   const handleCloseDetail = useCallback(() => setSelectedIssueKey(null), []);
   const handleCloseShortcutHelp = useCallback(() => setShowShortcutHelp(false), []);
@@ -2545,7 +2772,7 @@ export default function App() {
 
       {/* Main */}
       <main className="flex-1 overflow-auto">
-        {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} highlightedIndex={highlightedIndex} onHighlightChange={setHighlightedIndex} />}
+        {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} highlightedIndex={highlightedIndex} onHighlightChange={setHighlightedIndex} selectedIssueIds={selectedIssueIds} onSelectionChange={setSelectedIssueIds} />}
         {view === "board" && (
           <BoardView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} />
         )}
@@ -2569,6 +2796,15 @@ export default function App() {
 
       {/* Create Issue Modal */}
       {showCreateModal && <CreateIssueModal onClose={handleCloseCreateModal} defaultProject={project} />}
+
+      {/* Bulk Action Bar */}
+      {view === "list" && selectedIssueIds.size > 0 && (
+        <BulkActionBar
+          selectedIds={selectedIssueIds}
+          onDeselect={() => setSelectedIssueIds(new Set())}
+          project={project}
+        />
+      )}
     </div>
   );
 }

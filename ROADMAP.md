@@ -64,13 +64,13 @@
 
 ### 7. Bulk actions
 
-- [ ] **7.1** Checkbox selection on list view rows
-- [ ] **7.2** Select all / deselect all
-- [ ] **7.3** Bulk transition (change status for selected issues)
-- [ ] **7.4** Bulk assign (set assignee for selected issues)
-- [ ] **7.5** Bulk priority change
+- [x] **7.1** Checkbox selection on list view rows — *BDD tests: `App.test.tsx` (4 scenarios)*
+- [x] **7.2** Select all / deselect all — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **7.3** Bulk transition (change status for selected issues) — *BDD tests: `App.test.tsx` (2 scenarios)*
+- [x] **7.4** Bulk assign (set assignee for selected issues) — *BDD tests: `App.test.tsx` (1 scenario)*
+- [x] **7.5** Bulk priority change — *BDD tests: `App.test.tsx` (2 scenarios)*
 
-**Tech**: React state for selected issue IDs, batch API calls via `Promise.allSettled`, progress indicator.
+**Tech**: React state (`Set<string>`) for selected issue IDs. `BulkActionBar` floating component with transition/assign/priority dropdowns. Batch API calls via `Promise.allSettled`, success/failure result display. Checkbox column in table header (select all) and each row.
 
 ### 8. Saved filters
 
@@ -135,7 +135,7 @@
 | 4 | Board view (Kanban) | 1 | Complete |
 | 5 | Keyboard shortcuts | 2 | Complete |
 | 6 | Quick create modal | 2 | Complete |
-| 7 | Bulk actions | 2 | Not started |
+| 7 | Bulk actions | 2 | Complete |
 | 8 | Saved filters | 2 | Not started |
 | 9 | Sprint dashboard | 3 | Not started |
 | 10 | Dark/light mode toggle | 3 | Partial |
