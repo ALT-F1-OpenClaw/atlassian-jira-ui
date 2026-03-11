@@ -1,3 +1,8 @@
+## [1.31.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.30.0...v1.31.0) (2026-03-11)
+
+### Features
+
+* saved filters with localStorage persistence (tasks 8.1-8.4) ([c55dcc6](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/c55dcc657e7abe9a7d6a985a774f1b66f7e79d0a))
 ## [1.30.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.29.0...v1.30.0) (2026-03-11)
 
 ### Features
