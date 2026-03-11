@@ -1,3 +1,8 @@
+## [1.34.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.33.0...v1.34.0) (2026-03-11)
+
+### Features
+
+* dark/light mode toggle with system preference detection (tasks 11.2-11.5) ([dc6a5a4](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/dc6a5a471424a4110a879b8d05adb7c237fed882))
 ## [1.33.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.32.0...v1.33.0) (2026-03-11)
 
 ### Features
