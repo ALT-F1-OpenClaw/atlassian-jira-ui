@@ -109,3 +109,4 @@ string[]
 - Page size is 50 (Jira API default) — do not change without discussion
 - Always run tests before marking a task complete
 - Do not push to remote — let the user decide when to push
+- After code changes: update README.md to reflect new features, endpoints, test counts, and project structure
