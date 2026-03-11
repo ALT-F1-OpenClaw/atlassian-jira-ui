@@ -1,3 +1,8 @@
+## [1.39.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.39.1...v1.39.2) (2026-03-11)
+
+### Bug Fixes
+
+* upgrade GitHub Actions to Node.js 24 compatible versions ([3c67757](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/3c67757386e573d833bc13b03ab4f33ba25d5a26))
 ## [1.39.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.39.0...v1.39.1) (2026-03-11)
 
 ### Bug Fixes
