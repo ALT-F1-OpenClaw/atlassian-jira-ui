@@ -1,3 +1,8 @@
+## [1.39.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.39.0...v1.39.1) (2026-03-11)
+
+### Bug Fixes
+
+* CI/CD workflows — add dummy env vars for backend, Docker builds ([107360a](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/107360ad1210162e634c076ec7e8815da21ef0cb))
 ## [1.39.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.38.0...v1.39.0) (2026-03-11)
 ## [1.38.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.37.0...v1.38.0) (2026-03-11)
 
