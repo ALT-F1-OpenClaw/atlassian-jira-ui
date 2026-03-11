@@ -60,7 +60,7 @@ node scripts/screenshots.mjs
 - After committing a feature/fix, run `node scripts/bump-version.mjs <level>` — it generates CHANGELOG, commits, and tags
 
 ### Code Style
-- Frontend: single App.tsx file (no component splitting yet), Tailwind utility classes, dark theme
+- Frontend: single App.tsx file (no component splitting yet), Tailwind utility classes, dark theme, **fully responsive** (mobile-first, works on phone/tablet/desktop)
 - Backend: async endpoints, JQL query construction, `_format_issue()` normalizes Jira responses
 - Tests: BDD naming (`Given ... then ...`), use `within()` to scope assertions, `userEvent` for interactions
 - Filter dropdown order matches table column order: Type → Status → Assignee
