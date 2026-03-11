@@ -1,3 +1,8 @@
+## [1.43.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.43.0...v1.43.1) (2026-03-11)
+
+### Bug Fixes
+
+* recalibrate light mode zinc palette for WCAG AA contrast ([69d7175](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/69d717598b781d8ffdd7a7c738defa3c38dfdb94)), closes [#3f3f46](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/3f3f46) [#52525b](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/52525b) [#71717a](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/71717a) [#09090b](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/09090b) [#18](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/18)
 ## [1.43.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.42.0...v1.43.0) (2026-03-11)
 
 ### Features
