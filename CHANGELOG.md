@@ -1,3 +1,8 @@
+## [1.37.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.36.0...v1.37.0) (2026-03-11)
+
+### Features
+
+* UI visibility with sidebar, breadcrumbs, dashboard, empty states (tasks 13.1-13.5) ([3788bcc](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/3788bccb09be7c54e375bac998cfcb817989e049))
 ## [1.36.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.35.0...v1.36.0) (2026-03-11)
 
 ### Features
