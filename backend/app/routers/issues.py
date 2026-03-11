@@ -92,7 +92,7 @@ async def list_issues(
     sort_by: str = Query(default="updated"),
     sort_order: str = Query(default="DESC"),
     start_at: int = Query(default=0, ge=0),
-    max_results: int = Query(default=50, le=100),
+    max_results: int = Query(default=50, le=200),
 ):
     """List issues with optional filters."""
     jql_parts = []
