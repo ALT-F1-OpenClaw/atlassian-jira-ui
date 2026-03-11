@@ -236,8 +236,11 @@ Before going production-grade, re-enable these:
 | 34 | HTTPS + custom domain (required for OAuth callbacks) | Planned |
 | 35 | Rate limiting & abuse protection (per-user request throttling) | Planned |
 | 36 | Multi-tenant data isolation (no cross-user token leakage) | Planned |
-| 37 | Terms of Service / Privacy Policy pages | Planned |
-| 38 | Production deployment (Docker + reverse proxy + TLS) | Planned |
+| 37 | Terms of Service page (usage terms, liability, SLA, acceptable use) | Planned |
+| 38 | Data Privacy Policy — GDPR (EU), CCPA (California), PIPEDA (Canada), LGPD (Brazil), POPIA (South Africa), APPs (Australia) | Planned |
+| 39 | Cookie consent banner (opt-in for EU/GDPR, opt-out for others) | Planned |
+| 40 | Footer with ALT-F1 branding — link to [www.alt-f1.be](https://www.alt-f1.be) as project creator | Planned |
+| 41 | Production deployment (Docker + reverse proxy + TLS) | Planned |
 
 #### Phase 5 Details
 
@@ -252,6 +255,20 @@ Before going production-grade, re-enable these:
 - Frontend: authenticated users get the full app, scoped to their Jira site
 - Each API call uses the logged-in user's token (not a shared API token)
 - Atlassian's `accessible-resources` API lets users pick which Jira site to connect
+
+**Legal & Branding**:
+- **Terms of Service**: usage terms, liability limitations, SLA expectations, acceptable use policy, termination clauses
+- **Privacy Policy**: multi-jurisdiction compliance covering:
+  - 🇪🇺 GDPR (EU/EEA) — data processing basis, right to erasure, DPO contact, data transfer safeguards
+  - 🇺🇸 CCPA (California) — right to know, right to delete, opt-out of sale
+  - 🇨🇦 PIPEDA (Canada) — consent, access, accountability principles
+  - 🇧🇷 LGPD (Brazil) — legal basis, data subject rights, international transfers
+  - 🇿🇦 POPIA (South Africa) — conditions for lawful processing, data subject participation
+  - 🇦🇺 APPs (Australia) — collection, use, disclosure, cross-border transfer
+- **Cookie consent**: GDPR-compliant banner (opt-in for EU, informational for others)
+- **Data stored**: only OAuth tokens (encrypted) + session data — no Jira content is persisted
+- **Footer**: "Built by [ALT-F1](https://www.alt-f1.be)" with company logo/link on every page
+- **About page**: credit ALT-F1 as project creator with link to www.alt-f1.be
 
 **Security requirements for public SaaS**:
 - HTTPS mandatory (OAuth callback + token transport)
