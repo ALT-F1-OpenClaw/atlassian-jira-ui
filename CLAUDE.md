@@ -101,7 +101,8 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **PWA**: Web app manifest, service worker, installable on mobile
 - **Board view / Kanban** (tasks 3.1–3.4): columns by status category, issue cards, drag-and-drop transitions, swimlanes (assignee/priority)
 - **Mobile Kanban arrows**: ← → buttons on cards for status transitions (mobile only, sm:hidden)
-- **Total: 102 BDD tests**
+- **Command Palette** (tasks 4.1–4.4): Ctrl+K/Cmd+K overlay, debounced fuzzy search via `/api/search/quick`, arrow key navigation, Enter to open issue detail, recent searches in localStorage
+- **Total: 119 BDD tests**
 
-Next up: Command palette (tasks 4.1–4.4) — last piece of Phase 1.
+Phase 1 complete. Next up: Phase 2 — Productivity (tasks 5.1–8.4).
 See `ROADMAP.md` for full status.

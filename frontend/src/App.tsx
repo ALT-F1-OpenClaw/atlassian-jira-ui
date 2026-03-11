@@ -1772,14 +1772,256 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue }: { project
   );
 }
 
+/* ── Command Palette ── */
+
+const RECENT_SEARCHES_KEY = "jira-ui-recent-searches";
+const MAX_RECENT_SEARCHES = 10;
+
+interface QuickSearchResult {
+  id: string;
+  key: string;
+  summary: string;
+  status: string;
+  project: string;
+}
+
+function CommandPalette({
+  open,
+  onClose,
+  onSelectIssue,
+  project,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSelectIssue: (key: string) => void;
+  project: string;
+}) {
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<QuickSearchResult[]>([]);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+  const [isSearching, setIsSearching] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const backdropRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load recent searches from localStorage
+  useEffect(() => {
+    if (open) {
+      try {
+        const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
+        if (stored) setRecentSearches(JSON.parse(stored));
+      } catch { /* ignore */ }
+      setQuery("");
+      setResults([]);
+      setSelectedIndex(0);
+      setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [open]);
+
+  // Debounced search
+  useEffect(() => {
+    if (!open) return;
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+
+    if (!query.trim()) {
+      setResults([]);
+      setSelectedIndex(0);
+      return;
+    }
+
+    setIsSearching(true);
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ q: query.trim() });
+        if (project) params.set("project", project);
+        const res = await fetch(`${API}/api/search/quick?${params}`);
+        if (res.ok) {
+          const data = await res.json();
+          setResults(data.issues || []);
+          setSelectedIndex(0);
+        }
+      } catch { /* ignore */ }
+      setIsSearching(false);
+    }, 300);
+
+    return () => {
+      if (debounceRef.current) clearTimeout(debounceRef.current);
+    };
+  }, [query, open, project]);
+
+  const saveRecentSearch = (term: string) => {
+    const trimmed = term.trim();
+    if (!trimmed) return;
+    const updated = [trimmed, ...recentSearches.filter((s) => s !== trimmed)].slice(0, MAX_RECENT_SEARCHES);
+    setRecentSearches(updated);
+    try {
+      localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
+    } catch { /* ignore */ }
+  };
+
+  const clearRecentSearches = () => {
+    setRecentSearches([]);
+    try {
+      localStorage.removeItem(RECENT_SEARCHES_KEY);
+    } catch { /* ignore */ }
+  };
+
+  const selectResult = (key: string) => {
+    if (query.trim()) saveRecentSearch(query.trim());
+    onSelectIssue(key);
+    onClose();
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.min(i + 1, results.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setSelectedIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      e.preventDefault();
+      if (results.length > 0 && selectedIndex >= 0 && selectedIndex < results.length) {
+        selectResult(results[selectedIndex].key);
+      }
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      onClose();
+    }
+  };
+
+  const handleRecentClick = (term: string) => {
+    setQuery(term);
+  };
+
+  if (!open) return null;
+
+  return (
+    <div
+      ref={backdropRef}
+      className="fixed inset-0 z-[60] flex items-start justify-center bg-black/60 pt-[15vh] sm:pt-[20vh]"
+      onClick={(e) => { if (e.target === backdropRef.current) onClose(); }}
+      role="dialog"
+      aria-label="Command palette"
+    >
+      <div className="w-full max-w-lg mx-4 rounded-xl border border-zinc-700 bg-zinc-900 shadow-2xl overflow-hidden">
+        {/* Search input */}
+        <div className="flex items-center gap-2 border-b border-zinc-700 px-4 py-3">
+          <span className="text-zinc-500 text-sm">🔍</span>
+          <input
+            ref={inputRef}
+            type="text"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={handleKeyDown}
+            placeholder="Search issues..."
+            aria-label="Search issues"
+            className="flex-1 bg-transparent text-sm text-zinc-200 placeholder-zinc-500 focus:outline-none"
+          />
+          <kbd className="hidden sm:inline-block rounded border border-zinc-700 bg-zinc-800 px-1.5 py-0.5 text-[10px] text-zinc-500">
+            ESC
+          </kbd>
+        </div>
+
+        {/* Results / Recent searches */}
+        <div className="max-h-[300px] overflow-y-auto" role="listbox" aria-label="Search results">
+          {query.trim() ? (
+            <>
+              {isSearching && results.length === 0 && (
+                <div className="px-4 py-6 text-center text-sm text-zinc-500">Searching...</div>
+              )}
+              {!isSearching && results.length === 0 && query.trim() && (
+                <div className="px-4 py-6 text-center text-sm text-zinc-500">No results found</div>
+              )}
+              {results.map((result, i) => (
+                <button
+                  key={result.id}
+                  role="option"
+                  aria-selected={i === selectedIndex}
+                  onClick={() => selectResult(result.key)}
+                  className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors cursor-pointer ${
+                    i === selectedIndex ? "bg-blue-600/20 text-zinc-100" : "text-zinc-300 hover:bg-zinc-800"
+                  }`}
+                >
+                  <span className="font-mono text-xs text-blue-400 shrink-0">{result.key}</span>
+                  <span className="flex-1 truncate">{result.summary}</span>
+                  <StatusBadge status={result.status} />
+                  {result.project && (
+                    <span className="text-xs text-zinc-500 shrink-0">{result.project}</span>
+                  )}
+                </button>
+              ))}
+            </>
+          ) : (
+            <>
+              {recentSearches.length > 0 && (
+                <>
+                  <div className="flex items-center justify-between px-4 pt-3 pb-1">
+                    <span className="text-xs text-zinc-500">Recent searches</span>
+                    <button
+                      onClick={clearRecentSearches}
+                      className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors cursor-pointer"
+                      aria-label="Clear recent searches"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  {recentSearches.map((term) => (
+                    <button
+                      key={term}
+                      onClick={() => handleRecentClick(term)}
+                      className="flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 transition-colors cursor-pointer"
+                      role="option"
+                      aria-selected={false}
+                    >
+                      <span className="text-zinc-600">🕐</span>
+                      <span>{term}</span>
+                    </button>
+                  ))}
+                </>
+              )}
+              {recentSearches.length === 0 && (
+                <div className="px-4 py-6 text-center text-sm text-zinc-500">
+                  Type to search issues...
+                </div>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* Footer hint */}
+        <div className="border-t border-zinc-800 px-4 py-2 text-[11px] text-zinc-600 flex gap-4">
+          <span>↑↓ Navigate</span>
+          <span>↵ Open</span>
+          <span>ESC Close</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [view, setView] = useState<View>("list");
   const [project, setProject] = useState("");
   const [filters, setFilters] = useState<Filters>({ status: "", type: "", assignee: "" });
   const [issuesForFilters, setIssuesForFilters] = useState<Issue[]>([]);
   const [selectedIssueKey, setSelectedIssueKey] = useState<string | null>(null);
+  const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
 
   const handleCloseDetail = useCallback(() => setSelectedIssueKey(null), []);
+
+  // Global Ctrl+K / Cmd+K listener
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setCommandPaletteOpen((prev) => !prev);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const { data: projects } = useQuery({
     queryKey: ["projects"],
@@ -1801,21 +2043,33 @@ export default function App() {
             ⚡ <span className="text-zinc-300">Jira UI</span>
             <span className="ml-2 text-xs font-normal text-zinc-600">v{APP_VERSION}</span>
           </h1>
-          <nav className="flex gap-1">
-            {(["board", "list"] as View[]).map((v) => (
-              <button
-                key={v}
-                onClick={() => setView(v)}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
-                  view === v
-                    ? "bg-zinc-800 text-white"
-                    : "text-zinc-400 hover:text-zinc-200"
-                }`}
-              >
-                {v}
-              </button>
-            ))}
-          </nav>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setCommandPaletteOpen(true)}
+              className="flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-400 cursor-pointer"
+              aria-label="Open command palette"
+              title="Search (Ctrl+K)"
+            >
+              <span>🔍</span>
+              <span className="hidden sm:inline">Search</span>
+              <kbd className="hidden sm:inline rounded border border-zinc-700 bg-zinc-800 px-1 py-0.5 text-[10px]">⌘K</kbd>
+            </button>
+            <nav className="flex gap-1">
+              {(["board", "list"] as View[]).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
+                    view === v
+                      ? "bg-zinc-800 text-white"
+                      : "text-zinc-400 hover:text-zinc-200"
+                  }`}
+                >
+                  {v}
+                </button>
+              ))}
+            </nav>
+          </div>
         </div>
         <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 lg:items-center">
           <select
@@ -1846,6 +2100,14 @@ export default function App() {
       {selectedIssueKey && (
         <IssueDetailPanel issueKey={selectedIssueKey} onClose={handleCloseDetail} projectKey={project || undefined} />
       )}
+
+      {/* Command Palette */}
+      <CommandPalette
+        open={commandPaletteOpen}
+        onClose={() => setCommandPaletteOpen(false)}
+        onSelectIssue={(key) => setSelectedIssueKey(key)}
+        project={project}
+      />
     </div>
   );
 }

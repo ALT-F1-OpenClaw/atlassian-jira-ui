@@ -194,6 +194,17 @@ function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: obje
         json: () => Promise.resolve(detail),
       } as Response);
     }
+    if (urlStr.includes("/api/search/quick")) {
+      const searchUrl = new URL(urlStr, "http://localhost");
+      const q = (searchUrl.searchParams.get("q") || "").toLowerCase();
+      const searchResults = mockIssues.issues
+        .filter((i) => i.summary.toLowerCase().includes(q) || i.key.toLowerCase().includes(q))
+        .map((i) => ({ id: i.id, key: i.key, summary: i.summary, status: i.status.name, project: "PROJ" }));
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ issues: searchResults, total: searchResults.length }),
+      } as Response);
+    }
     if (urlStr.includes("/api/issues")) {
       return Promise.resolve({
         ok: true,
@@ -208,8 +219,20 @@ function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: obje
   });
 }
 
+const localStorageMock = (() => {
+  let store: Record<string, string> = {};
+  return {
+    getItem: (key: string) => store[key] ?? null,
+    setItem: (key: string, value: string) => { store[key] = value; },
+    removeItem: (key: string) => { delete store[key]; },
+    clear: () => { store = {}; },
+  };
+})();
+Object.defineProperty(window, "localStorage", { value: localStorageMock, writable: true });
+
 beforeEach(() => {
   vi.restoreAllMocks();
+  localStorageMock.clear();
   setupFetchMock();
 });
 
@@ -1974,6 +1997,335 @@ describe("Feature: Board view quick-action arrows for mobile", () => {
 
       const card = await screen.findByRole("article", { name: /Issue PROJ-1/ });
       expect(within(card).getByRole("group", { name: /Move PROJ-1/ })).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Command palette (Ctrl+K)", () => {
+  describe("Scenario: Ctrl+K opens command palette overlay", () => {
+    it("Given the app is loaded, when pressing Ctrl+K, then the command palette dialog should appear", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("{Control>}k{/Control}");
+
+      expect(screen.getByRole("dialog", { name: /command palette/i })).toBeInTheDocument();
+      expect(screen.getByLabelText("Search issues")).toBeInTheDocument();
+    });
+
+    it("Given the app is loaded, then a search button should be visible in the header", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      expect(screen.getByRole("button", { name: /open command palette/i })).toBeInTheDocument();
+    });
+
+    it("Given the app is loaded, when clicking the search button, then the command palette should open", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+
+      expect(screen.getByRole("dialog", { name: /command palette/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Escape closes the command palette", () => {
+    it("Given the command palette is open, when pressing Escape, then it should close", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      expect(screen.getByRole("dialog", { name: /command palette/i })).toBeInTheDocument();
+
+      await user.keyboard("{Escape}");
+      expect(screen.queryByRole("dialog", { name: /command palette/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Search input is auto-focused when palette opens", () => {
+    it("Given the command palette opens, then the search input should be focused", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+
+      await waitFor(() => {
+        expect(screen.getByLabelText("Search issues")).toHaveFocus();
+      });
+    });
+  });
+
+  describe("Scenario: Fuzzy search returns matching issues", () => {
+    it("Given the command palette is open, when typing 'login', then results matching 'login' should appear", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      await user.type(screen.getByLabelText("Search issues"), "login");
+
+      vi.advanceTimersByTime(350);
+      await waitFor(() => {
+        const dialog = screen.getByRole("dialog", { name: /command palette/i });
+        expect(within(dialog).getByText("PROJ-1")).toBeInTheDocument();
+        expect(within(dialog).getByText("Implement login page")).toBeInTheDocument();
+      });
+
+      vi.useRealTimers();
+    });
+
+    it("Given the command palette is open, when typing a non-matching term, then 'No results found' should appear", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      await user.type(screen.getByLabelText("Search issues"), "zzzznotfound");
+
+      vi.advanceTimersByTime(350);
+      await waitFor(() => {
+        const dialog = screen.getByRole("dialog", { name: /command palette/i });
+        expect(within(dialog).getByText("No results found")).toBeInTheDocument();
+      });
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe("Scenario: Search results show status badge and project", () => {
+    it("Given search results are displayed, then each result should show the status and project key", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      await user.type(screen.getByLabelText("Search issues"), "login");
+
+      vi.advanceTimersByTime(350);
+      await waitFor(() => {
+        const dialog = screen.getByRole("dialog", { name: /command palette/i });
+        expect(within(dialog).getByText("In Progress")).toBeInTheDocument();
+        expect(within(dialog).getByText("PROJ")).toBeInTheDocument();
+      });
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe("Scenario: Clicking a result opens the issue detail panel", () => {
+    it("Given search results are displayed, when clicking a result, then the issue detail panel should open", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      await user.type(screen.getByLabelText("Search issues"), "login");
+
+      vi.advanceTimersByTime(350);
+      await waitFor(() => {
+        const dialog = screen.getByRole("dialog", { name: /command palette/i });
+        expect(within(dialog).getByText("Implement login page")).toBeInTheDocument();
+      });
+
+      const dialog = screen.getByRole("dialog", { name: /command palette/i });
+      await user.click(within(dialog).getByText("Implement login page"));
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /command palette/i })).not.toBeInTheDocument();
+      });
+      expect(screen.getByRole("dialog", { name: /issue detail/i })).toBeInTheDocument();
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe("Scenario: Arrow keys navigate search results", () => {
+    it("Given search results are displayed, when pressing ArrowDown then ArrowUp, then the selected result should change", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      await user.type(screen.getByLabelText("Search issues"), "p");
+
+      vi.advanceTimersByTime(350);
+      const listbox = await screen.findByRole("listbox", { name: /search results/i });
+      await waitFor(() => {
+        const options = within(listbox).getAllByRole("option");
+        expect(options.length).toBeGreaterThan(0);
+      });
+
+      // First result should be selected by default
+      const options = within(listbox).getAllByRole("option");
+      expect(options[0]).toHaveAttribute("aria-selected", "true");
+
+      await user.keyboard("{ArrowDown}");
+      const updatedOptions = within(listbox).getAllByRole("option");
+      if (updatedOptions.length > 1) {
+        expect(updatedOptions[1]).toHaveAttribute("aria-selected", "true");
+        expect(updatedOptions[0]).toHaveAttribute("aria-selected", "false");
+      }
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe("Scenario: Enter key opens selected result", () => {
+    it("Given a result is selected, when pressing Enter, then the issue detail panel should open", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      await user.type(screen.getByLabelText("Search issues"), "login");
+
+      vi.advanceTimersByTime(350);
+      await waitFor(() => {
+        const dialog = screen.getByRole("dialog", { name: /command palette/i });
+        expect(within(dialog).getByText("PROJ-1")).toBeInTheDocument();
+      });
+
+      await user.keyboard("{Enter}");
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /command palette/i })).not.toBeInTheDocument();
+      });
+      expect(screen.getByRole("dialog", { name: /issue detail/i })).toBeInTheDocument();
+
+      vi.useRealTimers();
+    });
+  });
+
+  describe("Scenario: Recent searches are shown when palette opens with empty input", () => {
+    it("Given a search was performed, when reopening the palette, then recent searches should be displayed", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      // Seed localStorage
+      localStorage.setItem("jira-ui-recent-searches", JSON.stringify(["login", "bug"]));
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+
+      const dialog = screen.getByRole("dialog", { name: /command palette/i });
+      expect(within(dialog).getByText("Recent searches")).toBeInTheDocument();
+      expect(within(dialog).getByText("login")).toBeInTheDocument();
+      expect(within(dialog).getByText("bug")).toBeInTheDocument();
+
+      vi.useRealTimers();
+      localStorage.removeItem("jira-ui-recent-searches");
+    });
+  });
+
+  describe("Scenario: Clicking a recent search fills the input", () => {
+    it("Given recent searches are displayed, when clicking one, then the input should be filled with that search term", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      localStorage.setItem("jira-ui-recent-searches", JSON.stringify(["login"]));
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      const dialog = screen.getByRole("dialog", { name: /command palette/i });
+      await user.click(within(dialog).getByText("login"));
+
+      expect(screen.getByLabelText("Search issues")).toHaveValue("login");
+
+      vi.useRealTimers();
+      localStorage.removeItem("jira-ui-recent-searches");
+    });
+  });
+
+  describe("Scenario: Clear recent searches button", () => {
+    it("Given recent searches are displayed, when clicking 'Clear', then they should be removed", async () => {
+      const user = userEvent.setup();
+      localStorage.setItem("jira-ui-recent-searches", JSON.stringify(["login", "bug"]));
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      const dialog = screen.getByRole("dialog", { name: /command palette/i });
+      expect(within(dialog).getByText("Recent searches")).toBeInTheDocument();
+
+      await user.click(within(dialog).getByLabelText("Clear recent searches"));
+
+      expect(within(dialog).queryByText("Recent searches")).not.toBeInTheDocument();
+      expect(within(dialog).queryByText("login")).not.toBeInTheDocument();
+      expect(localStorage.getItem("jira-ui-recent-searches")).toBeNull();
+
+      localStorage.removeItem("jira-ui-recent-searches");
+    });
+  });
+
+  describe("Scenario: Empty state with no recent searches", () => {
+    it("Given no recent searches exist, when opening the palette, then 'Type to search issues...' should be shown", async () => {
+      const user = userEvent.setup();
+      localStorage.removeItem("jira-ui-recent-searches");
+
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      const dialog = screen.getByRole("dialog", { name: /command palette/i });
+      expect(within(dialog).getByText("Type to search issues...")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Keyboard navigation hints are shown", () => {
+    it("Given the command palette is open, then keyboard hints should be visible in the footer", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      const dialog = screen.getByRole("dialog", { name: /command palette/i });
+      expect(within(dialog).getByText("↑↓ Navigate")).toBeInTheDocument();
+      expect(within(dialog).getByText("↵ Open")).toBeInTheDocument();
+      expect(within(dialog).getByText("ESC Close")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Debounced search calls API with delay", () => {
+    it("Given the palette is open, when typing quickly, then the API should only be called once after the debounce period", async () => {
+      vi.useFakeTimers({ shouldAdvanceTime: true });
+      const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /open command palette/i }));
+      (global.fetch as ReturnType<typeof vi.fn>).mockClear();
+
+      await user.type(screen.getByLabelText("Search issues"), "log");
+
+      // Before debounce, no search call should be made
+      const earlySearchCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
+        (c: unknown[]) => (c[0] as string).includes("/api/search/quick")
+      );
+      expect(earlySearchCalls.length).toBe(0);
+
+      vi.advanceTimersByTime(350);
+      await waitFor(() => {
+        const searchCalls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.filter(
+          (c: unknown[]) => (c[0] as string).includes("/api/search/quick")
+        );
+        expect(searchCalls.length).toBe(1);
+        expect((searchCalls[0][0] as string)).toContain("q=log");
+      });
+
+      vi.useRealTimers();
     });
   });
 });

@@ -32,10 +32,10 @@
 
 ### 4. Quick search / Command palette
 
-- [ ] **4.1** `Ctrl+K` opens command palette overlay
-- [ ] **4.2** Fuzzy search across issues with debounced input
-- [ ] **4.3** Navigate to issue detail or project from results
-- [ ] **4.4** Recent searches history
+- [x] **4.1** `Ctrl+K` opens command palette overlay — *BDD tests: `App.test.tsx` (5 scenarios)*
+- [x] **4.2** Fuzzy search across issues with debounced input — *BDD tests: `App.test.tsx` (4 scenarios)*
+- [x] **4.3** Navigate to issue detail or project from results — *BDD tests: `App.test.tsx` (4 scenarios)*
+- [x] **4.4** Recent searches history — *BDD tests: `App.test.tsx` (4 scenarios)*
 
 **Tech**: `cmdk` (already in `package.json`). Backend `GET /api/search/quick` exists. Debounced fetch, keyboard navigation.
 
@@ -131,7 +131,7 @@
 |---|---------|-------|--------|
 | 1 | List view enhancements | 1 | Partial |
 | 2 | Issue detail panel | 1 | Complete |
-| 3 | Quick search / Command palette | 1 | Not started |
+| 3 | Quick search / Command palette | 1 | Complete |
 | 4 | Board view (Kanban) | 1 | Complete |
 | 5 | Quick create modal | 2 | Not started |
 | 6 | Keyboard shortcuts | 2 | Not started |
