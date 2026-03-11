@@ -69,7 +69,7 @@ interface Filters {
 }
 
 const FILTER_SELECT_CLASS =
-  "rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none";
+  "w-full lg:w-auto rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none";
 
 function FilterBar({
   filters,
@@ -185,8 +185,8 @@ function ListView({ project, filters, onIssuesLoaded }: { project: string; filte
 
   return (
     <div className="overflow-x-auto">
-      <table className="w-full text-left text-sm">
-        <thead className="border-b border-zinc-800 text-zinc-400">
+      <table className="block sm:table w-full text-left text-sm">
+        <thead className="hidden sm:table-header-group border-b border-zinc-800 text-zinc-400">
           <tr>
             {COLUMNS.map((col) => (
               <th
@@ -200,34 +200,34 @@ function ListView({ project, filters, onIssuesLoaded }: { project: string; filte
             ))}
           </tr>
         </thead>
-        <tbody>
+        <tbody className="block sm:table-row-group">
           {data?.issues.map((issue) => (
             <tr
               key={issue.id}
-              className="border-b border-zinc-900 transition-colors hover:bg-zinc-900/50"
+              className="flex flex-wrap sm:table-row items-center gap-x-3 gap-y-0.5 sm:gap-0 border-b border-zinc-800 sm:border-zinc-900 px-4 sm:px-0 py-3 sm:py-0 transition-colors hover:bg-zinc-900/50"
             >
-              <td className="px-4 py-3 font-mono text-blue-400">
+              <td className="w-full sm:w-auto sm:table-cell sm:px-4 sm:py-3 font-mono text-blue-400 text-base sm:text-sm order-1 sm:order-none">
                 {issue.key}
               </td>
-              <td className="px-4 py-3 text-zinc-400">{issue.type?.name}</td>
-              <td className="max-w-md truncate px-4 py-3">{issue.summary}</td>
-              <td className="px-4 py-3">
+              <td className="sm:table-cell sm:px-4 sm:py-3 text-zinc-400 text-xs sm:text-sm order-3 sm:order-none">{issue.type?.name}</td>
+              <td className="w-full sm:w-auto sm:table-cell sm:px-4 sm:py-3 sm:max-w-md sm:truncate order-2 sm:order-none mb-1 sm:mb-0">{issue.summary}</td>
+              <td className="sm:table-cell sm:px-4 sm:py-3 order-3 sm:order-none">
                 <StatusBadge status={issue.status?.name} />
               </td>
-              <td className="px-4 py-3">
+              <td className="sm:table-cell sm:px-4 sm:py-3 order-3 sm:order-none">
                 <PriorityIcon priority={issue.priority?.name} />
               </td>
-              <td className="px-4 py-3 text-zinc-400">
+              <td className="sm:table-cell sm:px-4 sm:py-3 text-zinc-400 text-xs sm:text-sm order-3 sm:order-none">
                 {issue.assignee?.displayName || "—"}
               </td>
-              <td className="px-4 py-3 text-zinc-500">
+              <td className="sm:table-cell sm:px-4 sm:py-3 text-zinc-500 text-xs sm:text-sm order-3 sm:order-none ml-auto sm:ml-0">
                 {issue.updated?.substring(0, 10) || "—"}
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div className="flex items-center justify-between px-4 py-3 text-sm text-zinc-500">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-4 py-3 text-sm text-zinc-500">
         <span>
           {startAt + 1}–{Math.min(startAt + (data?.issues.length || 0), data?.total || 0)} of {data?.total} issues
         </span>
@@ -272,16 +272,33 @@ export default function App() {
   return (
     <div className="flex h-screen flex-col">
       {/* Header */}
-      <header className="flex items-center justify-between border-b border-zinc-800 px-6 py-3">
-        <div className="flex items-center gap-4">
+      <header className="border-b border-zinc-800 px-4 sm:px-6 py-3">
+        <div className="flex items-center justify-between">
           <h1 className="text-lg font-bold">
             ⚡ <span className="text-zinc-300">Jira UI</span>
             <span className="ml-2 text-xs font-normal text-zinc-600">v{APP_VERSION}</span>
           </h1>
+          <nav className="flex gap-1">
+            {(["board", "list"] as View[]).map((v) => (
+              <button
+                key={v}
+                onClick={() => setView(v)}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
+                  view === v
+                    ? "bg-zinc-800 text-white"
+                    : "text-zinc-400 hover:text-zinc-200"
+                }`}
+              >
+                {v}
+              </button>
+            ))}
+          </nav>
+        </div>
+        <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 lg:items-center">
           <select
             value={project}
             onChange={(e) => setProject(e.target.value)}
-            className="rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
+            className="col-span-2 sm:col-span-1 w-full lg:w-auto rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
           >
             <option value="">All Projects</option>
             {projects?.map((p) => (
@@ -292,21 +309,6 @@ export default function App() {
           </select>
           <FilterBar filters={filters} onChange={setFilters} issues={issuesForFilters} />
         </div>
-        <nav className="flex gap-1">
-          {(["board", "list"] as View[]).map((v) => (
-            <button
-              key={v}
-              onClick={() => setView(v)}
-              className={`rounded-md px-3 py-1.5 text-sm font-medium capitalize transition-colors ${
-                view === v
-                  ? "bg-zinc-800 text-white"
-                  : "text-zinc-400 hover:text-zinc-200"
-              }`}
-            >
-              {v}
-            </button>
-          ))}
-        </nav>
       </header>
 
       {/* Main */}
