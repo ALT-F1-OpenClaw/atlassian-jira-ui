@@ -1,3 +1,8 @@
+## [1.21.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.20.2...v1.21.0) (2026-03-11)
+
+### Features
+
+* convert to PWA with manifest, service worker, and install prompt ([6a806eb](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/6a806eb849686e5c8e13d09f27f72ed25d73d49e))
 ## [1.20.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.20.1...v1.20.2) (2026-03-11)
 
 ### Bug Fixes
