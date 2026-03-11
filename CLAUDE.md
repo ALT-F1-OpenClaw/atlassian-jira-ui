@@ -90,6 +90,11 @@ VITE_API_URL=http://localhost:35400
 
 ## Current State
 
-Phase 1, Section 1 (List View) is complete: table, sorting, filters, pagination — all with BDD tests.
-Next up: Issue detail panel (task 2.1–2.5), then Board view and Command palette.
+Phase 1, Sections 1–2 complete:
+- **List View** (tasks 1.1–1.4): table, sorting, filters, pagination — 32 BDD tests
+- **Responsive design**: mobile-first cards, stacked filters, adaptive pagination
+- **Issue Detail Panel** (tasks 2.1–2.5): slide-in side panel, ADF rendering, inline editing (summary, description, assignee, priority), status transitions, metadata display, ADF edit button — 25 BDD tests
+- **Total: 57 BDD tests**
+
+Next up: Board view / Kanban (tasks 3.1–3.4), then Command palette (tasks 4.1–4.4).
 See `ROADMAP.md` for full status.
