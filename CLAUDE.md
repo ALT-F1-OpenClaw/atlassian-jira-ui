@@ -9,7 +9,9 @@ Modern alternative frontend for Atlassian Jira Cloud. Full-stack: FastAPI backen
 - **Backend**: Python 3.13, FastAPI, httpx (async Jira client), uvicorn — port 35400
 - **Frontend**: React 19, Vite 6, TypeScript 5.7 (strict), Tailwind CSS 4, TanStack Query, Recharts — port 5173
 - **Testing**: Vitest 4 + @testing-library/react + @testing-library/user-event (BDD style)
-- **Screenshots**: Playwright headless Chromium (`scripts/screenshots.mjs`)
+- **Screenshots**: Playwright E2E (`frontend/e2e/screenshots.spec.ts` → `docs/APP_SCREENSHOTS.md`)
+- **Backend tests**: pytest + pytest-asyncio, mock all Jira calls (`backend/tests/`)
+- **E2E tests**: Playwright with `page.route()` API mocking, PWA service worker disabled
 
 ## Directory Layout
 
@@ -27,7 +29,8 @@ frontend/          → React SPA
   vite.config.ts   → Proxy /api → localhost:35400
 scripts/
   bump-version.mjs  → Sync version across package.json, frontend/package.json, backend/app/version.py
-  screenshots.mjs   → Capture app screenshots with Playwright
+  frontend/e2e/     → Playwright E2E tests + screenshot generator
+  backend/tests/    → pytest backend tests (all endpoints mocked)
 ```
 
 ## Commands
@@ -48,7 +51,7 @@ node scripts/bump-version.mjs minor  # 1.9.0 → 1.10.0 (new features)
 node scripts/bump-version.mjs major  # 1.9.0 → 2.0.0 (breaking changes)
 
 # Screenshots (requires both servers running)
-node scripts/screenshots.mjs
+cd frontend && npm run build && npx playwright test e2e/screenshots.spec.ts
 ```
 
 ## Conventions
@@ -113,13 +116,13 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **Sprint CRUD** (tasks 9b.1–9b.5): create sprint modal (name/goal/dates), edit sprint modal, start/complete sprint with confirmation dialogs, delete sprint with confirmation, manage sprint scope (add/remove issues), backend CRUD endpoints via Jira Agile API
 - **UI Visibility & Navigation** (tasks 13.1–13.5): segmented view switcher with icons (Home/List/Board/Sprint), collapsible sidebar navigation (projects, saved filters, view shortcuts), breadcrumb bar (Home → View → Issue), dashboard landing page (quick actions, active sprints, recent issues, projects), empty states with CTAs
 - **About / Features Page** (tasks 14.1–14.4): dedicated about page accessible from sidebar, lists all 21 features with version badges and descriptions, shows app version/build date/GitHub+changelog links, responsive card-based layout, tech stack section
-- **Total: 255 BDD tests**
+- **Total: 302 tests** (255 frontend unit + 25 backend pytest + 22 Playwright E2E)
 
 Phase 1 complete. Phase 2 complete. Phase 3 complete — Sprint dashboard, sprint CRUD, time tracking, dark/light mode, offline mode, UI navigation, and about page done.
 CI/CD: GitHub Actions (CI, release, Docker build, CodeQL, Dependabot). Docker images published to GHCR on tag push (multi-arch amd64+arm64).
 Light mode recalibrated for WCAG AA contrast. Bundle code-split into 5 chunks (app 300KB + vendors).
 Smart caching: CACHE_STATIC (30min) for priorities/projects/members, CACHE_LIST (2min) for issue lists, CACHE_DETAIL (1min) for single issues.
-Phase 4 complete: loading spinners, wider command palette, chart hints, clickable scope links, description editor always rich text.
+Phase 4 nearly complete: loading spinners, wider command palette, chart hints, clickable scope links, description editor always rich text, project avatars, backend tests (pytest), E2E tests (Playwright), auto-generated screenshots. Only HTTPS via Tailscale remaining.
 
 **Bug fix workflow**: Every fix must have a GitHub issue (label: `bug`) created BEFORE the fix. Commit message references the issue (`fixes #N`). This ensures full traceability of what broke, why, and when it was fixed.
 

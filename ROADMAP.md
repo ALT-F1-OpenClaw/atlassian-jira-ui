@@ -220,7 +220,8 @@ Before going production-grade, re-enable these:
 | 22 | Chart hints (best/worst case explanations on sprint charts) | Complete |
 | 23 | Rich text editor always available for description editing | Complete |
 | 24 | Correct GitHub/changelog URLs in About page | Complete |
-| 25 | Project avatars from Jira API | Planned |
-| 26 | Backend tests (pytest) | Planned |
-| 27 | E2E tests (Playwright) | Planned |
-| 28 | HTTPS via Tailscale (PWA install) | Planned |
+| 25 | Project avatars from Jira API | Complete |
+| 26 | Backend tests (pytest) — 25 tests, all endpoints mocked | Complete |
+| 27 | E2E tests (Playwright) — 22 tests, full API mocking, PWA SW disabled | Complete |
+| 28 | Auto-generated app screenshots (`docs/APP_SCREENSHOTS.md`) — 12 views | Complete |
+| 29 | HTTPS via Tailscale (PWA install) | Planned |
