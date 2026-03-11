@@ -18,6 +18,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Create dummy .env for docker-compose
+        run: |
+          cat > backend/.env << 'EOF'
+          JIRA_HOST=https://test.atlassian.net
+          JIRA_EMAIL=test@test.com
+          JIRA_API_TOKEN=dummy-token
+          APP_SECRET_KEY=ci-test-secret-key
+          EOF
+
       - name: Build backend image
         run: docker build -t jira-ui-backend ./backend
 

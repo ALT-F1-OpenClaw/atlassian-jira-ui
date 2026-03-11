@@ -152,6 +152,14 @@
 
 **Tech**: Static data derived from CHANGELOG.md / hardcoded feature-version map. No API needed.
 
+### 15. CI/CD GitHub Actions
+
+- [x] **15.1** CI workflow — lint, typecheck, test (253 BDD), build on push/PR to main (Node 20+22, Python 3.11-3.13)
+- [x] **15.2** Release workflow — build + create GitHub Release with changelog on tag push
+- [x] **15.3** Docker workflow — build and verify Docker images on push/PR to main
+
+**Tech**: GitHub Actions, `ubuntu-latest` runners, npm/pip caching, matrix builds. Dummy env vars for CI backend validation.
+
 ---
 
 ## Build Order
@@ -173,3 +181,4 @@
 | 12 | Offline mode | 3 | Complete |
 | 13 | UI visibility & navigation | 3 | Complete |
 | 14 | About / Features page | 3 | Complete |
+| 15 | CI/CD GitHub Actions | — | Complete |

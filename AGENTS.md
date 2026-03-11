@@ -146,4 +146,7 @@ string[]
 - Always run tests before marking a task complete
 - Do not push to remote — let the user decide when to push
 - After code changes: update README.md to reflect new features, endpoints, test counts, and project structure
-- When adding a new feature: update the About / Features page (task 13) with the feature name and its release version
+- When adding a new feature: update the About / Features page (task 14) with the feature name and its release version
+- CI/CD: backend CI needs dummy env vars (JIRA_HOST, JIRA_EMAIL, JIRA_API_TOKEN, APP_SECRET_KEY) for import verification
+- CI/CD: Docker workflow creates a dummy backend/.env for docker-compose validation
+- CI/CD: backend/.env is gitignored — never commit real credentials

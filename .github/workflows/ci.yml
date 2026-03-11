@@ -67,4 +67,9 @@ jobs:
 
       - name: Verify imports
         working-directory: backend
+        env:
+          JIRA_HOST: https://test.atlassian.net
+          JIRA_EMAIL: test@test.com
+          JIRA_API_TOKEN: dummy-token
+          APP_SECRET_KEY: ci-test-secret-key
         run: python -c "from app.main import app; print('Backend imports OK')"
