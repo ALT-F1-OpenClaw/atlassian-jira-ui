@@ -1,3 +1,8 @@
+## [1.18.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.17.0...v1.18.0) (2026-03-11)
+
+### Features
+
+* implement issue detail panel (tasks 2.1-2.5) ([fe379e6](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/fe379e6fbb02afcb965f08de014e74a54142a895))
 ## [1.17.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.16.0...v1.17.0) (2026-03-11)
 
 ### Features
