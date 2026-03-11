@@ -183,3 +183,21 @@
 | 13 | UI visibility & navigation | 3 | Complete |
 | 14 | About / Features page | 3 | Complete |
 | 15 | CI/CD GitHub Actions | — | Complete |
+| 16 | Security hardening | — | In progress |
+
+---
+
+## Production Readiness Checklist
+
+Before going production-grade, re-enable these:
+
+- [ ] **Require PR reviews** — re-enable 1 approval requirement on `main` when the team grows beyond solo dev
+- [x] **Branch protection** — CI checks required, no force-push, no branch deletion
+- [x] **SECURITY.md** — vulnerability disclosure policy (PR #1)
+- [x] **Dependabot** — automated dependency vulnerability scanning (PR #2)
+- [x] **CodeQL** — static security analysis for JS/TS and Python (PR #3)
+- [x] **Pre-commit hooks** — secret detection + code quality (PR #4)
+- [ ] **HTTPS** — Tailscale Serve with TLS for PWA install prompt
+- [ ] **Rate limiting** — API rate limiting on backend endpoints
+- [ ] **Authentication** — user login / session management for multi-user deployment
+- [ ] **Audit logging** — track who changed what and when
