@@ -36,7 +36,8 @@ Tasks are tracked in `ROADMAP.md` with numbered IDs (e.g., `2.1`, `3.3`). When a
 - Reset pagination to page 0 when filters, sort, or project change
 - Board view uses `@dnd-kit/core` for drag-and-drop; mobile fallback uses ← → arrow buttons (`sm:hidden`)
 - Mobile-only UI patterns: use `sm:hidden` to show on mobile, `hidden sm:block` to show on desktop
-- Keyboard shortcuts: global `useEffect` keydown listener in `App()`, `isInputFocused()` helper to skip shortcuts when typing in inputs/textareas/selects/contenteditable. Shortcuts: j/k (list nav), Enter (open issue), Escape (close panel), b/l (view switch), ? (help overlay)
+- Keyboard shortcuts: global `useEffect` keydown listener in `App()`, `isInputFocused()` helper to skip shortcuts when typing in inputs/textareas/selects/contenteditable. Shortcuts: j/k (list nav), Enter (open issue), Escape (close panel), b/l (view switch), c (create issue), ? (help overlay)
+- Create issue modal: `CreateIssueModal` component with project/summary/type/priority/assignee/description fields, form validation, `useMutation` + optimistic cache update via `setQueriesData`, `+ Create` button in header
 
 ### Testing (Vitest + Testing Library)
 
@@ -57,6 +58,10 @@ Backend returns normalized shapes — not raw Jira format:
 
 // Issue detail: GET /api/issues/{key}
 Issue & { transitions: { id: string, name: string }[] }
+
+// Create issue: POST /api/issues
+// Body: { project: string, summary: string, issue_type?: string, priority?: string, assignee?: string, description?: string }
+// Returns: { id: string, key: string, self: string }
 
 // Projects: GET /api/projects
 { key: string, name: string, id: string }[]

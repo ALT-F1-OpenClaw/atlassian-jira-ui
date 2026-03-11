@@ -144,10 +144,12 @@ const mockIssueDetail = {
 
 const mockLabels = ["frontend", "auth", "backend", "bug", "enhancement", "documentation"];
 
-function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: object; transitionResponse?: object }) {
+function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: object; transitionResponse?: object; createResponse?: object; createError?: boolean }) {
   const detail = overrides?.issueDetail || mockIssueDetail;
   const patchRes = overrides?.patchResponse || { status: "ok", key: "PROJ-1" };
   const transitionRes = overrides?.transitionResponse || { status: "ok", key: "PROJ-1" };
+  const createRes = overrides?.createResponse || { id: "10004", key: "PROJ-4", self: "https://jira.example.com/rest/api/3/issue/10004" };
+  const createErr = overrides?.createError || false;
 
   global.fetch = vi.fn((url: string | URL | Request, init?: RequestInit) => {
     const urlStr = typeof url === "string" ? url : url.toString();
@@ -173,6 +175,20 @@ function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: obje
       return Promise.resolve({
         ok: true,
         json: () => Promise.resolve(mockLabels),
+      } as Response);
+    }
+    // Create issue: POST /api/issues (no key suffix)
+    if (urlStr.match(/\/api\/issues$/) && init?.method === "POST") {
+      if (createErr) {
+        return Promise.resolve({
+          ok: false,
+          status: 400,
+          json: () => Promise.resolve({ detail: "Bad request" }),
+        } as Response);
+      }
+      return Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve(createRes),
       } as Response);
     }
     // Issue detail: /api/issues/PROJ-1 (not /api/issues?...)
@@ -2566,6 +2582,280 @@ describe("Feature: Keyboard shortcuts — ? shows shortcut help overlay", () => 
       await user.click(screen.getByRole("button", { name: /show shortcuts/i }));
 
       expect(screen.getByRole("dialog", { name: /keyboard shortcuts/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Help overlay lists the create issue shortcut", () => {
+    it("Given the shortcut help is open, then it should list the 'c' shortcut for creating issues", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("?");
+
+      const dialog = screen.getByRole("dialog", { name: /keyboard shortcuts/i });
+      expect(within(dialog).getByText("Create new issue")).toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Quick create modal — 'c' key opens create issue modal (6.1)", () => {
+  describe("Scenario: Pressing 'c' opens the create issue modal", () => {
+    it("Given the list view is displayed, when pressing 'c', then a create issue modal should appear", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+
+      expect(screen.getByRole("dialog", { name: /create issue/i })).toBeInTheDocument();
+      expect(screen.getByText("Create Issue")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Create button in header opens the modal", () => {
+    it("Given the app is loaded, when clicking the Create button, then the create modal should open", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await user.click(screen.getByRole("button", { name: /create issue/i }));
+
+      expect(screen.getByRole("dialog", { name: /create issue/i })).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: 'c' shortcut is disabled when typing in an input", () => {
+    it("Given focus is on a select input, when pressing 'c', then the create modal should not open", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      const typeFilter = screen.getByLabelText("Filter by type");
+      await user.click(typeFilter);
+      await userEvent.keyboard("c");
+
+      expect(screen.queryByRole("dialog", { name: /create issue/i })).not.toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Escape closes the create modal", () => {
+    it("Given the create modal is open, when pressing Escape, then it should close", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+      expect(screen.getByRole("dialog", { name: /create issue/i })).toBeInTheDocument();
+
+      await userEvent.keyboard("{Escape}");
+
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /create issue/i })).not.toBeInTheDocument();
+      });
+    });
+  });
+});
+
+describe("Feature: Quick create modal — form fields (6.2)", () => {
+  describe("Scenario: Modal contains all required form fields", () => {
+    it("Given the create modal is open, then it should have project, summary, type, priority, assignee, and description fields", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+
+      const dialog = screen.getByRole("dialog", { name: /create issue/i });
+      expect(within(dialog).getByLabelText(/project/i)).toBeInTheDocument();
+      expect(within(dialog).getByLabelText(/summary/i)).toBeInTheDocument();
+      expect(within(dialog).getByLabelText(/type/i)).toBeInTheDocument();
+      expect(within(dialog).getByLabelText(/priority/i)).toBeInTheDocument();
+      expect(within(dialog).getByLabelText(/assignee/i)).toBeInTheDocument();
+      expect(within(dialog).getByLabelText(/description/i)).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Project dropdown is populated from API", () => {
+    it("Given the create modal is open, then the project dropdown should list projects from the API", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+
+      const dialog = screen.getByRole("dialog", { name: /create issue/i });
+      const projectSelect = within(dialog).getByLabelText(/project/i);
+      expect(projectSelect).toBeInTheDocument();
+      await waitFor(() => {
+        expect(within(projectSelect).getByText(/PROJ — My Project/)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Scenario: Type dropdown has Task, Bug, Story, Epic options", () => {
+    it("Given the create modal is open, then the type dropdown should have all 4 issue types", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+
+      const dialog = screen.getByRole("dialog", { name: /create issue/i });
+      const typeSelect = within(dialog).getByLabelText(/type/i);
+      expect(within(typeSelect).getByText("Task")).toBeInTheDocument();
+      expect(within(typeSelect).getByText("Bug")).toBeInTheDocument();
+      expect(within(typeSelect).getByText("Story")).toBeInTheDocument();
+      expect(within(typeSelect).getByText("Epic")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Priority dropdown is populated from API", () => {
+    it("Given the create modal is open, then the priority dropdown should list priorities from the API", async () => {
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+
+      const dialog = screen.getByRole("dialog", { name: /create issue/i });
+      const prioritySelect = within(dialog).getByLabelText(/priority/i);
+      await waitFor(() => {
+        expect(within(prioritySelect).getByText("Highest")).toBeInTheDocument();
+        expect(within(prioritySelect).getByText("High")).toBeInTheDocument();
+        expect(within(prioritySelect).getByText("Low")).toBeInTheDocument();
+      });
+    });
+  });
+});
+
+describe("Feature: Quick create modal — form validation (6.3)", () => {
+  describe("Scenario: Submitting without project shows error", () => {
+    it("Given the create modal is open with no project selected, when clicking Create, then a project error should appear", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+
+      const dialog = screen.getByRole("dialog", { name: /create issue/i });
+      await user.click(within(dialog).getByRole("button", { name: /^create$/i }));
+
+      expect(within(dialog).getByText("Project is required")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Submitting without summary shows error", () => {
+    it("Given the create modal has a project selected but no summary, when clicking Create, then a summary error should appear", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+
+      const dialog = screen.getByRole("dialog", { name: /create issue/i });
+      const projectSelect = within(dialog).getByLabelText(/project/i);
+      await waitFor(() => {
+        expect(within(projectSelect).getByText(/PROJ — My Project/)).toBeInTheDocument();
+      });
+      await user.selectOptions(projectSelect, "PROJ");
+      await user.click(within(dialog).getByRole("button", { name: /^create$/i }));
+
+      expect(within(dialog).getByText("Summary is required")).toBeInTheDocument();
+    });
+  });
+
+  describe("Scenario: Errors clear when user fills in the fields", () => {
+    it("Given validation errors are shown, when the user types a summary, then the summary error should disappear", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+
+      const dialog = screen.getByRole("dialog", { name: /create issue/i });
+      await user.click(within(dialog).getByRole("button", { name: /^create$/i }));
+      expect(within(dialog).getByText("Summary is required")).toBeInTheDocument();
+
+      await user.type(within(dialog).getByLabelText(/summary/i), "New task");
+
+      expect(within(dialog).queryByText("Summary is required")).not.toBeInTheDocument();
+    });
+  });
+});
+
+describe("Feature: Quick create modal — optimistic UI update (6.4)", () => {
+  describe("Scenario: Creating an issue closes the modal and sends POST request", () => {
+    it("Given the create modal is filled out, when submitting, then a POST request should be sent and the modal should close", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+
+      const dialog = screen.getByRole("dialog", { name: /create issue/i });
+      const projectSelect = within(dialog).getByLabelText(/project/i);
+      await waitFor(() => {
+        expect(within(projectSelect).getByText(/PROJ — My Project/)).toBeInTheDocument();
+      });
+      await user.selectOptions(projectSelect, "PROJ");
+      await user.type(within(dialog).getByLabelText(/summary/i), "Brand new issue");
+      await user.click(within(dialog).getByRole("button", { name: /^create$/i }));
+
+      // Modal should close after successful creation
+      await waitFor(() => {
+        expect(screen.queryByRole("dialog", { name: /create issue/i })).not.toBeInTheDocument();
+      });
+
+      // Verify POST was called with correct data
+      const postCall = (global.fetch as ReturnType<typeof vi.fn>).mock.calls.find(
+        ([url, init]: [string, RequestInit?]) => url.toString().match(/\/api\/issues$/) && init?.method === "POST"
+      );
+      expect(postCall).toBeDefined();
+      const body = JSON.parse(postCall![1]!.body as string);
+      expect(body.project).toBe("PROJ");
+      expect(body.summary).toBe("Brand new issue");
+      expect(body.issue_type).toBe("Task");
+    });
+  });
+
+  describe("Scenario: API error shows error message in the modal", () => {
+    it("Given the API returns an error, when submitting, then an error message should appear", async () => {
+      setupFetchMock({ createError: true });
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      await userEvent.keyboard("c");
+
+      const dialog = screen.getByRole("dialog", { name: /create issue/i });
+      const projectSelect = within(dialog).getByLabelText(/project/i);
+      await waitFor(() => {
+        expect(within(projectSelect).getByText(/PROJ — My Project/)).toBeInTheDocument();
+      });
+      await user.selectOptions(projectSelect, "PROJ");
+      await user.type(within(dialog).getByLabelText(/summary/i), "Failing issue");
+      await user.click(within(dialog).getByRole("button", { name: /^create$/i }));
+
+      await waitFor(() => {
+        expect(within(dialog).getByRole("alert")).toBeInTheDocument();
+        expect(within(dialog).getByText(/failed to create issue/i)).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe("Scenario: Create modal inherits the selected project", () => {
+    it("Given a project is selected in the header, when opening the create modal via button, then the project field should be pre-filled", async () => {
+      const user = userEvent.setup();
+      render(<App />, { wrapper: createWrapper() });
+      await screen.findByText("PROJ-1");
+
+      // Select a project in the header
+      const headerProjectSelect = screen.getByDisplayValue("All Projects");
+      await waitFor(() => {
+        expect(within(headerProjectSelect).getByText(/PROJ — My Project/)).toBeInTheDocument();
+      });
+      await user.selectOptions(headerProjectSelect, "PROJ");
+
+      // Use button since focus is on the select
+      await user.click(screen.getByRole("button", { name: /create issue/i }));
+
+      const dialog = screen.getByRole("dialog", { name: /create issue/i });
+      const projectSelect = within(dialog).getByLabelText(/project/i) as HTMLSelectElement;
+      expect(projectSelect.value).toBe("PROJ");
     });
   });
 });

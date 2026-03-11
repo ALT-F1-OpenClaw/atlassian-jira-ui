@@ -55,12 +55,12 @@
 
 ### 6. Quick create modal
 
-- [ ] **6.1** `c` key opens create issue modal
-- [ ] **6.2** Fields: project, summary, type, priority, assignee, description
-- [ ] **6.3** Form validation (project + summary required)
-- [ ] **6.4** Optimistic UI update after creation
+- [x] **6.1** `c` key opens create issue modal — *BDD tests: `App.test.tsx` (4 scenarios)*
+- [x] **6.2** Fields: project, summary, type, priority, assignee, description — *BDD tests: `App.test.tsx` (4 scenarios)*
+- [x] **6.3** Form validation (project + summary required) — *BDD tests: `App.test.tsx` (3 scenarios)*
+- [x] **6.4** Optimistic UI update after creation — *BDD tests: `App.test.tsx` (4 scenarios)*
 
-**Tech**: Backend `POST /api/issues` exists. React dialog component, TanStack Query `useMutation`, `queryClient.invalidateQueries` on success.
+**Tech**: Backend `POST /api/issues` exists. `CreateIssueModal` component with form validation, `useMutation` for creation, `queryClient.setQueriesData` for optimistic cache update + `invalidateQueries` on success. `c` shortcut context-aware (disabled in inputs). `+ Create` button in header.
 
 ### 7. Bulk actions
 
@@ -133,8 +133,8 @@
 | 2 | Issue detail panel | 1 | Complete |
 | 3 | Quick search / Command palette | 1 | Complete |
 | 4 | Board view (Kanban) | 1 | Complete |
-| 5 | Quick create modal | 2 | Not started |
-| 6 | Keyboard shortcuts | 2 | Not started |
+| 5 | Keyboard shortcuts | 2 | Complete |
+| 6 | Quick create modal | 2 | Complete |
 | 7 | Bulk actions | 2 | Not started |
 | 8 | Saved filters | 2 | Not started |
 | 9 | Sprint dashboard | 3 | Not started |

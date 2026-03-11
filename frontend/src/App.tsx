@@ -2024,6 +2024,7 @@ const SHORTCUTS: { key: string; description: string }[] = [
   { key: "Escape", description: "Close detail panel / modal" },
   { key: "b", description: "Switch to board view" },
   { key: "l", description: "Switch to list view" },
+  { key: "c", description: "Create new issue" },
   { key: "?", description: "Show this help" },
   { key: "Ctrl+K / ⌘K", description: "Open command palette" },
 ];
@@ -2076,6 +2077,290 @@ function ShortcutHelpOverlay({ onClose }: { onClose: () => void }) {
   );
 }
 
+/* ── Create Issue Modal ── */
+
+const ISSUE_TYPES = ["Task", "Bug", "Story", "Epic"];
+
+const CREATE_FIELD_CLASS =
+  "w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none";
+
+function CreateIssueModal({
+  onClose,
+  defaultProject,
+}: {
+  onClose: () => void;
+  defaultProject: string;
+}) {
+  const queryClient = useQueryClient();
+  const backdropRef = useRef<HTMLDivElement>(null);
+
+  const [formProject, setFormProject] = useState(defaultProject);
+  const [summary, setSummary] = useState("");
+  const [issueType, setIssueType] = useState("Task");
+  const [priority, setPriority] = useState("");
+  const [assignee, setAssignee] = useState("");
+  const [description, setDescription] = useState("");
+  const [errors, setErrors] = useState<{ project?: string; summary?: string }>({});
+  const [submitError, setSubmitError] = useState("");
+
+  const { data: projects } = useQuery({
+    queryKey: ["projects"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/projects`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<{ key: string; name: string; id: string }[]>;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: priorities } = useQuery({
+    queryKey: ["priorities"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/priorities`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<JiraPriority[]>;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const { data: members } = useQuery({
+    queryKey: ["members", formProject],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/projects/${formProject}/members`);
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<ProjectMember[]>;
+    },
+    enabled: !!formProject,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: { project: string; summary: string; issue_type: string; priority?: string; assignee?: string; description?: string }) => {
+      const res = await fetch(`${API}/api/issues`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error(`${res.status}`);
+      return res.json() as Promise<{ id: string; key: string; self: string }>;
+    },
+    onSuccess: (data) => {
+      // Optimistic: add a placeholder issue to the cache immediately
+      queryClient.setQueriesData<{ issues: Issue[]; total: number }>(
+        { queryKey: ["issues"] },
+        (old) => {
+          if (!old) return old;
+          const newIssue: Issue = {
+            id: data.id,
+            key: data.key,
+            summary,
+            status: { name: "To Do", category: "new" },
+            priority: { name: priority || "Medium", iconUrl: "" },
+            assignee: assignee && members
+              ? (() => {
+                  const m = members.find((mem) => mem.accountId === assignee);
+                  return m ? { accountId: m.accountId, displayName: m.displayName, avatarUrl: m.avatarUrl } : null;
+                })()
+              : null,
+            type: { name: issueType, iconUrl: "" },
+            updated: new Date().toISOString(),
+          };
+          return { issues: [newIssue, ...old.issues], total: old.total + 1 };
+        },
+      );
+      // Then invalidate to get fresh data from server
+      queryClient.invalidateQueries({ queryKey: ["issues"] });
+      onClose();
+    },
+    onError: () => {
+      setSubmitError("Failed to create issue. Please try again.");
+    },
+  });
+
+  const validate = (): boolean => {
+    const newErrors: { project?: string; summary?: string } = {};
+    if (!formProject) newErrors.project = "Project is required";
+    if (!summary.trim()) newErrors.summary = "Summary is required";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitError("");
+    if (!validate()) return;
+    createMutation.mutate({
+      project: formProject,
+      summary: summary.trim(),
+      issue_type: issueType,
+      ...(priority && { priority }),
+      ...(assignee && { assignee }),
+      ...(description.trim() && { description: description.trim() }),
+    });
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        e.preventDefault();
+        onClose();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onClose]);
+
+  return (
+    <div
+      ref={backdropRef}
+      className="fixed inset-0 z-50 flex items-start justify-center bg-black/60 p-4 pt-[10vh] overflow-y-auto"
+      onClick={(e) => e.target === backdropRef.current && onClose()}
+      role="dialog"
+      aria-label="Create issue"
+      aria-modal="true"
+    >
+      <div className="w-full max-w-lg rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl">
+        {/* Header */}
+        <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+          <h2 className="text-lg font-semibold text-zinc-100">Create Issue</h2>
+          <button
+            onClick={onClose}
+            className="rounded p-1 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200 cursor-pointer"
+            aria-label="Close create modal"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="space-y-4 p-4">
+          {submitError && (
+            <div className="rounded-md bg-red-900/50 border border-red-700 px-3 py-2 text-sm text-red-300" role="alert">
+              {submitError}
+            </div>
+          )}
+
+          {/* Project */}
+          <div>
+            <label htmlFor="create-project" className="block text-sm font-medium text-zinc-300 mb-1">
+              Project <span className="text-red-400">*</span>
+            </label>
+            <select
+              id="create-project"
+              value={formProject}
+              onChange={(e) => { setFormProject(e.target.value); setAssignee(""); setErrors((prev) => ({ ...prev, project: undefined })); }}
+              className={CREATE_FIELD_CLASS}
+            >
+              <option value="">Select project...</option>
+              {projects?.map((p) => (
+                <option key={p.key} value={p.key}>
+                  {p.key} — {p.name}
+                </option>
+              ))}
+            </select>
+            {errors.project && <p className="mt-1 text-xs text-red-400">{errors.project}</p>}
+          </div>
+
+          {/* Summary */}
+          <div>
+            <label htmlFor="create-summary" className="block text-sm font-medium text-zinc-300 mb-1">
+              Summary <span className="text-red-400">*</span>
+            </label>
+            <input
+              id="create-summary"
+              type="text"
+              value={summary}
+              onChange={(e) => { setSummary(e.target.value); setErrors((prev) => ({ ...prev, summary: undefined })); }}
+              className={CREATE_FIELD_CLASS}
+              placeholder="What needs to be done?"
+              autoFocus
+            />
+            {errors.summary && <p className="mt-1 text-xs text-red-400">{errors.summary}</p>}
+          </div>
+
+          {/* Type + Priority row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="create-type" className="block text-sm font-medium text-zinc-300 mb-1">Type</label>
+              <select
+                id="create-type"
+                value={issueType}
+                onChange={(e) => setIssueType(e.target.value)}
+                className={CREATE_FIELD_CLASS}
+              >
+                {ISSUE_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="create-priority" className="block text-sm font-medium text-zinc-300 mb-1">Priority</label>
+              <select
+                id="create-priority"
+                value={priority}
+                onChange={(e) => setPriority(e.target.value)}
+                className={CREATE_FIELD_CLASS}
+              >
+                <option value="">Default</option>
+                {priorities?.map((p) => (
+                  <option key={p.id} value={p.name}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Assignee */}
+          <div>
+            <label htmlFor="create-assignee" className="block text-sm font-medium text-zinc-300 mb-1">Assignee</label>
+            <select
+              id="create-assignee"
+              value={assignee}
+              onChange={(e) => setAssignee(e.target.value)}
+              className={CREATE_FIELD_CLASS}
+              disabled={!formProject}
+            >
+              <option value="">Unassigned</option>
+              {members?.filter((m) => m.active).map((m) => (
+                <option key={m.accountId} value={m.accountId}>{m.displayName}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label htmlFor="create-description" className="block text-sm font-medium text-zinc-300 mb-1">Description</label>
+            <textarea
+              id="create-description"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={`${CREATE_FIELD_CLASS} min-h-[100px] resize-y`}
+              placeholder="Add a description..."
+            />
+          </div>
+
+          {/* Actions */}
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createMutation.isPending}
+              className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
+            >
+              {createMutation.isPending ? "Creating..." : "Create"}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
 function isInputFocused(): boolean {
   const tag = document.activeElement?.tagName;
   if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return true;
@@ -2091,10 +2376,12 @@ export default function App() {
   const [selectedIssueKey, setSelectedIssueKey] = useState<string | null>(null);
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
 
   const handleCloseDetail = useCallback(() => setSelectedIssueKey(null), []);
   const handleCloseShortcutHelp = useCallback(() => setShowShortcutHelp(false), []);
+  const handleCloseCreateModal = useCallback(() => setShowCreateModal(false), []);
 
   // Global keyboard shortcuts
   useEffect(() => {
@@ -2110,6 +2397,7 @@ export default function App() {
       if (isInputFocused()) return;
       if (commandPaletteOpen) return;
       if (showShortcutHelp) return; // handled by ShortcutHelpOverlay itself
+      if (showCreateModal) return;
 
       // Escape: close detail panel
       if (e.key === "Escape") {
@@ -2124,6 +2412,13 @@ export default function App() {
       if (e.key === "?") {
         e.preventDefault();
         setShowShortcutHelp(true);
+        return;
+      }
+
+      // c — create new issue
+      if (e.key === "c") {
+        e.preventDefault();
+        setShowCreateModal(true);
         return;
       }
 
@@ -2164,7 +2459,7 @@ export default function App() {
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [commandPaletteOpen, showShortcutHelp, selectedIssueKey, view, highlightedIndex, issuesForFilters]);
+  }, [commandPaletteOpen, showShortcutHelp, showCreateModal, selectedIssueKey, view, highlightedIndex, issuesForFilters]);
 
   const { data: projects } = useQuery({
     queryKey: ["projects"],
@@ -2187,6 +2482,15 @@ export default function App() {
             <span className="ml-2 text-xs font-normal text-zinc-600">v{APP_VERSION}</span>
           </h1>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-500 cursor-pointer"
+              aria-label="Create issue"
+              title="Create issue (c)"
+            >
+              <span className="hidden sm:inline">+ Create</span>
+              <span className="sm:hidden">+</span>
+            </button>
             <button
               onClick={() => setCommandPaletteOpen(true)}
               className="flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-400 cursor-pointer"
@@ -2262,6 +2566,9 @@ export default function App() {
 
       {/* Shortcut Help Overlay */}
       {showShortcutHelp && <ShortcutHelpOverlay onClose={handleCloseShortcutHelp} />}
+
+      {/* Create Issue Modal */}
+      {showCreateModal && <CreateIssueModal onClose={handleCloseCreateModal} defaultProject={project} />}
     </div>
   );
 }
