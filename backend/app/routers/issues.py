@@ -1,8 +1,12 @@
 """Issue endpoints."""
 
-from fastapi import APIRouter, Query
+import logging
+from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
+import httpx
 from ..jira_client import jira_request
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/issues", tags=["issues"])
 
@@ -207,7 +211,11 @@ async def update_issue(key: str, req: UpdateIssueRequest):
     if req.assignee:
         fields["assignee"] = {"accountId": req.assignee}
 
-    await jira_request("PUT", f"/issue/{key}", json={"fields": fields})
+    try:
+        await jira_request("PUT", f"/issue/{key}", json={"fields": fields})
+    except httpx.HTTPStatusError as e:
+        logger.error("Failed to update issue %s: %s", key, e.response.text)
+        raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
     return {"status": "ok", "key": key}
 
 

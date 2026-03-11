@@ -1,9 +1,12 @@
 """Async Jira API client with rate-limit retry."""
 
 import asyncio
+import logging
 import httpx
 from base64 import b64encode
 from .config import get_settings
+
+logger = logging.getLogger(__name__)
 
 _client: httpx.AsyncClient | None = None
 
@@ -68,7 +71,14 @@ async def jira_request(
         if response.status_code == 204:
             return None
 
-        response.raise_for_status()
+        if response.status_code >= 400:
+            body = response.text
+            logger.error("Jira API error %s %s: %s %s", method, path, response.status_code, body)
+            raise httpx.HTTPStatusError(
+                f"Jira API error {response.status_code}: {body}",
+                request=response.request,
+                response=response,
+            )
         return response.json()
 
     return None

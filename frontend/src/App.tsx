@@ -258,10 +258,13 @@ function tiptapToAdf(node: Record<string, unknown>): AdfNode {
   if (node.type === "text") {
     const result: AdfNode = { type: "text", text: (node.text as string) || "" };
     if (node.marks && Array.isArray(node.marks) && node.marks.length) {
-      result.marks = node.marks.map((m: { type: string; attrs?: Record<string, unknown> }) => ({
-        type: TIPTAP_TO_ADF_MARKS[m.type] || m.type,
-        ...(m.attrs ? { attrs: m.attrs } : {}),
-      }));
+      result.marks = node.marks.map((m: { type: string; attrs?: Record<string, unknown> }) => {
+        const adfType = TIPTAP_TO_ADF_MARKS[m.type] || m.type;
+        if (adfType === "link" && m.attrs) {
+          return { type: adfType, attrs: { href: m.attrs.href as string } };
+        }
+        return { type: adfType, ...(m.attrs ? { attrs: m.attrs } : {}) };
+      });
     }
     return result;
   }
@@ -273,7 +276,15 @@ function tiptapToAdf(node: Record<string, unknown>): AdfNode {
   }
 
   if (node.attrs) {
-    result.attrs = node.attrs as Record<string, unknown>;
+    const attrs = node.attrs as Record<string, unknown>;
+    // Only include non-null attrs that ADF expects
+    const cleaned: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(attrs)) {
+      if (v != null) cleaned[k] = v;
+    }
+    if (Object.keys(cleaned).length) {
+      result.attrs = cleaned;
+    }
   }
 
   if (node.content && Array.isArray(node.content) && node.content.length) {
