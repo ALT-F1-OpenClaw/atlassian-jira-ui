@@ -1,3 +1,8 @@
+## [1.49.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.48.2...v1.49.0) (2026-03-12)
+
+### Features
+
+* searchable autocomplete dropdowns + Create submenu with Project creation ([c3d4f67](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/c3d4f67608b36d6e647a5e7f5bd525fdaf8845f2))
 ## [1.48.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.48.1...v1.48.2) (2026-03-11)
 ## [1.48.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.48.0...v1.48.1) (2026-03-11)
 ## [1.48.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.47.1...v1.48.0) (2026-03-11)
