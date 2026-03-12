@@ -28,6 +28,29 @@ vi.mock("recharts", () => {
   };
 });
 
+// JSDOM doesn't implement scrollIntoView
+Element.prototype.scrollIntoView = vi.fn();
+
+/**
+ * Helper: select an option from a SearchableSelect component.
+ * Opens the dropdown by clicking the button, then clicks the matching option.
+ */
+async function selectSearchableOption(
+  user: ReturnType<typeof userEvent.setup>,
+  container: HTMLElement | typeof screen,
+  ariaLabel: string,
+  optionText: string,
+) {
+  const btn = "getByLabelText" in container
+    ? container.getByLabelText(ariaLabel)
+    : within(container).getByLabelText(ariaLabel);
+  await user.click(btn);
+  // Find the option in the listbox
+  const listbox = screen.getByRole("listbox");
+  const option = within(listbox).getByText(optionText);
+  await user.click(option);
+}
+
 function createWrapper() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -670,12 +693,13 @@ describe("Feature: Filter dropdowns", () => {
 
   describe("Scenario: Status filter dropdown shows unique statuses from data", () => {
     it("Given 3 issues with statuses 'In Progress', 'To Do', 'Done', then the status dropdown should list all three", async () => {
+      const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
 
       await screen.findByText("PROJ-1");
-      const statusSelect = screen.getByLabelText("Filter by status");
-      const options = within(statusSelect).getAllByRole("option");
-      const optionTexts = options.map((o) => o.textContent);
+      await user.click(screen.getByLabelText("Filter by status"));
+      const listbox = screen.getByRole("listbox");
+      const optionTexts = within(listbox).getAllByRole("option").map((o) => o.textContent);
       expect(optionTexts).toContain("All Statuses");
       expect(optionTexts).toContain("In Progress");
       expect(optionTexts).toContain("To Do");
@@ -685,12 +709,13 @@ describe("Feature: Filter dropdowns", () => {
 
   describe("Scenario: Type filter dropdown shows unique types from data", () => {
     it("Given issues of type Story, Bug, Task, then the type dropdown should list all three", async () => {
+      const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
 
       await screen.findByText("PROJ-1");
-      const typeSelect = screen.getByLabelText("Filter by type");
-      const options = within(typeSelect).getAllByRole("option");
-      const optionTexts = options.map((o) => o.textContent);
+      await user.click(screen.getByLabelText("Filter by type"));
+      const listbox = screen.getByRole("listbox");
+      const optionTexts = within(listbox).getAllByRole("option").map((o) => o.textContent);
       expect(optionTexts).toContain("All Types");
       expect(optionTexts).toContain("Story");
       expect(optionTexts).toContain("Bug");
@@ -700,12 +725,13 @@ describe("Feature: Filter dropdowns", () => {
 
   describe("Scenario: Assignee filter dropdown shows unique assignees from data", () => {
     it("Given issues assigned to 'Alice Martin' and 'Bob Chen', then the assignee dropdown should list both", async () => {
+      const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
 
       await screen.findByText("PROJ-1");
-      const assigneeSelect = screen.getByLabelText("Filter by assignee");
-      const options = within(assigneeSelect).getAllByRole("option");
-      const optionTexts = options.map((o) => o.textContent);
+      await user.click(screen.getByLabelText("Filter by assignee"));
+      const listbox = screen.getByRole("listbox");
+      const optionTexts = within(listbox).getAllByRole("option").map((o) => o.textContent);
       expect(optionTexts).toContain("All Assignees");
       expect(optionTexts).toContain("Alice Martin");
       expect(optionTexts).toContain("Bob Chen");
@@ -718,8 +744,7 @@ describe("Feature: Filter dropdowns", () => {
       render(<App />, { wrapper: createWrapper() });
 
       await screen.findByText("PROJ-1");
-      const statusSelect = screen.getByLabelText("Filter by status");
-      await user.selectOptions(statusSelect, "Done");
+      await selectSearchableOption(user, screen, "Filter by status", "Done");
 
       const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
       const issuesCalls = calls.filter((c: unknown[]) => (c[0] as string).includes("/api/issues"));
@@ -735,8 +760,7 @@ describe("Feature: Filter dropdowns", () => {
       render(<App />, { wrapper: createWrapper() });
 
       await screen.findByText("PROJ-1");
-      const typeSelect = screen.getByLabelText("Filter by type");
-      await user.selectOptions(typeSelect, "Bug");
+      await selectSearchableOption(user, screen, "Filter by type", "Bug");
 
       const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
       const issuesCalls = calls.filter((c: unknown[]) => (c[0] as string).includes("/api/issues"));
@@ -752,17 +776,16 @@ describe("Feature: Filter dropdowns", () => {
       render(<App />, { wrapper: createWrapper() });
 
       await screen.findByText("PROJ-1");
-      const statusSelect = screen.getByLabelText("Filter by status");
-      await user.selectOptions(statusSelect, "Done");
+      await selectSearchableOption(user, screen, "Filter by status", "Done");
 
       const clearBtn = screen.getByText("Clear filters");
       await user.click(clearBtn);
 
-      // After clearing, all filter dropdowns should be reset to default (empty string)
+      // After clearing, all filter dropdowns should show their placeholder text
       await waitFor(() => {
-        expect(statusSelect).toHaveValue("");
-        expect(screen.getByLabelText("Filter by type")).toHaveValue("");
-        expect(screen.getByLabelText("Filter by assignee")).toHaveValue("");
+        expect(screen.getByLabelText("Filter by status")).toHaveTextContent("All Statuses");
+        expect(screen.getByLabelText("Filter by type")).toHaveTextContent("All Types");
+        expect(screen.getByLabelText("Filter by assignee")).toHaveTextContent("All Assignees");
       });
       // Clear button should disappear when no filters active
       expect(screen.queryByText("Clear filters")).not.toBeInTheDocument();
@@ -1288,8 +1311,9 @@ describe("Feature: Inline editing", () => {
       const editBtn = within(panel).getByLabelText("Edit priority");
       await user.click(editBtn);
 
-      const select = within(panel).getByLabelText("priority");
-      await user.selectOptions(select, "Medium");
+      // InlineEditSelect auto-opens the SearchableSelect — click the option directly
+      const listbox = await screen.findByRole("listbox");
+      await user.click(within(listbox).getByText("Medium"));
 
       await waitFor(() => {
         const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
@@ -1452,10 +1476,9 @@ describe("Feature: Assignee dropdown with project members", () => {
 
       await user.click(within(panel).getByLabelText("Edit assignee"));
 
-      const select = within(panel).getByLabelText("assignee");
-      expect(select.tagName).toBe("SELECT");
-      const options = within(select).getAllByRole("option");
-      const optionTexts = options.map((o) => o.textContent);
+      // SearchableSelect opens a listbox
+      const listbox = screen.getByRole("listbox");
+      const optionTexts = within(listbox).getAllByRole("option").map((o) => o.textContent);
       expect(optionTexts).toContain("Alice Martin");
       expect(optionTexts).toContain("Bob Chen");
       expect(optionTexts).toContain("Carol Davis");
@@ -1476,8 +1499,9 @@ describe("Feature: Assignee dropdown with project members", () => {
       });
 
       await user.click(within(panel).getByLabelText("Edit assignee"));
-      const select = within(panel).getByLabelText("assignee");
-      await user.selectOptions(select, "def456");
+      // InlineEditSelect auto-opens — click option directly
+      const listbox = await screen.findByRole("listbox");
+      await user.click(within(listbox).getByText("Bob Chen"));
 
       await waitFor(() => {
         const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
@@ -1505,9 +1529,8 @@ describe("Feature: Assignee dropdown with project members", () => {
       });
 
       await user.click(within(panel).getByLabelText("Edit assignee"));
-      const select = within(panel).getByLabelText("assignee");
-      const options = within(select).getAllByRole("option");
-      const optionTexts = options.map((o) => o.textContent);
+      const listbox = screen.getByRole("listbox");
+      const optionTexts = within(listbox).getAllByRole("option").map((o) => o.textContent);
       expect(optionTexts).toContain("Unassigned");
     });
   });
@@ -1526,9 +1549,8 @@ describe("Feature: Priority dropdown with fetched priorities", () => {
       const editBtn = within(panel).getByLabelText("Edit priority");
       await user.click(editBtn);
 
-      const select = within(panel).getByLabelText("priority");
-      const options = within(select).getAllByRole("option");
-      const optionTexts = options.map((o) => o.textContent);
+      const listbox = screen.getByRole("listbox");
+      const optionTexts = within(listbox).getAllByRole("option").map((o) => o.textContent);
       expect(optionTexts).toContain("Highest");
       expect(optionTexts).toContain("High");
       expect(optionTexts).toContain("Medium");
@@ -2623,10 +2645,11 @@ describe("Feature: Keyboard shortcuts — j/k navigation in list view", () => {
       render(<App />, { wrapper: createWrapper() });
       await screen.findByText("PROJ-1");
 
-      const typeFilter = screen.getByLabelText("Filter by type");
-      await user.click(typeFilter);
-      // Focus is now on the select element
-      await userEvent.keyboard("j");
+      // Click the SearchableSelect to open it — focus moves to the search input
+      await user.click(screen.getByLabelText("Filter by type"));
+      const searchInput = await screen.findByLabelText("Search options");
+      await user.click(searchInput);
+      await user.keyboard("j");
 
       const tbody = screen.getAllByRole("rowgroup")[1];
       const rows = within(tbody).getAllByRole("row");
@@ -2813,6 +2836,8 @@ describe("Feature: Quick create modal — 'c' key opens create issue modal (6.1)
       render(<App />, { wrapper: createWrapper() });
       await screen.findByText("PROJ-1");
 
+      // Click Create dropdown, then Issue
+      await user.click(screen.getByRole("button", { name: "Create" }));
       await user.click(screen.getByRole("button", { name: /create issue/i }));
 
       expect(screen.getByRole("dialog", { name: /create issue/i })).toBeInTheDocument();
@@ -2825,9 +2850,10 @@ describe("Feature: Quick create modal — 'c' key opens create issue modal (6.1)
       render(<App />, { wrapper: createWrapper() });
       await screen.findByText("PROJ-1");
 
-      const typeFilter = screen.getByLabelText("Filter by type");
-      await user.click(typeFilter);
-      await userEvent.keyboard("c");
+      await user.click(screen.getByLabelText("Filter by type"));
+      const searchInput = await screen.findByLabelText("Search options");
+      await user.click(searchInput);
+      await user.keyboard("c");
 
       expect(screen.queryByRole("dialog", { name: /create issue/i })).not.toBeInTheDocument();
     });
@@ -2870,17 +2896,19 @@ describe("Feature: Quick create modal — form fields (6.2)", () => {
 
   describe("Scenario: Project dropdown is populated from API", () => {
     it("Given the create modal is open, then the project dropdown should list projects from the API", async () => {
+      const user = userEvent.setup();
       render(<App />, { wrapper: createWrapper() });
       await screen.findByText("PROJ-1");
 
       await userEvent.keyboard("c");
 
       const dialog = screen.getByRole("dialog", { name: /create issue/i });
-      const projectSelect = within(dialog).getByLabelText(/project/i);
-      expect(projectSelect).toBeInTheDocument();
+      // Click the project SearchableSelect to open the dropdown
+      await user.click(within(dialog).getByText("Select project..."));
       await waitFor(() => {
-        expect(within(projectSelect).getByText(/PROJ — My Project/)).toBeInTheDocument();
+        expect(screen.getByRole("listbox")).toBeInTheDocument();
       });
+      expect(screen.getByText(/PROJ — My Project/)).toBeInTheDocument();
     });
   });
 
@@ -2943,11 +2971,12 @@ describe("Feature: Quick create modal — form validation (6.3)", () => {
       await userEvent.keyboard("c");
 
       const dialog = screen.getByRole("dialog", { name: /create issue/i });
-      const projectSelect = within(dialog).getByLabelText(/project/i);
+      // Select project via SearchableSelect
+      await user.click(within(dialog).getByText("Select project..."));
       await waitFor(() => {
-        expect(within(projectSelect).getByText(/PROJ — My Project/)).toBeInTheDocument();
+        expect(screen.getByRole("listbox")).toBeInTheDocument();
       });
-      await user.selectOptions(projectSelect, "PROJ");
+      await user.click(screen.getByText(/PROJ — My Project/));
       await user.click(within(dialog).getByRole("button", { name: /^create$/i }));
 
       expect(within(dialog).getByText("Summary is required")).toBeInTheDocument();
@@ -2983,11 +3012,10 @@ describe("Feature: Quick create modal — optimistic UI update (6.4)", () => {
       await userEvent.keyboard("c");
 
       const dialog = screen.getByRole("dialog", { name: /create issue/i });
-      const projectSelect = within(dialog).getByLabelText(/project/i);
-      await waitFor(() => {
-        expect(within(projectSelect).getByText(/PROJ — My Project/)).toBeInTheDocument();
-      });
-      await user.selectOptions(projectSelect, "PROJ");
+      // Select project via SearchableSelect
+      await user.click(within(dialog).getByText("Select project..."));
+      await waitFor(() => expect(screen.getByRole("listbox")).toBeInTheDocument());
+      await user.click(screen.getByText(/PROJ — My Project/));
       await user.type(within(dialog).getByLabelText(/summary/i), "Brand new issue");
       await user.click(within(dialog).getByRole("button", { name: /^create$/i }));
 
@@ -3018,11 +3046,9 @@ describe("Feature: Quick create modal — optimistic UI update (6.4)", () => {
       await userEvent.keyboard("c");
 
       const dialog = screen.getByRole("dialog", { name: /create issue/i });
-      const projectSelect = within(dialog).getByLabelText(/project/i);
-      await waitFor(() => {
-        expect(within(projectSelect).getByText(/PROJ — My Project/)).toBeInTheDocument();
-      });
-      await user.selectOptions(projectSelect, "PROJ");
+      await user.click(within(dialog).getByText("Select project..."));
+      await waitFor(() => expect(screen.getByRole("listbox")).toBeInTheDocument());
+      await user.click(screen.getByText(/PROJ — My Project/));
       await user.type(within(dialog).getByLabelText(/summary/i), "Failing issue");
       await user.click(within(dialog).getByRole("button", { name: /^create$/i }));
 
@@ -3039,19 +3065,19 @@ describe("Feature: Quick create modal — optimistic UI update (6.4)", () => {
       render(<App />, { wrapper: createWrapper() });
       await screen.findByText("PROJ-1");
 
-      // Select a project in the header
-      const headerProjectSelect = screen.getByDisplayValue("All Projects");
-      await waitFor(() => {
-        expect(within(headerProjectSelect).getByText(/PROJ — My Project/)).toBeInTheDocument();
-      });
-      await user.selectOptions(headerProjectSelect, "PROJ");
+      // Select a project in the header via SearchableSelect
+      const projectBtns = screen.getAllByText("All Projects");
+      await user.click(projectBtns[0]);
+      await waitFor(() => expect(screen.getByRole("listbox")).toBeInTheDocument());
+      await user.click(screen.getByText(/PROJ — My Project/));
 
-      // Use button since focus is on the select
+      // Click Create dropdown, then Issue
+      await user.click(screen.getByRole("button", { name: "Create" }));
       await user.click(screen.getByRole("button", { name: /create issue/i }));
 
       const dialog = screen.getByRole("dialog", { name: /create issue/i });
-      const projectSelect = within(dialog).getByLabelText(/project/i) as HTMLSelectElement;
-      expect(projectSelect.value).toBe("PROJ");
+      // SearchableSelect shows the selected label as button text
+      expect(within(dialog).getByText(/PROJ — My Project/)).toBeInTheDocument();
     });
   });
 });
@@ -3191,17 +3217,19 @@ describe("Feature: Bulk actions on selected issues", () => {
       render(<App />, { wrapper: createWrapper() });
       await screen.findByText("PROJ-1");
 
-      // Select a project first to enable members
-      const projectSelect = screen.getAllByDisplayValue("All Projects")[0];
-      await user.selectOptions(projectSelect, "PROJ");
+      // Select a project first to enable members via SearchableSelect
+      const projectBtns = screen.getAllByText("All Projects");
+      await user.click(projectBtns[0]);
+      await waitFor(() => expect(screen.getByRole("listbox")).toBeInTheDocument());
+      await user.click(screen.getByText(/PROJ — My Project/));
 
       await waitFor(() => screen.findByText("PROJ-1"));
 
       await user.click(screen.getByLabelText("Select PROJ-1"));
       await user.click(screen.getByLabelText("Select PROJ-2"));
 
-      const assignSelect = screen.getByLabelText("Bulk assign");
-      await user.selectOptions(assignSelect, "abc123");
+      // Bulk assign is now SearchableSelect
+      await selectSearchableOption(user, screen, "Bulk assign", "Alice Martin");
 
       await waitFor(() => {
         const calls = (global.fetch as ReturnType<typeof vi.fn>).mock.calls;
@@ -3286,9 +3314,8 @@ describe("Feature: Bulk actions on selected issues", () => {
       render(<App />, { wrapper: createWrapper() });
       await screen.findByText("PROJ-1");
 
-      // Apply a filter
-      const typeFilter = screen.getByLabelText("Filter by type");
-      await user.selectOptions(typeFilter, "Bug");
+      // Apply a filter via SearchableSelect
+      await selectSearchableOption(user, screen, "Filter by type", "Bug");
 
       // Save Filter button should appear
       const saveBtn = screen.getByLabelText("Save current filter");
@@ -3312,8 +3339,7 @@ describe("Feature: Bulk actions on selected issues", () => {
       render(<App />, { wrapper: createWrapper() });
       await screen.findByText("PROJ-1");
 
-      const typeFilter = screen.getByLabelText("Filter by type");
-      await user.selectOptions(typeFilter, "Bug");
+      await selectSearchableOption(user, screen, "Filter by type", "Bug");
 
       await user.click(screen.getByLabelText("Save current filter"));
 
@@ -3348,7 +3374,7 @@ describe("Feature: Bulk actions on selected issues", () => {
       await user.click(screen.getByLabelText("Saved filters"));
       await user.click(screen.getByLabelText("Apply filter Bugs Only"));
 
-      expect(screen.getByLabelText("Filter by type")).toHaveValue("Bug");
+      expect(screen.getByLabelText("Filter by type")).toHaveTextContent("Bug");
     });
 
     it("Given no saved filters exist, then the dropdown shows an empty message", async () => {
@@ -3405,8 +3431,7 @@ describe("Feature: Bulk actions on selected issues", () => {
       render(<App />, { wrapper: createWrapper() });
       await screen.findByText("PROJ-1");
 
-      const typeFilter = screen.getByLabelText("Filter by type");
-      await user.selectOptions(typeFilter, "Bug");
+      await selectSearchableOption(user, screen, "Filter by type", "Bug");
       await user.click(screen.getByLabelText("Save current filter"));
 
       const stored = JSON.parse(localStorage.getItem("jira-ui-saved-filters") || "[]");

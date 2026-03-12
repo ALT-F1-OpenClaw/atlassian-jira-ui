@@ -502,6 +502,178 @@ async function offlineFetch(
 const FILTER_SELECT_CLASS =
   "w-full lg:w-auto rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none";
 
+/* ── SearchableSelect ─────────────────────────────────────────────── */
+function SearchableSelect({
+  value,
+  onChange,
+  options,
+  placeholder = "Select...",
+  className = "",
+  ariaLabel,
+  disabled = false,
+  id,
+  autoOpen = false,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: { value: string; label: string }[];
+  placeholder?: string;
+  className?: string;
+  ariaLabel?: string;
+  disabled?: boolean;
+  id?: string;
+  autoOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(autoOpen);
+  const [search, setSearch] = useState("");
+  const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const listRef = useRef<HTMLUListElement>(null);
+  const [highlightIdx, setHighlightIdx] = useState(-1);
+
+  const filtered = search
+    ? options.filter((o) => o.label.toLowerCase().includes(search.toLowerCase()))
+    : options;
+
+  // Close on outside click
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSearch("");
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  // Scroll highlighted item into view
+  useEffect(() => {
+    if (highlightIdx >= 0 && listRef.current) {
+      const item = listRef.current.children[highlightIdx] as HTMLElement | undefined;
+      item?.scrollIntoView({ block: "nearest" });
+    }
+  }, [highlightIdx]);
+
+  const selectedLabel = value
+    ? options.find((o) => o.value === value)?.label || value
+    : placeholder;
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (!open) {
+      if (e.key === "ArrowDown" || e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        setOpen(true);
+        setTimeout(() => inputRef.current?.focus(), 0);
+      }
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setHighlightIdx((i) => Math.min(i + 1, filtered.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setHighlightIdx((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter" && highlightIdx >= 0 && filtered[highlightIdx]) {
+      e.preventDefault();
+      onChange(filtered[highlightIdx].value);
+      setOpen(false);
+      setSearch("");
+      setHighlightIdx(-1);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      setOpen(false);
+      setSearch("");
+      setHighlightIdx(-1);
+    }
+  };
+
+  const selectOption = (val: string) => {
+    onChange(val);
+    setOpen(false);
+    setSearch("");
+    setHighlightIdx(-1);
+  };
+
+  return (
+    <div ref={containerRef} className={`relative ${className}`} onKeyDown={handleKeyDown}>
+      <button
+        type="button"
+        id={id}
+        aria-label={ariaLabel}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        disabled={disabled}
+        onClick={() => {
+          if (!disabled) {
+            setOpen(!open);
+            if (!open) setTimeout(() => inputRef.current?.focus(), 0);
+          }
+        }}
+        className={`${FILTER_SELECT_CLASS} ${className.includes("w-full") ? "w-full" : "w-full lg:w-auto"} flex items-center justify-between gap-1 text-left ${disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}
+      >
+        <span className={value ? "text-zinc-200" : "text-zinc-400"}>{selectedLabel}</span>
+        <svg className="h-3.5 w-3.5 text-zinc-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={open ? "M18 15l-6-6-6 6" : "M6 9l6 6 6-6"} />
+        </svg>
+      </button>
+      {open && (
+        <div className="absolute z-50 mt-1 w-full min-w-[200px] rounded-md border border-zinc-700 bg-zinc-900 shadow-lg">
+          <div className="p-1.5">
+            <input
+              ref={inputRef}
+              type="text"
+              value={search}
+              onChange={(e) => { setSearch(e.target.value); setHighlightIdx(0); }}
+              placeholder="Search..."
+              className="w-full rounded border border-zinc-600 bg-zinc-800 px-2 py-1 text-sm text-zinc-200 placeholder-zinc-500 focus:border-blue-500 focus:outline-none"
+              aria-label="Search options"
+            />
+          </div>
+          <ul
+            ref={listRef}
+            role="listbox"
+            className="max-h-60 overflow-y-auto py-1"
+          >
+            <li
+              role="option"
+              aria-selected={value === ""}
+              onClick={() => selectOption("")}
+              className={`cursor-pointer px-3 py-1.5 text-sm ${
+                value === "" ? "bg-blue-600 text-white" : "text-zinc-300 hover:bg-zinc-800"
+              }`}
+            >
+              {placeholder}
+            </li>
+            {filtered.map((o, i) => (
+              <li
+                key={o.value}
+                role="option"
+                aria-selected={o.value === value}
+                onClick={() => selectOption(o.value)}
+                className={`cursor-pointer px-3 py-1.5 text-sm ${
+                  o.value === value
+                    ? "bg-blue-600 text-white"
+                    : i === highlightIdx
+                      ? "bg-zinc-800 text-zinc-200"
+                      : "text-zinc-300 hover:bg-zinc-800"
+                }`}
+              >
+                {o.label}
+              </li>
+            ))}
+            {filtered.length === 0 && (
+              <li className="px-3 py-2 text-sm text-zinc-500 italic">No matches</li>
+            )}
+          </ul>
+        </div>
+      )}
+    </div>
+  );
+}
+/* ── End SearchableSelect ────────────────────────────────────────── */
+
 function FilterBar({
   filters,
   onChange,
@@ -519,39 +691,27 @@ function FilterBar({
 
   return (
     <>
-      <select
-        aria-label="Filter by type"
+      <SearchableSelect
+        ariaLabel="Filter by type"
         value={filters.type}
-        onChange={(e) => onChange({ ...filters, type: e.target.value })}
-        className={FILTER_SELECT_CLASS}
-      >
-        <option value="">All Types</option>
-        {types.map((t) => (
-          <option key={t} value={t}>{t}</option>
-        ))}
-      </select>
-      <select
-        aria-label="Filter by status"
+        onChange={(v) => onChange({ ...filters, type: v })}
+        options={types.map((t) => ({ value: t!, label: t! }))}
+        placeholder="All Types"
+      />
+      <SearchableSelect
+        ariaLabel="Filter by status"
         value={filters.status}
-        onChange={(e) => onChange({ ...filters, status: e.target.value })}
-        className={FILTER_SELECT_CLASS}
-      >
-        <option value="">All Statuses</option>
-        {statuses.map((s) => (
-          <option key={s} value={s}>{s}</option>
-        ))}
-      </select>
-      <select
-        aria-label="Filter by assignee"
+        onChange={(v) => onChange({ ...filters, status: v })}
+        options={statuses.map((s) => ({ value: s!, label: s! }))}
+        placeholder="All Statuses"
+      />
+      <SearchableSelect
+        ariaLabel="Filter by assignee"
         value={filters.assignee}
-        onChange={(e) => onChange({ ...filters, assignee: e.target.value })}
-        className={FILTER_SELECT_CLASS}
-      >
-        <option value="">All Assignees</option>
-        {assignees.map((a) => (
-          <option key={a} value={a}>{a}</option>
-        ))}
-      </select>
+        onChange={(v) => onChange({ ...filters, assignee: v })}
+        options={assignees.map((a) => ({ value: a, label: a }))}
+        placeholder="All Assignees"
+      />
       {hasFilters && (
         <button
           onClick={() => onChange({ status: "", type: "", assignee: "" })}
@@ -1141,13 +1301,24 @@ function InlineEditSelect({
   placeholder?: string;
 }) {
   const [editing, setEditing] = useState(false);
-  const selectRef = useRef<HTMLSelectElement>(null);
-
-  useEffect(() => {
-    if (editing) setTimeout(() => selectRef.current?.focus(), 0);
-  }, [editing]);
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const shownValue = displayValue || value;
+  const normalizedOptions = options.map((o) =>
+    typeof o === "string" ? { value: o, label: o } : o
+  );
+
+  // Close on outside click
+  useEffect(() => {
+    if (!editing) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setEditing(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [editing]);
 
   if (!editing) {
     return (
@@ -1163,27 +1334,19 @@ function InlineEditSelect({
   }
 
   return (
-    <select
-      ref={selectRef}
-      value={value}
-      onChange={(e) => {
-        onSave(e.target.value);
-        setEditing(false);
-      }}
-      onBlur={() => setEditing(false)}
-      onKeyDown={(e) => {
-        if (e.key === "Escape") setEditing(false);
-      }}
-      aria-label={label}
-      className={FILTER_SELECT_CLASS}
-    >
-      {placeholder && <option value="">{placeholder}</option>}
-      {options.map((o) => {
-        const optValue = typeof o === "string" ? o : o.value;
-        const optLabel = typeof o === "string" ? o : o.label;
-        return <option key={optValue} value={optValue}>{optLabel}</option>;
-      })}
-    </select>
+    <div ref={containerRef}>
+      <SearchableSelect
+        value={value}
+        onChange={(v) => {
+          onSave(v);
+          setEditing(false);
+        }}
+        options={normalizedOptions}
+        placeholder={placeholder || "Select..."}
+        ariaLabel={label}
+        autoOpen
+      />
+    </div>
   );
 }
 
@@ -3205,19 +3368,14 @@ function CreateIssueModal({
             <label htmlFor="create-project" className="block text-sm font-medium text-zinc-300 mb-1">
               Project <span className="text-red-400">*</span>
             </label>
-            <select
+            <SearchableSelect
               id="create-project"
               value={formProject}
-              onChange={(e) => { setFormProject(e.target.value); setAssignee(""); setErrors((prev) => ({ ...prev, project: undefined })); }}
-              className={CREATE_FIELD_CLASS}
-            >
-              <option value="">Select project...</option>
-              {projects?.map((p) => (
-                <option key={p.key} value={p.key}>
-                  {p.key} — {p.name}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => { setFormProject(v); setAssignee(""); setErrors((prev) => ({ ...prev, project: undefined })); }}
+              options={(projects || []).map((p) => ({ value: p.key, label: `${p.key} — ${p.name}` }))}
+              placeholder="Select project..."
+              className="w-full"
+            />
             {errors.project && <p className="mt-1 text-xs text-red-400">{errors.project}</p>}
           </div>
 
@@ -3272,18 +3430,15 @@ function CreateIssueModal({
           {/* Assignee */}
           <div>
             <label htmlFor="create-assignee" className="block text-sm font-medium text-zinc-300 mb-1">Assignee</label>
-            <select
+            <SearchableSelect
               id="create-assignee"
               value={assignee}
-              onChange={(e) => setAssignee(e.target.value)}
-              className={CREATE_FIELD_CLASS}
+              onChange={setAssignee}
+              options={(members || []).filter((m) => m.active).map((m) => ({ value: m.accountId, label: m.displayName }))}
+              placeholder="Unassigned"
+              className="w-full"
               disabled={!formProject}
-            >
-              <option value="">Unassigned</option>
-              {members?.filter((m) => m.active).map((m) => (
-                <option key={m.accountId} value={m.accountId}>{m.displayName}</option>
-              ))}
-            </select>
+            />
           </div>
 
           {/* Description */}
@@ -3320,6 +3475,199 @@ function CreateIssueModal({
     </div>
   );
 }
+
+
+/* ── Create Project Modal ────────────────────────────────────────── */
+function CreateProjectModal({
+  onClose,
+  members,
+}: {
+  onClose: () => void;
+  members?: ProjectMember[];
+}) {
+  const [name, setName] = useState("");
+  const [key, setKey] = useState("");
+  const [description, setDescription] = useState("");
+  const [projectType, setProjectType] = useState("software");
+  const [leadAccountId, setLeadAccountId] = useState("");
+  const [keyManuallyEdited, setKeyManuallyEdited] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; key?: string }>({});
+  const [submitError, setSubmitError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Auto-generate key from name (first letters of each word, uppercase, max 10 chars)
+  useEffect(() => {
+    if (keyManuallyEdited) return;
+    const generated = name
+      .split(/\s+/)
+      .map((w) => w.charAt(0))
+      .join("")
+      .toUpperCase()
+      .replace(/[^A-Z0-9]/g, "")
+      .slice(0, 10);
+    setKey(generated);
+  }, [name, keyManuallyEdited]);
+
+  const handleSubmit = async () => {
+    const newErrors: { name?: string; key?: string } = {};
+    if (!name.trim()) newErrors.name = "Project name is required";
+    if (!key.trim()) newErrors.key = "Project key is required";
+    else if (!/^[A-Z][A-Z0-9]{1,9}$/.test(key.toUpperCase()))
+      newErrors.key = "Key must be 2-10 uppercase letters/numbers, starting with a letter";
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError("");
+    try {
+      const res = await fetch(`${API}/api/projects`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim(),
+          key: key.toUpperCase(),
+          project_type_key: projectType,
+          lead_account_id: leadAccountId || null,
+          description: description.trim(),
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.detail || "Failed to create project");
+      }
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
+      onClose();
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Failed to create project. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const PROJECT_TYPES = [
+    { value: "software", label: "Software" },
+    { value: "service_desk", label: "Service Desk" },
+    { value: "business", label: "Business" },
+  ];
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
+      <div
+        className="relative w-full max-w-lg rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl mx-4"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Create project"
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-zinc-100">Create Project</h2>
+          <button onClick={onClose} className="rounded p-1 text-zinc-500 hover:bg-zinc-800 hover:text-zinc-300 cursor-pointer" aria-label="Close">✕</button>
+        </div>
+
+        {submitError && (
+          <div role="alert" className="mb-3 rounded bg-red-900/40 border border-red-700 px-3 py-2 text-sm text-red-300">{submitError}</div>
+        )}
+
+        <div className="space-y-3">
+          {/* Project name */}
+          <div>
+            <label htmlFor="create-project-name" className="block text-sm font-medium text-zinc-300 mb-1">
+              Name <span className="text-red-400">*</span>
+            </label>
+            <input
+              id="create-project-name"
+              type="text"
+              value={name}
+              onChange={(e) => { setName(e.target.value); setErrors((prev) => ({ ...prev, name: undefined })); }}
+              className={CREATE_FIELD_CLASS}
+              placeholder="My Awesome Project"
+              autoFocus
+            />
+            {errors.name && <p className="mt-1 text-xs text-red-400">{errors.name}</p>}
+          </div>
+
+          {/* Project key */}
+          <div>
+            <label htmlFor="create-project-key" className="block text-sm font-medium text-zinc-300 mb-1">
+              Key <span className="text-red-400">*</span>
+            </label>
+            <input
+              id="create-project-key"
+              type="text"
+              value={key}
+              onChange={(e) => { setKey(e.target.value.toUpperCase()); setKeyManuallyEdited(true); setErrors((prev) => ({ ...prev, key: undefined })); }}
+              className={CREATE_FIELD_CLASS}
+              placeholder="MAP"
+              maxLength={10}
+            />
+            <p className="mt-0.5 text-xs text-zinc-500">2-10 uppercase letters/numbers. Auto-generated from name.</p>
+            {errors.key && <p className="mt-1 text-xs text-red-400">{errors.key}</p>}
+          </div>
+
+          {/* Type + Lead row */}
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label htmlFor="create-project-type" className="block text-sm font-medium text-zinc-300 mb-1">Type</label>
+              <select
+                id="create-project-type"
+                value={projectType}
+                onChange={(e) => setProjectType(e.target.value)}
+                className={CREATE_FIELD_CLASS}
+              >
+                {PROJECT_TYPES.map((t) => (
+                  <option key={t.value} value={t.value}>{t.label}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="create-project-lead" className="block text-sm font-medium text-zinc-300 mb-1">Lead</label>
+              <SearchableSelect
+                id="create-project-lead"
+                value={leadAccountId}
+                onChange={setLeadAccountId}
+                options={(members || []).filter((m) => m.active).map((m) => ({ value: m.accountId, label: m.displayName }))}
+                placeholder="Select lead..."
+                className="w-full"
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div>
+            <label htmlFor="create-project-desc" className="block text-sm font-medium text-zinc-300 mb-1">Description</label>
+            <textarea
+              id="create-project-desc"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className={`${CREATE_FIELD_CLASS} min-h-[80px] resize-y`}
+              placeholder="What is this project about?"
+            />
+          </div>
+        </div>
+
+        {/* Actions */}
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-400 transition-colors hover:bg-zinc-800 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={handleSubmit}
+            disabled={submitting}
+            className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
+          >
+            {submitting ? "Creating..." : "Create"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+/* ── End Create Project Modal ────────────────────────────────────── */
 
 /* ── Bulk Action Bar ── */
 
@@ -3466,19 +3814,17 @@ function BulkActionBar({
             </select>
 
             {/* Assign */}
-            <select
-              aria-label="Bulk assign"
+            <SearchableSelect
+              ariaLabel="Bulk assign"
               value=""
-              onChange={(e) => { if (e.target.value !== "") handleBulkAssign(e.target.value); }}
-              className={FILTER_SELECT_CLASS}
+              onChange={(v) => { if (v !== "") handleBulkAssign(v); }}
+              options={[
+                { value: "__unassign__", label: "Unassigned" },
+                ...(members || []).filter((m) => m.active).map((m) => ({ value: m.accountId, label: m.displayName })),
+              ]}
+              placeholder="Assign..."
               disabled={busy || !project}
-            >
-              <option value="" disabled>Assign...</option>
-              <option value="__unassign__">Unassigned</option>
-              {members?.filter((m) => m.active).map((m) => (
-                <option key={m.accountId} value={m.accountId}>{m.displayName}</option>
-              ))}
-            </select>
+            />
 
             {/* Priority */}
             <select
@@ -4722,13 +5068,29 @@ export default function App() {
   const [commandPaletteOpen, setCommandPaletteOpen] = useState(false);
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [showCreateProjectModal, setShowCreateProjectModal] = useState(false);
+  const [showCreateMenu, setShowCreateMenu] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const [selectedIssueIds, setSelectedIssueIds] = useState<Set<string>>(new Set());
   const [savedFilters, setSavedFilters] = useState<SavedFilter[]>(loadSavedFilters);
+  const createMenuRef = useRef<HTMLDivElement>(null);
 
   const handleCloseDetail = useCallback(() => setSelectedIssueKey(null), []);
   const handleCloseShortcutHelp = useCallback(() => setShowShortcutHelp(false), []);
   const handleCloseCreateModal = useCallback(() => setShowCreateModal(false), []);
+  const handleCloseCreateProjectModal = useCallback(() => setShowCreateProjectModal(false), []);
+
+  // Close create menu on outside click
+  useEffect(() => {
+    if (!showCreateMenu) return;
+    const handler = (e: MouseEvent) => {
+      if (createMenuRef.current && !createMenuRef.current.contains(e.target as Node)) {
+        setShowCreateMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showCreateMenu]);
 
   const hasActiveFilters = !!(project || filters.status || filters.type || filters.assignee);
 
@@ -4901,15 +5263,40 @@ export default function App() {
             </h1>
           </div>
           <div className="flex items-center gap-2">
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-500 cursor-pointer"
-              aria-label="Create issue"
-              title="Create issue (c)"
-            >
-              <span className="hidden sm:inline">+ Create</span>
-              <span className="sm:hidden">+</span>
-            </button>
+            <div className="relative" ref={createMenuRef}>
+              <button
+                onClick={() => setShowCreateMenu(!showCreateMenu)}
+                className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-500 cursor-pointer flex items-center gap-1"
+                aria-label="Create"
+                aria-haspopup="true"
+                aria-expanded={showCreateMenu}
+                title="Create (c)"
+              >
+                <span className="hidden sm:inline">+ Create</span>
+                <span className="sm:hidden">+</span>
+                <svg className="h-3 w-3 hidden sm:block" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 9l6 6 6-6" />
+                </svg>
+              </button>
+              {showCreateMenu && (
+                <div className="absolute right-0 mt-1 w-44 rounded-md border border-zinc-700 bg-zinc-900 shadow-lg z-50">
+                  <button
+                    onClick={() => { setShowCreateMenu(false); setShowCreateModal(true); }}
+                    className="w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800 rounded-t-md flex items-center gap-2 cursor-pointer"
+                    aria-label="Create issue"
+                  >
+                    <span>📋</span> Issue
+                  </button>
+                  <button
+                    onClick={() => { setShowCreateMenu(false); setShowCreateProjectModal(true); }}
+                    className="w-full px-3 py-2 text-left text-sm text-zinc-200 hover:bg-zinc-800 rounded-b-md flex items-center gap-2 cursor-pointer"
+                    aria-label="Create project"
+                  >
+                    <span>📁</span> Project
+                  </button>
+                </div>
+              )}
+            </div>
             <button
               onClick={() => setCommandPaletteOpen(true)}
               className="flex items-center gap-1.5 rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-xs text-zinc-500 transition-colors hover:border-zinc-600 hover:text-zinc-400 cursor-pointer"
@@ -4963,18 +5350,13 @@ export default function App() {
         </div>
         {view !== "dashboard" && view !== "about" && (
           <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 lg:items-center">
-            <select
+            <SearchableSelect
               value={project}
-              onChange={(e) => setProject(e.target.value)}
-              className="col-span-2 sm:col-span-1 w-full lg:w-auto rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
-            >
-              <option value="">All Projects</option>
-              {projects?.map((p) => (
-                <option key={p.key} value={p.key}>
-                  {p.key} — {p.name}
-                </option>
-              ))}
-            </select>
+              onChange={setProject}
+              options={(projects || []).map((p) => ({ value: p.key, label: `${p.key} — ${p.name}` }))}
+              placeholder="All Projects"
+              className="col-span-2 sm:col-span-1"
+            />
             <FilterBar filters={filters} onChange={setFilters} issues={issuesForFilters} />
             <SavedFiltersDropdown
               savedFilters={savedFilters}
@@ -5041,6 +5423,7 @@ export default function App() {
 
       {/* Create Issue Modal */}
       {showCreateModal && <CreateIssueModal onClose={handleCloseCreateModal} defaultProject={project} isOnline={isOnline} queueMutation={queueMutation} />}
+      {showCreateProjectModal && <CreateProjectModal onClose={handleCloseCreateProjectModal} />}
 
       {/* Bulk Action Bar */}
       {view === "list" && selectedIssueIds.size > 0 && (

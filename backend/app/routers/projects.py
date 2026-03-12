@@ -1,7 +1,17 @@
 """Project endpoints."""
 
 from fastapi import APIRouter, Query
+from pydantic import BaseModel
 from ..jira_client import jira_request
+
+
+class CreateProjectRequest(BaseModel):
+    """Request body for creating a Jira project."""
+    key: str
+    name: str
+    project_type_key: str = "software"  # software, service_desk, business
+    lead_account_id: str | None = None
+    description: str = ""
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -21,6 +31,21 @@ async def list_projects():
         }
         for p in (data or [])
     ]
+
+
+@router.post("")
+async def create_project(body: CreateProjectRequest):
+    """Create a new Jira project."""
+    payload: dict = {
+        "key": body.key.upper(),
+        "name": body.name,
+        "projectTypeKey": body.project_type_key,
+        "description": body.description,
+    }
+    if body.lead_account_id:
+        payload["leadAccountId"] = body.lead_account_id
+    result = await jira_request("POST", "/project", json=payload)
+    return {"status": "created", "project": result}
 
 
 @router.get("/{key}")
