@@ -1,0 +1,27 @@
+# Traefik static configuration
+# Prod (:4443) + Dev (:9443)
+
+api:
+  dashboard: true
+  insecure: false
+
+entryPoints:
+  prod:
+    address: ":4443"
+  dev:
+    address: ":9443"
+  traefik:
+    address: ":8080"
+
+providers:
+  file:
+    filename: /etc/traefik/dynamic.yml
+    watch: true
+
+tls:
+  certificates:
+    - certFile: /etc/traefik/certs/atlf1be-raspberry-pi-4.tail981e59.ts.net.crt
+      keyFile: /etc/traefik/certs/atlf1be-raspberry-pi-4.tail981e59.ts.net.key
+
+log:
+  level: INFO

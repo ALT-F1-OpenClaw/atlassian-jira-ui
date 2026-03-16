@@ -169,6 +169,22 @@ Always: CodeQL (weekly) + Dependabot (weekly)
 
 Error categories: `test-runner-conflict`, `missing-module`, `typescript-error`, `test-failure`, `dependency-error`, `lint-error`, `build-error`
 
+### Production Deployment
+
+6 containers on Raspberry Pi 4 via Docker + Traefik + Watchtower:
+
+```
+Traefik (:4443 prod, :9443 dev) → frontend (nginx) → backend (FastAPI)
+Watchtower polls GHCR every 5 min → auto-updates dev containers
+Prod pinned to version tag → manual: ./deploy-prod.sh vX.Y.Z
+```
+
+- Deploy config: `deploy/` directory (docker-compose.yml, traefik configs, deploy script)
+- Live at: `/srv/atlassian-jira-ui/` on the Pi
+- Systemd service: `jira-ui.service` (auto-start on boot)
+- TLS: Tailscale certs for `atlf1be-raspberry-pi-4.tail981e59.ts.net`
+- Port 443 reserved for OpenClaw (Tailscale Serve)
+
 ### Screenshots
 
 - 17 auto-generated screenshots in `docs/APP_SCREENSHOTS.md`

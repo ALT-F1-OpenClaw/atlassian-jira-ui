@@ -1,0 +1,98 @@
+# Atlassian Jira UI — Production Docker Compose
+# 6 containers: Traefik + Watchtower + Dev (auto) + Prod (pinned)
+#
+# Deploy to /srv/atlassian-jira-ui/ on the Raspberry Pi
+#
+# Dev:  https://atlf1be-raspberry-pi-4.tail981e59.ts.net:9443  (auto-updated)
+# Prod: https://atlf1be-raspberry-pi-4.tail981e59.ts.net:4443  (manual promote)
+#
+# Promote to prod:  ./deploy-prod.sh v1.49.1
+
+networks:
+  traefik:
+    driver: bridge
+
+services:
+  # ══════════════════════════════════════════════
+  # TRAEFIK — Reverse Proxy + TLS
+  # ══════════════════════════════════════════════
+  traefik:
+    image: traefik:v3.4
+    container_name: traefik
+    restart: unless-stopped
+    ports:
+      - "4443:4443"   # prod
+      - "9443:9443"   # dev
+      - "8080:8080"   # dashboard
+    volumes:
+      - ./traefik/traefik.yml:/etc/traefik/traefik.yml:ro
+      - ./traefik/dynamic.yml:/etc/traefik/dynamic.yml:ro
+      - ./traefik/atlf1be-raspberry-pi-4.tail981e59.ts.net.crt:/etc/traefik/certs/atlf1be-raspberry-pi-4.tail981e59.ts.net.crt:ro
+      - ./traefik/atlf1be-raspberry-pi-4.tail981e59.ts.net.key:/etc/traefik/certs/atlf1be-raspberry-pi-4.tail981e59.ts.net.key:ro
+    networks:
+      - traefik
+
+  # ══════════════════════════════════════════════
+  # WATCHTOWER — auto-update dev only
+  # ══════════════════════════════════════════════
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_LABEL_ENABLE=true
+      - DOCKER_API_VERSION=1.47
+    networks:
+      - traefik
+
+  # ══════════════════════════════════════════════
+  # PROD — pinned version, manual promote
+  # ══════════════════════════════════════════════
+  prod-backend:
+    image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend:${PROD_VERSION:-latest}
+    container_name: prod-backend
+    restart: unless-stopped
+    env_file: ./prod/.env
+    environment:
+      - CORS_ORIGINS=https://atlf1be-raspberry-pi-4.tail981e59.ts.net:4443
+    networks:
+      - traefik
+
+  prod-frontend:
+    image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-frontend:${PROD_VERSION:-latest}
+    container_name: prod-frontend
+    restart: unless-stopped
+    volumes:
+      - ./prod/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    networks:
+      - traefik
+
+  # ══════════════════════════════════════════════
+  # DEV — :latest, auto-updated by Watchtower
+  # ══════════════════════════════════════════════
+  dev-backend:
+    image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend:latest
+    container_name: dev-backend
+    restart: unless-stopped
+    env_file: ./dev/.env
+    environment:
+      - CORS_ORIGINS=https://atlf1be-raspberry-pi-4.tail981e59.ts.net:9443
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - traefik
+
+  dev-frontend:
+    image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-frontend:latest
+    container_name: dev-frontend
+    restart: unless-stopped
+    volumes:
+      - ./dev/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - traefik

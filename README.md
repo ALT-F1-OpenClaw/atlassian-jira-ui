@@ -221,6 +221,36 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **Vitest** — fast unit testing
 - **Testing Library** — BDD-style component tests (248 scenarios)
 
+## Deployment
+
+The app runs on a Raspberry Pi 4 (ARM64) with Docker + Traefik, accessible via Tailscale.
+
+```
+┌──────────────────────────────────────────────────────┐
+│                   Raspberry Pi 4                      │
+│                                                       │
+│  ┌─────────┐  ┌───────────┐                          │
+│  │ Traefik │  │Watchtower │                          │
+│  │  :4443  │  │  5 min    │                          │
+│  │  :9443  │  │  poll     │                          │
+│  └────┬────┘  └───────────┘                          │
+│       │                                               │
+│  ┌────┴──────────────────┐  ┌──────────────────────┐ │
+│  │   DEV (:9443)         │  │   PROD (:4443)       │ │
+│  │  :latest (auto)       │  │  pinned version      │ │
+│  └───────────────────────┘  └──────────────────────┘ │
+└──────────────────────────────────────────────────────┘
+```
+
+| Environment | URL | Update |
+|---|---|---|
+| **Prod** | `https://atlf1be-raspberry-pi-4.tail981e59.ts.net:4443` | Manual: `./deploy-prod.sh vX.Y.Z` |
+| **Dev** | `https://atlf1be-raspberry-pi-4.tail981e59.ts.net:9443` | Auto (Watchtower, 5 min) |
+
+**6 containers**: Traefik (reverse proxy + TLS), Watchtower (auto-update dev), prod-backend, prod-frontend, dev-backend, dev-frontend.
+
+See [`deploy/README.md`](deploy/README.md) for full setup guide.
+
 ## Getting Started
 
 ### Prerequisites
@@ -349,6 +379,12 @@ atlassian-jira-ui/
 │   └── playwright.config.ts     # Playwright config (Chromium, port 4173)
 ├── scripts/
 │   └── bump-version.mjs         # Version sync + changelog
+├── deploy/
+│   ├── README.md                # Production deployment guide
+│   ├── docker-compose.yml       # 6-container setup (Traefik + dev + prod)
+│   ├── deploy-prod.sh           # Pin prod to specific version tag
+│   ├── traefik/                 # Traefik static + dynamic config
+│   └── nginx.conf.template      # Per-environment nginx template
 ├── .github/
 │   └── workflows/
 │       ├── ci.yml               # Unit + backend tests (Node 20/22, Python 3.11-3.13)

@@ -1,0 +1,49 @@
+# Traefik dynamic configuration — Prod + Dev
+
+http:
+  routers:
+    # ── PROD (:4443) ──
+    prod-api:
+      rule: "PathPrefix(`/api`)"
+      entryPoints: ["prod"]
+      service: prod-backend
+      tls: {}
+      priority: 10
+    prod-frontend:
+      rule: "PathPrefix(`/`)"
+      entryPoints: ["prod"]
+      service: prod-frontend
+      tls: {}
+      priority: 1
+
+    # ── DEV (:9443) ──
+    dev-api:
+      rule: "PathPrefix(`/api`)"
+      entryPoints: ["dev"]
+      service: dev-backend
+      tls: {}
+      priority: 10
+    dev-frontend:
+      rule: "PathPrefix(`/`)"
+      entryPoints: ["dev"]
+      service: dev-frontend
+      tls: {}
+      priority: 1
+
+  services:
+    prod-frontend:
+      loadBalancer:
+        servers:
+          - url: "http://prod-frontend:80"
+    prod-backend:
+      loadBalancer:
+        servers:
+          - url: "http://prod-backend:35400"
+    dev-frontend:
+      loadBalancer:
+        servers:
+          - url: "http://dev-frontend:80"
+    dev-backend:
+      loadBalancer:
+        servers:
+          - url: "http://dev-backend:35400"

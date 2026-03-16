@@ -174,7 +174,7 @@ Phase 1, Sections 1–2 complete + enhancements:
 Phase 4b (CI Intelligence): #43 workflow trigger + #44 error extraction complete. #45 auto-fix PR planned.
 Phase 5 (Multi-User Auth & Public SaaS): 12 features (#30–#41) planned — OAuth 2.0, sessions, multi-tenant, legal.
 
-**Current version**: v1.49.0 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
+**Current version**: v1.49.1 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
 
 CI/CD: 6 GitHub Actions workflows (CI, release, Docker validate, Docker publish, CodeQL, CI auto-fix).
 Docker images on GHCR (multi-arch amd64+arm64). Bundle code-split into 5 chunks (app 300KB + vendors).
@@ -182,5 +182,23 @@ Smart caching: CACHE_STATIC (30min), CACHE_LIST (2min), CACHE_DETAIL (1min).
 Light mode WCAG AA compliant. 17 auto-generated screenshots.
 
 **Bug fix workflow**: Every fix must have a GitHub issue (label: `bug`) created BEFORE the fix. Commit message references the issue (`fixes #N`).
+
+### Production Deployment
+
+Runs on Raspberry Pi 4 (ARM64) with Docker + Traefik + Watchtower.
+
+```
+/srv/atlassian-jira-ui/
+├── docker-compose.yml          ← 6 containers
+├── deploy-prod.sh              ← Pin prod to version tag
+├── traefik/                    ← TLS + routing config
+├── prod/.env + nginx.conf      ← Jira creds + nginx upstream
+└── dev/.env + nginx.conf
+```
+
+- **Prod** (`:4443`): pinned to specific version tag, manual promote via `./deploy-prod.sh vX.Y.Z`
+- **Dev** (`:9443`): `:latest`, auto-updated by Watchtower every 5 min
+- **Systemd**: `jira-ui.service` auto-starts on boot
+- Tailscale TLS certs for HTTPS
 
 See `ROADMAP.md` for full status.
