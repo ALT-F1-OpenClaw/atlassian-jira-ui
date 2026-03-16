@@ -1,3 +1,8 @@
+## [1.50.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.50.0...v1.50.1) (2026-03-16)
+
+### Bug Fixes
+
+* truncate masked API token display to prevent overflow ([d21cfa8](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/d21cfa8c16d2bc423c81b1c878230bc70ca1d71f))
 ## [1.50.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.49.2...v1.50.0) (2026-03-16)
 
 ### Features
