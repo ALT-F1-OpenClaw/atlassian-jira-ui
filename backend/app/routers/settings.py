@@ -42,7 +42,7 @@ async def get_settings_view():
     """Get current settings (token masked)."""
     s = get_settings()
     token = s.jira_api_token
-    masked = f"{'•' * max(0, len(token) - 4)}{token[-4:]}" if len(token) > 4 else "••••"
+    masked = f"••••{token[-4:]}" if len(token) > 4 else "••••"
     return {
         "jira_host": s.jira_host,
         "jira_email": s.jira_email,

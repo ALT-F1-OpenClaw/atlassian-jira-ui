@@ -3620,7 +3620,7 @@ function SettingsPage() {
               </button>
             </div>
             <p className="mt-1 text-xs text-zinc-500">
-              Current: {tokenMasked} · <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Get API token</a>
+              Current: {tokenMasked.length > 20 ? `${tokenMasked.slice(0, 8)}…${tokenMasked.slice(-4)}` : tokenMasked} · <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Get API token</a>
             </p>
           </div>
         </div>
