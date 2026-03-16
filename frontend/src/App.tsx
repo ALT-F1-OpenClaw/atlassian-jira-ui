@@ -26,7 +26,7 @@ const CACHE_STATIC = 30 * 60_000; // 30 min — priorities, labels, projects, me
 const CACHE_LIST = 2 * 60_000; // 2 min — issue lists, boards (change moderately)
 const CACHE_DETAIL = 60_000; // 1 min — single issue detail (may be edited)
 
-type View = "dashboard" | "board" | "list" | "detail" | "sprint" | "about";
+type View = "dashboard" | "board" | "list" | "detail" | "sprint" | "about" | "settings";
 
 interface Issue {
   id: string;
@@ -3477,6 +3477,223 @@ function CreateIssueModal({
 }
 
 
+/* ── Settings Page ───────────────────────────────────────────────── */
+function SettingsPage() {
+  const [jiraHost, setJiraHost] = useState("");
+  const [jiraEmail, setJiraEmail] = useState("");
+  const [jiraToken, setJiraToken] = useState("");
+  const [tokenMasked, setTokenMasked] = useState("");
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<{ success: boolean; message: string; server_title?: string; user_display_name?: string } | null>(null);
+  const [saveResult, setSaveResult] = useState<{ status: string; changed: string[] } | null>(null);
+  const [showToken, setShowToken] = useState(false);
+
+  // Load current settings
+  useEffect(() => {
+    fetch(`${API}/api/settings`)
+      .then((r) => r.json())
+      .then((data) => {
+        setJiraHost(data.jira_host || "");
+        setJiraEmail(data.jira_email || "");
+        setTokenMasked(data.jira_api_token_masked || "");
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const handleTest = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const body: Record<string, string> = {};
+      if (jiraHost) body.jira_host = jiraHost;
+      if (jiraEmail) body.jira_email = jiraEmail;
+      if (jiraToken) body.jira_api_token = jiraToken;
+      const res = await fetch(`${API}/api/settings/test`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(Object.keys(body).length > 0 ? body : null),
+      });
+      setTestResult(await res.json());
+    } catch {
+      setTestResult({ success: false, message: "Failed to reach backend" });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveResult(null);
+    setTestResult(null);
+    try {
+      const body: Record<string, string> = {};
+      if (jiraHost) body.jira_host = jiraHost;
+      if (jiraEmail) body.jira_email = jiraEmail;
+      if (jiraToken) body.jira_api_token = jiraToken;
+      const res = await fetch(`${API}/api/settings`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      const data = await res.json();
+      setSaveResult(data);
+      if (data.status === "updated") {
+        // Refresh masked token
+        const refreshRes = await fetch(`${API}/api/settings`);
+        const refreshData = await refreshRes.json();
+        setTokenMasked(refreshData.jira_api_token_masked || "");
+        setJiraToken(""); // Clear plaintext token
+        setShowToken(false);
+      }
+    } catch {
+      setSaveResult({ status: "error", changed: [] });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) return <LoadingSpinner message="Loading settings..." />;
+
+  const FIELD_CLASS = "w-full rounded-md border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none";
+
+  return (
+    <div className="mx-auto max-w-2xl px-4 py-6">
+      <h1 className="text-2xl font-bold text-zinc-100 mb-6">Settings</h1>
+
+      {/* Jira Connection */}
+      <section className="rounded-lg border border-zinc-700 bg-zinc-900/50 p-5 mb-6">
+        <h2 className="text-lg font-semibold text-zinc-200 mb-4">Jira Connection</h2>
+
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="settings-host" className="block text-sm font-medium text-zinc-300 mb-1">
+              Jira Host
+            </label>
+            <input
+              id="settings-host"
+              type="url"
+              value={jiraHost}
+              onChange={(e) => setJiraHost(e.target.value)}
+              className={FIELD_CLASS}
+              placeholder="https://yourcompany.atlassian.net"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="settings-email" className="block text-sm font-medium text-zinc-300 mb-1">
+              Email
+            </label>
+            <input
+              id="settings-email"
+              type="email"
+              value={jiraEmail}
+              onChange={(e) => setJiraEmail(e.target.value)}
+              className={FIELD_CLASS}
+              placeholder="you@company.com"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="settings-token" className="block text-sm font-medium text-zinc-300 mb-1">
+              API Token
+            </label>
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <input
+                  id="settings-token"
+                  type={showToken ? "text" : "password"}
+                  value={jiraToken}
+                  onChange={(e) => setJiraToken(e.target.value)}
+                  className={FIELD_CLASS}
+                  placeholder={tokenMasked || "Enter new API token..."}
+                />
+              </div>
+              <button
+                onClick={() => setShowToken(!showToken)}
+                className="rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 cursor-pointer"
+                title={showToken ? "Hide token" : "Show token"}
+              >
+                {showToken ? "🙈" : "👁"}
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-zinc-500">
+              Current: {tokenMasked} · <a href="https://id.atlassian.com/manage-profile/security/api-tokens" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">Get API token</a>
+            </p>
+          </div>
+        </div>
+
+        {/* Test result */}
+        {testResult && (
+          <div className={`mt-4 rounded-md px-4 py-3 text-sm ${testResult.success ? "bg-green-900/40 border border-green-700 text-green-300" : "bg-red-900/40 border border-red-700 text-red-300"}`} role="alert">
+            <div className="font-medium">{testResult.success ? "✅ " : "❌ "}{testResult.message}</div>
+            {testResult.server_title && <div className="mt-1 text-xs opacity-80">Server: {testResult.server_title}</div>}
+            {testResult.user_display_name && <div className="text-xs opacity-80">User: {testResult.user_display_name}</div>}
+          </div>
+        )}
+
+        {/* Save result */}
+        {saveResult && (
+          <div className={`mt-4 rounded-md px-4 py-3 text-sm ${saveResult.status === "updated" ? "bg-green-900/40 border border-green-700 text-green-300" : saveResult.status === "no_changes" ? "bg-zinc-800 border border-zinc-700 text-zinc-400" : "bg-red-900/40 border border-red-700 text-red-300"}`} role="alert">
+            {saveResult.status === "updated" && `✅ Updated: ${saveResult.changed.join(", ")}`}
+            {saveResult.status === "no_changes" && "No changes to save"}
+            {saveResult.status === "error" && "❌ Failed to save settings"}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="mt-5 flex gap-3">
+          <button
+            onClick={handleTest}
+            disabled={testing}
+            className="rounded-md border border-zinc-600 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
+          >
+            {testing ? "Testing..." : "🔌 Test Connection"}
+          </button>
+          <button
+            onClick={handleSave}
+            disabled={saving || (!jiraHost && !jiraEmail && !jiraToken)}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
+          >
+            {saving ? "Saving..." : "💾 Save Changes"}
+          </button>
+        </div>
+      </section>
+
+      {/* App Preferences */}
+      <section className="rounded-lg border border-zinc-700 bg-zinc-900/50 p-5">
+        <h2 className="text-lg font-semibold text-zinc-200 mb-4">App Preferences</h2>
+        <div className="space-y-3 text-sm text-zinc-400">
+          <div className="flex items-center justify-between">
+            <span>Theme</span>
+            <span className="text-zinc-300">Managed via header toggle (☀/🌙)</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Page size</span>
+            <span className="text-zinc-300">50 issues per page</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Cache: static data</span>
+            <span className="text-zinc-300">30 min</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Cache: issue lists</span>
+            <span className="text-zinc-300">2 min</span>
+          </div>
+          <div className="flex items-center justify-between">
+            <span>Cache: issue detail</span>
+            <span className="text-zinc-300">1 min</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+/* ── End Settings Page ───────────────────────────────────────────── */
+
+
 /* ── Create Project Modal ────────────────────────────────────────── */
 function CreateProjectModal({
   onClose,
@@ -4526,6 +4743,7 @@ function Sidebar({
     { id: "board", label: "Board View", icon: "\u25A6" },
     { id: "sprint", label: "Sprint Dashboard", icon: "\u23F1" },
     { id: "about", label: "About", icon: "\u24D8" },
+    { id: "settings", label: "Settings", icon: "⚙" },
   ];
 
   if (!open) {
@@ -5348,7 +5566,7 @@ export default function App() {
             </nav>
           </div>
         </div>
-        {view !== "dashboard" && view !== "about" && (
+        {view !== "dashboard" && view !== "about" && view !== "settings" && (
           <div className="mt-2 grid grid-cols-2 sm:grid-cols-3 lg:flex gap-2 lg:items-center">
             <SearchableSelect
               value={project}
@@ -5402,6 +5620,7 @@ export default function App() {
           )}
           {view === "sprint" && <SprintDashboard project={project} onSelectIssue={setSelectedIssueKey} />}
           {view === "about" && <AboutPage />}
+          {view === "settings" && <SettingsPage />}
         </main>
       </div>
 
