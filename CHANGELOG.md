@@ -1,3 +1,8 @@
+## [1.52.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.52.1...v1.52.2) (2026-03-16)
+
+### Features
+
+* move timer inline next to issue key in detail panel header ([a857ad0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/a857ad060b5079546e126abc3f89a116cac59c39))
 ## [1.52.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.52.0...v1.52.1) (2026-03-16)
 
 ### Features
