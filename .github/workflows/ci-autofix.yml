@@ -90,22 +90,31 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           TITLE="fix(ci): auto-detected failure — ${{ steps.extract.outputs.category }}"
-          BODY=$(cat <<'ISSUE_EOF'
-          ## CI Failure Auto-Detected
 
+          # Write issue body to a temp file to avoid shell quoting issues
+          cat > /tmp/issue-body.md << 'BODY_HEADER'
+          ## CI Failure Auto-Detected
+          BODY_HEADER
+
+          cat >> /tmp/issue-body.md << EOF
           | Field | Value |
           |-------|-------|
           | **Run** | [CI #${{ steps.extract.outputs.run_id }}](${{ steps.extract.outputs.run_url }}) |
-          | **Commit** | `${{ steps.extract.outputs.commit_sha }}` |
-          | **Message** | ${{ steps.extract.outputs.commit_msg }} |
-          | **Category** | `${{ steps.extract.outputs.category }}` |
-          | **Branch** | `main` |
+          | **Commit** | \`${{ steps.extract.outputs.commit_sha }}\` |
+          | **Message** | $(echo "${{ steps.extract.outputs.commit_msg }}" | tr '`$' '..' ) |
+          | **Category** | \`${{ steps.extract.outputs.category }}\` |
+          | **Branch** | \`main\` |
+          EOF
 
-          ## Failed Job Logs
+          echo "" >> /tmp/issue-body.md
+          echo "## Failed Job Logs" >> /tmp/issue-body.md
+          echo "" >> /tmp/issue-body.md
+          echo '```' >> /tmp/issue-body.md
+          head -c 4000 /tmp/failed-logs.txt >> /tmp/issue-body.md
+          echo "" >> /tmp/issue-body.md
+          echo '```' >> /tmp/issue-body.md
 
-          ```
-          ${{ steps.extract.outputs.logs }}
-          ```
+          cat >> /tmp/issue-body.md << 'BODY_FOOTER'
 
           ## Auto-Fix Instructions
 
@@ -115,21 +124,19 @@ jobs:
           run tests to verify, and open a PR with a `fix:` conventional commit referencing
           this issue (`fixes #<number>`).
 
-          **Error category**: `${{ steps.extract.outputs.category }}`
-
           Common fixes by category:
-          - `test-runner-conflict`: Vitest picking up Playwright specs → fix test.dir/exclude config
-          - `missing-module`: Dependency not installed or import path wrong → fix imports or package.json
-          - `typescript-error`: Type mismatch → fix types
-          - `test-failure`: Assertion failed → fix test or code
-          - `dependency-error`: Package install failed → fix versions or lockfile
-          - `lint-error`: Code style → run formatter
-          - `build-error`: Compilation failed → fix source code
-          ISSUE_EOF
+          - `test-runner-conflict`: Vitest picking up Playwright specs
+          - `missing-module`: Dependency not installed or import path wrong
+          - `typescript-error`: Type mismatch
+          - `test-failure`: Assertion failed
+          - `dependency-error`: Package install failed
+          - `lint-error`: Code style
+          - `build-error`: Compilation failed
+          BODY_FOOTER
 
           ISSUE_NUM=$(gh issue create \
             --title "$TITLE" \
-            --body "$BODY" \
+            --body-file /tmp/issue-body.md \
             --label "ci-autofix,bug,ci" \
             --json number -q '.number')
 
@@ -141,18 +148,24 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh issue comment "${{ steps.check_issue.outputs.existing }}" \
-            --body "## New CI failure on same branch
+          # Write comment body to file to avoid shell quoting issues
+          cat > /tmp/comment-body.md << EOF
+          ## New CI failure on same branch
 
           | Field | Value |
           |-------|-------|
           | **Run** | [CI #${{ steps.extract.outputs.run_id }}](${{ steps.extract.outputs.run_url }}) |
           | **Commit** | \`${{ steps.extract.outputs.commit_sha }}\` |
           | **Category** | \`${{ steps.extract.outputs.category }}\` |
+          EOF
 
-          \`\`\`
-          $(head -c 2000 /tmp/failed-logs.txt)
-          \`\`\`"
+          echo '```' >> /tmp/comment-body.md
+          head -c 2000 /tmp/failed-logs.txt >> /tmp/comment-body.md
+          echo "" >> /tmp/comment-body.md
+          echo '```' >> /tmp/comment-body.md
+
+          gh issue comment "${{ steps.check_issue.outputs.existing }}" \
+            --body-file /tmp/comment-body.md
 
       - name: Notify Discord
         if: steps.create_issue.outputs.issue_number != ''
