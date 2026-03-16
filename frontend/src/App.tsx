@@ -2048,6 +2048,7 @@ function IssueDetailPanel({
             <div className="flex items-center gap-3">
               <span className="text-xs text-zinc-500">{issue.type?.name}</span>
               <span className="font-mono text-blue-400 font-semibold">{issue.key}</span>
+              <IssueTimer issueKey={issueKey} onLogWork={(prefill) => { setLogWorkPrefill(prefill); setLogWorkOpen(true); }} />
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -2067,7 +2068,6 @@ function IssueDetailPanel({
               </button>
             </div>
           </div>
-          <IssueTimer issueKey={issueKey} onLogWork={(prefill) => { setLogWorkPrefill(prefill); setLogWorkOpen(true); }} />
         </div>
 
         {/* Panel body */}
