@@ -1,3 +1,8 @@
+## [1.53.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.52.3...v1.53.0) (2026-03-16)
+
+### Features
+
+* 'Open in Jira' button on issues — list view, board cards, detail panel ([#51](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/51)) ([26bb920](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/26bb9207b51e714c3284c05656d6bc870ee6694b))
 ## [1.52.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.52.2...v1.52.3) (2026-03-16)
 ## [1.52.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.52.1...v1.52.2) (2026-03-16)
 
