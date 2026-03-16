@@ -5750,6 +5750,19 @@ export default function App() {
         </main>
       </div>
 
+      {/* Footer */}
+      <footer className="border-t border-zinc-800 px-4 py-2 text-center text-xs text-zinc-500 shrink-0">
+        Built by{" "}
+        <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+          ALT-F1
+        </a>
+        {" "}· Brussels 🇧🇪 🇲🇦 ·{" "}
+        <a href="https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui" target="_blank" rel="noopener noreferrer" className="text-zinc-400 hover:text-zinc-300">
+          GitHub
+        </a>
+        {" "}· v{APP_VERSION}
+      </footer>
+
       {/* Issue Detail Panel */}
       {selectedIssueKey && (
         <IssueDetailPanel issueKey={selectedIssueKey} onClose={handleCloseDetail} projectKey={project || undefined} isOnline={isOnline} queueMutation={queueMutation} />

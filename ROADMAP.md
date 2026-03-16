@@ -275,7 +275,7 @@ Before going production-grade, re-enable these:
 | 37 | Terms of Service page (usage terms, liability, SLA, acceptable use) | Planned |
 | 38 | Data Privacy Policy — GDPR (EU), CCPA (California), PIPEDA (Canada), LGPD (Brazil), POPIA (South Africa), APPs (Australia) | Planned |
 | 39 | Cookie consent banner (opt-in for EU/GDPR, opt-out for others) | Planned |
-| 40 | Footer with ALT-F1 branding — link to [www.alt-f1.be](https://www.alt-f1.be) as project creator | Planned |
+| 40 | Footer with ALT-F1 branding — link to alt-f1.be + GitHub + version | Complete |
 | 41 | Production deployment (Docker + Traefik + Watchtower on Raspberry Pi) | Complete |
 
 #### Phase 5 Details
