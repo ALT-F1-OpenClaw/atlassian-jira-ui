@@ -1,3 +1,8 @@
+## [1.53.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.0...v1.53.1) (2026-03-16)
+
+### Features
+
+* ALT-F1 footer branding on every page ([#40](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/40)) ([e2d57de](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/e2d57de2449869def2a68e4dab4e4b7bd5ce9a9c))
 ## [1.53.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.52.3...v1.53.0) (2026-03-16)
 
 ### Features
