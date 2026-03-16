@@ -2009,8 +2009,8 @@ function IssueDetailPanel({
   if (isLoading) {
     return (
       <div className="fixed inset-0 z-50 flex" role="dialog" aria-label="Issue detail">
-        <div className="hidden md:block flex-1 bg-black/50" onClick={onClose} />
-        <div className="w-full md:w-[600px] lg:w-[720px] bg-zinc-950 border-l border-zinc-800 p-6 overflow-y-auto">
+        <div className="hidden md:block md:w-[10%] bg-black/50" onClick={onClose} />
+        <div className="w-full md:w-[90%] bg-zinc-950 border-l border-zinc-800 p-6 overflow-y-auto">
           <LoadingSpinner message="Loading issue…" />
         </div>
       </div>
@@ -2020,8 +2020,8 @@ function IssueDetailPanel({
   if (error || !issue) {
     return (
       <div className="fixed inset-0 z-50 flex" role="dialog" aria-label="Issue detail">
-        <div className="hidden md:block flex-1 bg-black/50" onClick={onClose} />
-        <div className="w-full md:w-[600px] lg:w-[720px] bg-zinc-950 border-l border-zinc-800 p-6 overflow-y-auto">
+        <div className="hidden md:block md:w-[10%] bg-black/50" onClick={onClose} />
+        <div className="w-full md:w-[90%] bg-zinc-950 border-l border-zinc-800 p-6 overflow-y-auto">
           <p className="text-red-400">Error loading issue.</p>
           <button onClick={onClose} className="mt-4 text-zinc-400 hover:text-zinc-200 text-sm">Close</button>
         </div>
@@ -2040,8 +2040,8 @@ function IssueDetailPanel({
 
   return (
     <div className="fixed inset-0 z-50 flex" role="dialog" aria-label="Issue detail">
-      <div className="hidden md:block flex-1 bg-black/50" onClick={onClose} aria-hidden="true" />
-      <div className="w-full md:w-[600px] lg:w-[720px] bg-zinc-950 border-l border-zinc-800 overflow-y-auto flex flex-col">
+      <div className="hidden md:block md:w-[10%] bg-black/50" onClick={onClose} aria-hidden="true" />
+      <div className="w-full md:w-[90%] bg-zinc-950 border-l border-zinc-800 overflow-y-auto flex flex-col">
         {/* Panel header */}
         <div className="border-b border-zinc-800 px-4 sm:px-6 py-3 shrink-0 space-y-2">
           <div className="flex items-center justify-between">
