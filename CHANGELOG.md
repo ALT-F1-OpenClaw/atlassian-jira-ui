@@ -1,3 +1,8 @@
+## [1.53.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.1...v1.53.2) (2026-03-16)
+
+### Bug Fixes
+
+* pin @tiptap/* to 3.20.1 — v3.20.3 ships without dist/ files ([efb423b](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/efb423b72014dfe4684feede38b9a9527f28b0ef)), closes [#29](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/29)
 ## [1.53.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.0...v1.53.1) (2026-03-16)
 
 ### Features
