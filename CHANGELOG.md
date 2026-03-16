@@ -1,3 +1,8 @@
+## [1.51.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.50.1...v1.51.0) (2026-03-16)
+
+### Features
+
+* searchable sprint selector — type-to-filter on Sprint Dashboard ([#50](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/50)) ([967d824](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/967d824cfb1f488e2f8bf7079bb4eed11f56ed37)), closes [#29](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/29) [#41](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/41)
 ## [1.50.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.50.0...v1.50.1) (2026-03-16)
 
 ### Bug Fixes
