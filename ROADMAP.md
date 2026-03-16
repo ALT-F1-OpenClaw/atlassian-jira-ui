@@ -226,12 +226,12 @@ Before going production-grade, re-enable these:
 | 26 | Backend tests (pytest) — 25 tests, all endpoints mocked | Complete |
 | 27 | E2E tests (Playwright) — 22 tests, full API mocking, PWA SW disabled | Complete |
 | 28 | Auto-generated app screenshots (`docs/APP_SCREENSHOTS.md`) — 17 views | Complete |
-| 29 | HTTPS via Tailscale (PWA install) | Planned |
+| 29 | HTTPS via Tailscale (Traefik + TLS certs) | Complete |
 | 46 | SearchableSelect — autocomplete dropdowns with type-to-filter (7 dropdowns replaced) | Complete |
 | 47 | Create Project modal — name, key, type, lead, description via `POST /api/projects` | Complete |
 | 48 | Create submenu — `+ Create` dropdown with Issue and Project options | Complete |
 | 49 | Settings page — view/edit Jira connection, test connection, app preferences | Complete |
-| 50 | Searchable sprint selector — type-to-filter sprint dropdown on Sprint Dashboard | Planned |
+| 50 | Searchable sprint selector — type-to-filter sprint dropdown on Sprint Dashboard | Complete |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
@@ -275,7 +275,7 @@ Before going production-grade, re-enable these:
 | 38 | Data Privacy Policy — GDPR (EU), CCPA (California), PIPEDA (Canada), LGPD (Brazil), POPIA (South Africa), APPs (Australia) | Planned |
 | 39 | Cookie consent banner (opt-in for EU/GDPR, opt-out for others) | Planned |
 | 40 | Footer with ALT-F1 branding — link to [www.alt-f1.be](https://www.alt-f1.be) as project creator | Planned |
-| 41 | Production deployment (Docker + reverse proxy + TLS) | Planned |
+| 41 | Production deployment (Docker + Traefik + Watchtower on Raspberry Pi) | Complete |
 
 #### Phase 5 Details
 

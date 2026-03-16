@@ -4489,18 +4489,14 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
           {sprints.length > 1 && (
-            <select
-              value={selectedSprintId || ""}
-              onChange={(e) => setSelectedSprintId(Number(e.target.value))}
-              className="mb-2 rounded-md border border-zinc-700 bg-zinc-900 px-3 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none"
-              aria-label="Select sprint"
-            >
-              {sprints.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.boardName}) [{s.state}]
-                </option>
-              ))}
-            </select>
+            <SearchableSelect
+              value={String(selectedSprintId || "")}
+              onChange={(v) => setSelectedSprintId(Number(v))}
+              options={sprints.map((s) => ({ value: String(s.id), label: `${s.name} (${s.boardName}) [${s.state}]` }))}
+              placeholder="Select sprint..."
+              ariaLabel="Select sprint"
+              className="mb-2"
+            />
           )}
           <h2 className="text-xl font-bold text-zinc-100" data-testid="sprint-name">{activeSprint.name}</h2>
           <p className="text-sm text-zinc-400 mt-1">
