@@ -202,6 +202,7 @@ Prod pinned to version tag → manual: ./deploy-prod.sh vX.Y.Z
 - Page size is 50 (Jira API default) — do not change without discussion
 - Always run tests before marking a task complete
 - Do not push to remote — let the user decide when to push
+- **Doc updates on every minor/major version**: README.md, AGENTS.md, CLAUDE.md must be updated before tagging a minor (x.Y.0) or major (X.0.0) release. Patch releases (x.y.Z) can skip doc updates
 - **Bug fix workflow**: create a GitHub issue first (label: `bug`), then fix, reference the issue in the commit (`fixes #N`), issue gets closed automatically on merge
 - **All fixes must have a GitHub issue** — this provides traceability (what broke, root cause, fix, version)
 - Issue template: title starts with `fix:`, body includes Bug description, Root cause, Fix description, Fixed in version

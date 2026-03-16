@@ -112,6 +112,7 @@ node scripts/bump-version.mjs major  # 1.48.0 → 2.0.0 (breaking changes)
 - **Never** include `Co-Authored-By` lines
 - Commit message via HEREDOC for clean formatting
 - After committing a feature/fix, run `node scripts/bump-version.mjs <level>` — it generates CHANGELOG, commits, and tags
+- **Doc updates on every minor/major version**: README.md, AGENTS.md, CLAUDE.md must be updated before tagging a minor (x.Y.0) or major (X.0.0) release. Patch releases (x.y.Z) can skip doc updates
 
 ### Code Style
 - Frontend: single App.tsx file (no component splitting yet), Tailwind utility classes, dark theme, **fully responsive** (mobile-first, works on phone/tablet/desktop)
