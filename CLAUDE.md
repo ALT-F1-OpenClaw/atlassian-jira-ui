@@ -157,7 +157,8 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **Mobile Kanban arrows**: ← → buttons on cards for status transitions (mobile only, sm:hidden)
 - **Command Palette** (tasks 4.1–4.4): Ctrl+K/Cmd+K overlay, debounced fuzzy search via `/api/search/quick`, arrow key navigation, Enter to open issue detail, recent searches in localStorage
 - **Keyboard Shortcuts** (tasks 5.1–5.5): j/k list navigation with highlight, Enter opens issue, Escape closes panels, b/l view switching, ? help overlay, context-aware (disabled in inputs)
-- **Quick Create Modal** (tasks 6.1–6.4): `c` key or `+ Create` button opens modal, project/summary/type/priority/assignee/description fields, form validation (project + summary required), optimistic UI update with query invalidation
+- **SearchableSelect** (task 46): custom dropdown with search-as-you-type, keyboard navigation (↑↓/Enter/Escape), `autoOpen` for inline edits. Replaces 7 native `<select>` elements: project filter, type/status/assignee filters, create modal project + assignee, bulk assign, inline edit priority + assignee
+- **Quick Create Submenu** (tasks 6.1–6.6): `+ Create` button shows dropdown with Issue + Project options. `c` key opens Issue modal directly. `CreateIssueModal` with project/summary/type/priority/assignee/description, form validation, optimistic UI. `CreateProjectModal` with name, auto-key (initials), type (software/service_desk/business), lead (SearchableSelect), description. Backend `POST /api/projects`
 - **Bulk Actions** (tasks 7.1–7.5): checkbox selection on list rows, select all/deselect all, floating action bar with bulk transition/assign/priority dropdowns, `Promise.allSettled` batch API calls, success/failure result display, responsive layout
 - **Saved Filters** (tasks 8.1–8.4): save current filter combination (project + status + type + assignee) as named view, quick-access dropdown in header, inline rename/delete, localStorage persistence (`jira-ui-saved-filters`)
 - **Sprint Dashboard** (tasks 9.1–9.4): active sprint overview with issue counts by status (pie chart), burndown chart (remaining vs ideal), velocity chart (committed vs completed points across sprints), sprint scope change tracking, `s` keyboard shortcut, sprint selector dropdown, responsive layout
@@ -173,7 +174,7 @@ Phase 1, Sections 1–2 complete + enhancements:
 Phase 4b (CI Intelligence): #43 workflow trigger + #44 error extraction complete. #45 auto-fix PR planned.
 Phase 5 (Multi-User Auth & Public SaaS): 12 features (#30–#41) planned — OAuth 2.0, sessions, multi-tenant, legal.
 
-**Current version**: v1.48.0 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
+**Current version**: v1.49.0 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
 
 CI/CD: 6 GitHub Actions workflows (CI, release, Docker validate, Docker publish, CodeQL, CI auto-fix).
 Docker images on GHCR (multi-arch amd64+arm64). Bundle code-split into 5 chunks (app 300KB + vendors).

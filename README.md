@@ -188,6 +188,9 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - [x] **UI navigation** — Segmented view switcher with icons, collapsible sidebar (projects/filters/views), breadcrumbs, dashboard landing page, empty states with CTAs
 
 ### Additional Features
+- **Searchable dropdowns** — Type-to-filter autocomplete on all dropdowns (project, filters, assignee, priority)
+- **Create submenu** — `+ Create` dropdown with Issue and Project creation
+- **Create project** — Name, auto-generated key, type (Software/Service Desk/Business), lead, description
 - **Responsive design** — Mobile-first layout, stacked filters, adaptive pagination, works on phone/tablet/desktop
 - **Rich text editor** — TipTap-based ADF editor with toolbar (bold, italic, headings, lists, links, code blocks)
 - **Smart dropdowns** — Assignee from Jira project members, priority from Jira API, status transitions
@@ -365,6 +368,7 @@ atlassian-jira-ui/
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/projects` | List projects |
+| POST | `/api/projects` | Create project (name, key, type, lead, description) |
 | GET | `/api/projects/{key}` | Project details |
 | GET | `/api/projects/{key}/members` | Project members (assignable users) |
 | GET | `/api/issues` | List/filter issues |

@@ -59,8 +59,10 @@
 - [x] **6.2** Fields: project, summary, type, priority, assignee, description — *BDD tests: `App.test.tsx` (4 scenarios)*
 - [x] **6.3** Form validation (project + summary required) — *BDD tests: `App.test.tsx` (3 scenarios)*
 - [x] **6.4** Optimistic UI update after creation — *BDD tests: `App.test.tsx` (4 scenarios)*
+- [x] **6.5** Create submenu (Issue + Project) — `+ Create` button opens dropdown with Issue and Project options — *v1.49.0*
+- [x] **6.6** Create Project modal — name, auto-generated key, type (Software/Service Desk/Business), lead, description — *v1.49.0*
 
-**Tech**: Backend `POST /api/issues` exists. `CreateIssueModal` component with form validation, `useMutation` for creation, `queryClient.setQueriesData` for optimistic cache update + `invalidateQueries` on success. `c` shortcut context-aware (disabled in inputs). `+ Create` button in header.
+**Tech**: Backend `POST /api/issues` and `POST /api/projects` exist. `CreateIssueModal` + `CreateProjectModal` components. `+ Create` button shows dropdown submenu; `c` shortcut opens Issue modal directly. `SearchableSelect` for project lead picker. Key auto-generated from name initials.
 
 ### 7. Bulk actions
 
@@ -223,8 +225,11 @@ Before going production-grade, re-enable these:
 | 25 | Project avatars from Jira API | Complete |
 | 26 | Backend tests (pytest) — 25 tests, all endpoints mocked | Complete |
 | 27 | E2E tests (Playwright) — 22 tests, full API mocking, PWA SW disabled | Complete |
-| 28 | Auto-generated app screenshots (`docs/APP_SCREENSHOTS.md`) — 12 views | Complete |
+| 28 | Auto-generated app screenshots (`docs/APP_SCREENSHOTS.md`) — 17 views | Complete |
 | 29 | HTTPS via Tailscale (PWA install) | Planned |
+| 46 | SearchableSelect — autocomplete dropdowns with type-to-filter (7 dropdowns replaced) | Complete |
+| 47 | Create Project modal — name, key, type, lead, description via `POST /api/projects` | Complete |
+| 48 | Create submenu — `+ Create` dropdown with Issue and Project options | Complete |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
