@@ -1,3 +1,8 @@
+## [1.52.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.51.0...v1.52.0) (2026-03-16)
+
+### Features
+
+* OAuth 2.0 config in Settings — Client ID, Client Secret, callback URL ([6a3682c](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/6a3682c33524ac3a792157e06c0871b0dd428d95))
 ## [1.51.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.50.1...v1.51.0) (2026-03-16)
 
 ### Features
