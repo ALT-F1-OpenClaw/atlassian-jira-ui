@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
@@ -27,6 +27,28 @@ const CACHE_LIST = 2 * 60_000; // 2 min — issue lists, boards (change moderate
 const CACHE_DETAIL = 60_000; // 1 min — single issue detail (may be edited)
 
 type View = "dashboard" | "board" | "list" | "detail" | "sprint" | "about" | "settings";
+
+const JiraHostContext = createContext("");
+function useJiraHost() { return useContext(JiraHostContext); }
+
+/** Small helper: renders a ↗ link to open something in Jira */
+function OpenInJira({ path, className = "" }: { path: string; className?: string }) {
+  const host = useJiraHost();
+  if (!host) return null;
+  return (
+    <a
+      href={`${host}${path}`}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={`text-zinc-500 hover:text-blue-400 transition-colors ${className}`}
+      title="Open in Jira"
+      aria-label="Open in Jira"
+      onClick={(e) => e.stopPropagation()}
+    >
+      ↗
+    </a>
+  );
+}
 
 interface Issue {
   id: string;
@@ -2048,6 +2070,7 @@ function IssueDetailPanel({
             <div className="flex items-center gap-3">
               <span className="text-xs text-zinc-500">{issue.type?.name}</span>
               <span className="font-mono text-blue-400 font-semibold">{issue.key}</span>
+              <OpenInJira path={`/browse/${issue.key}`} className="text-xs" />
               <IssueTimer issueKey={issueKey} onLogWork={(prefill) => { setLogWorkPrefill(prefill); setLogWorkOpen(true); }} />
             </div>
             <div className="flex items-center gap-2">
@@ -2321,6 +2344,7 @@ function DraggableCard({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <span className="font-mono text-xs text-blue-400">{issue.key}</span>
+          <OpenInJira path={`/browse/${issue.key}`} className="text-xs ml-1" />
           <p className="mt-0.5 text-sm text-zinc-200 line-clamp-2">{issue.summary}</p>
         </div>
       </div>
@@ -2859,7 +2883,7 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlighted
                 />
               </td>
               <td className="w-full sm:w-auto sm:table-cell sm:px-4 sm:py-3 font-mono text-blue-400 text-base sm:text-sm order-1 sm:order-none">
-                {issue.key}
+                {issue.key} <OpenInJira path={`/browse/${issue.key}`} className="text-xs" />
               </td>
               <td className="sm:table-cell sm:px-4 sm:py-3 text-zinc-400 text-xs sm:text-sm order-3 sm:order-none">{issue.type?.name}</td>
               <td className="w-full sm:w-auto sm:table-cell sm:px-4 sm:py-3 sm:max-w-md sm:truncate order-2 sm:order-none mb-1 sm:mb-0">{issue.summary}</td>
@@ -5526,6 +5550,18 @@ export default function App() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [commandPaletteOpen, showShortcutHelp, showCreateModal, selectedIssueKey, view, highlightedIndex, issuesForFilters]);
 
+  // Fetch Jira host for "Open in Jira" links
+  const { data: jiraSettings } = useQuery({
+    queryKey: ["settings-host"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/api/settings`);
+      if (!res.ok) return { jira_host: "" };
+      return res.json() as Promise<{ jira_host: string }>;
+    },
+    staleTime: CACHE_STATIC,
+  });
+  const jiraHost = jiraSettings?.jira_host?.replace(/\/$/, "") || "";
+
   const { data: projects } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
@@ -5539,6 +5575,7 @@ export default function App() {
   });
 
   return (
+    <JiraHostContext.Provider value={jiraHost}>
     <div className="flex h-screen flex-col">
       {/* Offline indicator banner */}
       <OfflineIndicator
@@ -5742,5 +5779,6 @@ export default function App() {
         />
       )}
     </div>
+    </JiraHostContext.Provider>
   );
 }
