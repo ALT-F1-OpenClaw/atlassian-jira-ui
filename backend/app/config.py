@@ -12,6 +12,10 @@ class Settings(BaseSettings):
     jira_email: str
     jira_api_token: str
 
+    # OAuth 2.0 (3LO)
+    atlassian_client_id: str = ""
+    atlassian_client_secret: str = ""
+
     # App
     app_secret_key: str = "change-me"
     cors_origins: str = "http://localhost:5173"

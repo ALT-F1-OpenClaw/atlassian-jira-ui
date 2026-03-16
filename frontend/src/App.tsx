@@ -3483,12 +3483,17 @@ function SettingsPage() {
   const [jiraEmail, setJiraEmail] = useState("");
   const [jiraToken, setJiraToken] = useState("");
   const [tokenMasked, setTokenMasked] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [clientSecret, setClientSecret] = useState("");
+  const [clientSecretMasked, setClientSecretMasked] = useState("");
+  const [oauthConfigured, setOauthConfigured] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
   const [testResult, setTestResult] = useState<{ success: boolean; message: string; server_title?: string; user_display_name?: string } | null>(null);
   const [saveResult, setSaveResult] = useState<{ status: string; changed: string[] } | null>(null);
   const [showToken, setShowToken] = useState(false);
+  const [showClientSecret, setShowClientSecret] = useState(false);
 
   // Load current settings
   useEffect(() => {
@@ -3498,6 +3503,9 @@ function SettingsPage() {
         setJiraHost(data.jira_host || "");
         setJiraEmail(data.jira_email || "");
         setTokenMasked(data.jira_api_token_masked || "");
+        setClientId(data.atlassian_client_id || "");
+        setClientSecretMasked(data.atlassian_client_secret_masked || "");
+        setOauthConfigured(data.oauth_configured || false);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -3533,6 +3541,8 @@ function SettingsPage() {
       if (jiraHost) body.jira_host = jiraHost;
       if (jiraEmail) body.jira_email = jiraEmail;
       if (jiraToken) body.jira_api_token = jiraToken;
+      if (clientId) body.atlassian_client_id = clientId;
+      if (clientSecret) body.atlassian_client_secret = clientSecret;
       const res = await fetch(`${API}/api/settings`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -3541,12 +3551,15 @@ function SettingsPage() {
       const data = await res.json();
       setSaveResult(data);
       if (data.status === "updated") {
-        // Refresh masked token
         const refreshRes = await fetch(`${API}/api/settings`);
         const refreshData = await refreshRes.json();
         setTokenMasked(refreshData.jira_api_token_masked || "");
-        setJiraToken(""); // Clear plaintext token
+        setClientSecretMasked(refreshData.atlassian_client_secret_masked || "");
+        setOauthConfigured(refreshData.oauth_configured || false);
+        setJiraToken("");
+        setClientSecret("");
         setShowToken(false);
+        setShowClientSecret(false);
       }
     } catch {
       setSaveResult({ status: "error", changed: [] });
@@ -3654,11 +3667,91 @@ function SettingsPage() {
           </button>
           <button
             onClick={handleSave}
-            disabled={saving || (!jiraHost && !jiraEmail && !jiraToken)}
+            disabled={saving || (!jiraHost && !jiraEmail && !jiraToken && !clientId && !clientSecret)}
             className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
           >
             {saving ? "Saving..." : "💾 Save Changes"}
           </button>
+        </div>
+      </section>
+
+      {/* OAuth 2.0 */}
+      <section className="rounded-lg border border-zinc-700 bg-zinc-900/50 p-5 mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold text-zinc-200">OAuth 2.0 (3LO)</h2>
+          {oauthConfigured
+            ? <span className="rounded-full bg-green-900/40 border border-green-700 px-2.5 py-0.5 text-xs text-green-300">Configured</span>
+            : <span className="rounded-full bg-zinc-800 border border-zinc-700 px-2.5 py-0.5 text-xs text-zinc-400">Not configured</span>
+          }
+        </div>
+        <p className="text-sm text-zinc-400 mb-4">
+          Register an app at{" "}
+          <a href="https://developer.atlassian.com/console/myapps/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+            developer.atlassian.com
+          </a>{" "}
+          to enable "Login with Atlassian". Required scopes: <code className="text-xs bg-zinc-800 px-1 rounded">read:jira-work</code>,{" "}
+          <code className="text-xs bg-zinc-800 px-1 rounded">write:jira-work</code>,{" "}
+          <code className="text-xs bg-zinc-800 px-1 rounded">read:jira-user</code>.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label htmlFor="settings-client-id" className="block text-sm font-medium text-zinc-300 mb-1">
+              Client ID
+            </label>
+            <input
+              id="settings-client-id"
+              type="text"
+              value={clientId}
+              onChange={(e) => setClientId(e.target.value)}
+              className={FIELD_CLASS}
+              placeholder="Enter Client ID from Atlassian Developer Console"
+            />
+          </div>
+
+          <div>
+            <label htmlFor="settings-client-secret" className="block text-sm font-medium text-zinc-300 mb-1">
+              Client Secret
+            </label>
+            <div className="flex gap-2">
+              <input
+                id="settings-client-secret"
+                type={showClientSecret ? "text" : "password"}
+                value={clientSecret}
+                onChange={(e) => setClientSecret(e.target.value)}
+                className={`${FIELD_CLASS} flex-1`}
+                placeholder={clientSecretMasked || "Enter Client Secret"}
+              />
+              <button
+                onClick={() => setShowClientSecret(!showClientSecret)}
+                className="rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 cursor-pointer"
+                title={showClientSecret ? "Hide" : "Show"}
+              >
+                {showClientSecret ? "🙈" : "👁"}
+              </button>
+            </div>
+            {clientSecretMasked && <p className="mt-1 text-xs text-zinc-500">Current: {clientSecretMasked}</p>}
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-zinc-300 mb-1">Callback URL</label>
+            <div className="flex gap-2">
+              <input
+                type="text"
+                readOnly
+                value={`${window.location.origin}/auth/callback`}
+                className={`${FIELD_CLASS} bg-zinc-800 text-zinc-400 cursor-text`}
+              />
+              <button
+                onClick={() => navigator.clipboard.writeText(`${window.location.origin}/auth/callback`)}
+                className="rounded-md border border-zinc-700 px-3 py-2 text-sm text-zinc-400 hover:bg-zinc-800 cursor-pointer"
+                title="Copy to clipboard"
+              >
+                📋
+              </button>
+            </div>
+            <p className="mt-1 text-xs text-zinc-500">Add this URL to your Atlassian app's allowed callback URLs</p>
+          </div>
         </div>
       </section>
 

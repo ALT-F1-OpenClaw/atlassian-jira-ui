@@ -23,10 +23,12 @@ class JiraConnection(BaseModel):
 
 
 class UpdateJiraConnection(BaseModel):
-    """Update Jira connection settings."""
+    """Update Jira connection and OAuth settings."""
     jira_host: str | None = None
     jira_email: str | None = None
     jira_api_token: str | None = None
+    atlassian_client_id: str | None = None
+    atlassian_client_secret: str | None = None
 
 
 class TestConnectionResult(BaseModel):
@@ -37,16 +39,24 @@ class TestConnectionResult(BaseModel):
     user_display_name: str | None = None
 
 
+def _mask(value: str, show_last: int = 4) -> str:
+    """Mask a secret, showing only the last N chars."""
+    if len(value) <= show_last:
+        return "••••"
+    return f"••••{value[-show_last:]}"
+
+
 @router.get("")
 async def get_settings_view():
-    """Get current settings (token masked)."""
+    """Get current settings (secrets masked)."""
     s = get_settings()
-    token = s.jira_api_token
-    masked = f"••••{token[-4:]}" if len(token) > 4 else "••••"
     return {
         "jira_host": s.jira_host,
         "jira_email": s.jira_email,
-        "jira_api_token_masked": masked,
+        "jira_api_token_masked": _mask(s.jira_api_token),
+        "atlassian_client_id": s.atlassian_client_id,
+        "atlassian_client_secret_masked": _mask(s.atlassian_client_secret) if s.atlassian_client_secret else "",
+        "oauth_configured": bool(s.atlassian_client_id and s.atlassian_client_secret),
     }
 
 
@@ -137,6 +147,12 @@ async def update_settings(body: UpdateJiraConnection):
     if body.jira_api_token is not None:
         env_dict["JIRA_API_TOKEN"] = body.jira_api_token
         changed.append("JIRA_API_TOKEN")
+    if body.atlassian_client_id is not None:
+        env_dict["ATLASSIAN_CLIENT_ID"] = body.atlassian_client_id
+        changed.append("ATLASSIAN_CLIENT_ID")
+    if body.atlassian_client_secret is not None:
+        env_dict["ATLASSIAN_CLIENT_SECRET"] = body.atlassian_client_secret
+        changed.append("ATLASSIAN_CLIENT_SECRET")
 
     if not changed:
         return {"status": "no_changes", "changed": []}
