@@ -3,6 +3,7 @@
 [![CI](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/ci.yml)
 [![Release](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/release.yml/badge.svg)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/release.yml)
 [![Docker](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/docker.yml/badge.svg)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/docker.yml)
+[![GitHub release](https://img.shields.io/github/v/release/ALT-F1-OpenClaw/atlassian-jira-ui)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Python](https://img.shields.io/badge/Python-%3E%3D3.11-blue.svg)](https://www.python.org/)
 [![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
