@@ -1,3 +1,8 @@
+## [1.53.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.2...v1.53.3) (2026-03-16)
+
+### Bug Fixes
+
+* **ci:** ci-autofix HEREDOC quoting crash — use --body-file instead (fixes [#33](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/33)) ([449ed5b](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/449ed5bd37a4c10d0f483a4a41377687a7f91373))
 ## [1.53.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.1...v1.53.2) (2026-03-16)
 
 ### Bug Fixes
