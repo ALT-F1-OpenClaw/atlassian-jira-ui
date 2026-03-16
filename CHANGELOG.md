@@ -1,3 +1,8 @@
+## [1.52.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.52.0...v1.52.1) (2026-03-16)
+
+### Features
+
+* issue detail panel now opens at 90% page width ([0ff5dac](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/0ff5dacff27b2364570d66865a38b67f63fa99b4))
 ## [1.52.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.51.0...v1.52.0) (2026-03-16)
 
 ### Features
