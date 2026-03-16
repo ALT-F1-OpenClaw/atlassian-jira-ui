@@ -1,3 +1,4 @@
+## [1.52.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.52.2...v1.52.3) (2026-03-16)
 ## [1.52.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.52.1...v1.52.2) (2026-03-16)
 
 ### Features
