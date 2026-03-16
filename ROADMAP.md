@@ -230,6 +230,8 @@ Before going production-grade, re-enable these:
 | 46 | SearchableSelect — autocomplete dropdowns with type-to-filter (7 dropdowns replaced) | Complete |
 | 47 | Create Project modal — name, key, type, lead, description via `POST /api/projects` | Complete |
 | 48 | Create submenu — `+ Create` dropdown with Issue and Project options | Complete |
+| 49 | Settings page — view/edit Jira connection, test connection, app preferences | Complete |
+| 50 | Searchable sprint selector — type-to-filter sprint dropdown on Sprint Dashboard | Planned |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
