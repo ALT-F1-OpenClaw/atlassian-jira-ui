@@ -232,7 +232,7 @@ Before going production-grade, re-enable these:
 | 48 | Create submenu — `+ Create` dropdown with Issue and Project options | Complete |
 | 49 | Settings page — view/edit Jira connection, test connection, app preferences | Complete |
 | 50 | Searchable sprint selector — type-to-filter sprint dropdown on Sprint Dashboard | Complete |
-| 51 | "Open in Jira" button — link to corresponding Jira page on issues, boards, sprints, projects | Planned |
+| 51 | "Open in Jira" ↗ button — link to Jira on list rows, board cards, detail panel | Complete |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
