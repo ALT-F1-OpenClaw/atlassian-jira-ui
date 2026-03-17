@@ -1,3 +1,8 @@
+## [1.54.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.5...v1.54.0) (2026-03-17)
+
+### Features
+
+* OAuth 2.0 (3LO) — Login with Atlassian ([#30](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/30)) ([8d2ff36](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/8d2ff36627c87a31362ddbdca64ebfe09dcf0b9d))
 ## [1.53.5](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.4...v1.53.5) (2026-03-17)
 
 ### Bug Fixes
