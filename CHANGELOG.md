@@ -1,3 +1,8 @@
+## [1.53.5](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.4...v1.53.5) (2026-03-17)
+
+### Bug Fixes
+
+* Settings breadcrumb + auth explanation section ([f9264d3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/f9264d3eecbacb2cc4482f2a7d2a7bf7f4d17870))
 ## [1.53.4](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.3...v1.53.4) (2026-03-16)
 ## [1.53.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.2...v1.53.3) (2026-03-16)
 
