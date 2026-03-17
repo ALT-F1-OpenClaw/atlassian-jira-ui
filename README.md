@@ -250,7 +250,8 @@ The app runs on a Raspberry Pi 4 (ARM64) with Docker + Traefik, accessible via T
 
 **6 containers**: Traefik (reverse proxy + TLS), Watchtower (auto-update dev), prod-backend, prod-frontend, dev-backend, dev-frontend.
 
-See [`deploy/README.md`](deploy/README.md) for full setup guide.
+📖 **[User Guide](docs/USER_GUIDE.md)** — full feature documentation
+🚀 **[Deployment Guide](deploy/README.md)** — production setup on Raspberry Pi
 
 ## Getting Started
 
