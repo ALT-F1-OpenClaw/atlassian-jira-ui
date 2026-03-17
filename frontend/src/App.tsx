@@ -3789,6 +3789,24 @@ function SettingsPage() {
             <p className="mt-1 text-xs text-zinc-500">Add this URL to your Atlassian app's allowed callback URLs</p>
           </div>
         </div>
+
+        {/* OAuth Save */}
+        <div className="mt-5 flex gap-3">
+          <button
+            onClick={handleSave}
+            disabled={saving || (!clientId && !clientSecret)}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 disabled:opacity-50 cursor-pointer"
+          >
+            {saving ? "Saving..." : "💾 Save OAuth"}
+          </button>
+        </div>
+        {saveResult && (
+          <div className={`mt-3 rounded-md px-4 py-3 text-sm ${saveResult.status === "updated" ? "bg-green-900/40 border border-green-700 text-green-300" : saveResult.status === "no_changes" ? "bg-zinc-800 border border-zinc-700 text-zinc-400" : "bg-red-900/40 border border-red-700 text-red-300"}`} role="alert">
+            {saveResult.status === "updated" && `✅ Updated: ${saveResult.changed.join(", ")}`}
+            {saveResult.status === "no_changes" && "No changes to save"}
+            {saveResult.status === "error" && "❌ Failed to save"}
+          </div>
+        )}
       </section>
 
       {/* App Preferences */}
