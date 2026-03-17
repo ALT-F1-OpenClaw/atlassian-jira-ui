@@ -1,3 +1,8 @@
+## [1.56.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.55.0...v1.56.0) (2026-03-17)
+
+### Features
+
+* Strategy Pattern for dual auth — API Token + OAuth coexist with toggles ([9218161](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/92181612da646fe57b557ae713c16311f9783516))
 ## [1.55.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.54.2...v1.55.0) (2026-03-17)
 
 ### Features
