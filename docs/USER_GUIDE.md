@@ -36,6 +36,7 @@ Each user logs in with their own Atlassian account. No shared credentials.
    - **Manage**: jira-project — create/edit project settings and project-level objects
    - **View**: jira-user, jira-work — view user info, read project/issue data, search issues
    - **Update**: jira-work — create/edit issues, post comments, create worklogs, delete issues
+   ![OAuth Consent Screen](screenshots/18-oauth-consent.png)
 3. Click **Accept** to authorize
 4. You'll be redirected back — your avatar and name appear in the header
 5. Click **↪** to logout
