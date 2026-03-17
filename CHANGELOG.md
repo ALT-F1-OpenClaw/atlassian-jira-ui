@@ -1,3 +1,8 @@
+## [1.54.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.54.1...v1.54.2) (2026-03-17)
+
+### Bug Fixes
+
+* add Save button to OAuth section in Settings ([f111bd6](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/f111bd617ea88db2007479f20e01ed989f6edb45))
 ## [1.54.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.54.0...v1.54.1) (2026-03-17)
 ## [1.54.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.53.5...v1.54.0) (2026-03-17)
 
