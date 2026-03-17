@@ -1,5 +1,6 @@
 """OAuth 2.0 (3LO) authentication with Atlassian."""
 
+import logging
 import secrets
 import time
 from urllib.parse import urlencode
@@ -7,6 +8,8 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 import httpx
+
+logger = logging.getLogger(__name__)
 
 from ..config import get_settings
 
@@ -139,15 +142,20 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
         },
     }
 
+    logger.info("OAuth callback success: user=%s cloud_id=%s resources=%d",
+                user.get("displayName", "?"), cloud_id, len(resources))
+
     # Set session cookie and redirect to app
     response = RedirectResponse("/")
+    # Note: secure=False because backend sees HTTP from Traefik (TLS terminated at proxy)
+    # The browser still sees HTTPS — cookies are safe in transit
     response.set_cookie(
         SESSION_COOKIE,
         session_id,
         max_age=SESSION_MAX_AGE,
         httponly=True,
         samesite="lax",
-        secure=True,
+        secure=False,
     )
     return response
 
