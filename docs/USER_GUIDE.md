@@ -268,4 +268,36 @@ If you see this error from Atlassian:
 
 ---
 
+---
+
+## Technologies
+
+| Technology | Purpose | URL |
+|---|---|---|
+| [React 19](https://react.dev/) | Frontend UI framework | <https://react.dev/> |
+| [TypeScript 5.7](https://www.typescriptlang.org/) | Type-safe JavaScript | <https://www.typescriptlang.org/> |
+| [Vite](https://vite.dev/) | Frontend build tool + dev server | <https://vite.dev/> |
+| [Tailwind CSS 4](https://tailwindcss.com/) | Utility-first CSS framework | <https://tailwindcss.com/> |
+| [TanStack Query](https://tanstack.com/query) | Data fetching + caching | <https://tanstack.com/query> |
+| [TipTap](https://tiptap.dev/) | Rich text editor (ProseMirror) | <https://tiptap.dev/> |
+| [Recharts](https://recharts.org/) | Charts (burndown, velocity, pie) | <https://recharts.org/> |
+| [dnd-kit](https://dndkit.com/) | Drag-and-drop (Kanban board) | <https://dndkit.com/> |
+| [Playwright](https://playwright.dev/) | E2E browser testing | <https://playwright.dev/> |
+| [Vitest](https://vitest.dev/) | Unit testing framework | <https://vitest.dev/> |
+| [FastAPI](https://fastapi.tiangolo.com/) | Backend Python framework | <https://fastapi.tiangolo.com/> |
+| [Python 3.13](https://www.python.org/) | Backend language | <https://www.python.org/> |
+| [httpx](https://www.python-httpx.org/) | Async HTTP client for Jira API | <https://www.python-httpx.org/> |
+| [Pydantic](https://docs.pydantic.dev/) | Request/response validation | <https://docs.pydantic.dev/> |
+| [Docker](https://www.docker.com/) | Containerization | <https://www.docker.com/> |
+| [Traefik](https://traefik.io/) | Reverse proxy + TLS termination | <https://traefik.io/> |
+| [Watchtower](https://github.com/nicholas-fedor/watchtower) | Auto-update Docker containers | <https://github.com/nicholas-fedor/watchtower> |
+| [Tailscale](https://tailscale.com/) | VPN + TLS certificates | <https://tailscale.com/> |
+| [GitHub Actions](https://github.com/features/actions) | CI/CD pipelines | <https://github.com/features/actions> |
+| [GHCR](https://ghcr.io/) | Docker image registry | <https://ghcr.io/> |
+| [Jira Cloud REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/) | Jira data source | <https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/> |
+| [Jira Agile REST API](https://developer.atlassian.com/cloud/jira/software/rest/intro/) | Boards, sprints, epics | <https://developer.atlassian.com/cloud/jira/software/rest/intro/> |
+| [Atlassian OAuth 2.0 (3LO)](https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/) | User authentication | <https://developer.atlassian.com/cloud/jira/platform/oauth-2-3lo-apps/> |
+
+---
+
 Built by [ALT-F1](https://www.alt-f1.be) · Brussels 🇧🇪 🇲🇦
