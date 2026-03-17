@@ -43,8 +43,27 @@ def _save_sessions() -> None:
 
 _sessions: dict[str, dict] = _load_sessions()
 
-# CSRF state tokens (temporary, expire after 10 min)
-_oauth_states: dict[str, float] = {}
+# CSRF state tokens — also file-backed to survive restarts
+_STATES_FILE = _Path("/app/oauth_states.json")
+
+
+def _load_states() -> dict[str, float]:
+    if _STATES_FILE.exists():
+        try:
+            return {k: float(v) for k, v in _json.loads(_STATES_FILE.read_text()).items()}
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_states() -> None:
+    try:
+        _STATES_FILE.write_text(_json.dumps(_oauth_states))
+    except Exception as e:
+        logger.warning("Failed to save states: %s", e)
+
+
+_oauth_states: dict[str, float] = _load_states()
 
 ATLASSIAN_AUTH_URL = "https://auth.atlassian.com/authorize"
 ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
@@ -99,6 +118,8 @@ async def login(request: Request):
     for k in expired:
         del _oauth_states[k]
 
+    _save_states()
+
     params = {
         "audience": "api.atlassian.com",
         "client_id": s.atlassian_client_id,
@@ -121,6 +142,7 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
     if state not in _oauth_states:
         return RedirectResponse("/?auth_error=invalid_state")
     del _oauth_states[state]
+    _save_states()
 
     s = get_settings()
 
