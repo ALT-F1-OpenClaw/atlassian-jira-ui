@@ -13,11 +13,14 @@ Resolution order:
 3. Neither → raise 401 Unauthorized
 """
 
+import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from fastapi import Request, HTTPException
 from .config import get_settings
 from .jira_client import jira_request as _jira_request
+
+logger = logging.getLogger(__name__)
 
 
 # ── Auth Result ──────────────────────────────────────────────────────
@@ -100,7 +103,12 @@ def resolve_auth(request: Request) -> JiraAuth:
     for strategy in _strategies:
         auth = strategy.resolve(request)
         if auth is not None:
+            logger.debug("Auth resolved via %s", auth.method)
             return auth
+
+    # Debug: log what cookies we received
+    cookies = dict(request.cookies)
+    logger.warning("No auth resolved. Cookies: %s", list(cookies.keys()))
 
     # No strategy resolved — check what's configured
     s = get_settings()
