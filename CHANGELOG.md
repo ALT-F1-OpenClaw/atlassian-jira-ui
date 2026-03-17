@@ -1,3 +1,8 @@
+## [1.56.4](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.3...v1.56.4) (2026-03-17)
+
+### Bug Fixes
+
+* OAuth cookie — set secure=False behind Traefik TLS termination ([78dcc7f](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/78dcc7f189ee4b40259e32db64a9ede6a93b1dae))
 ## [1.56.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.2...v1.56.3) (2026-03-17)
 
 ### Bug Fixes
