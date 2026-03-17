@@ -3775,9 +3775,30 @@ function SettingsPage() {
           <a href="https://developer.atlassian.com/console/myapps/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
             developer.atlassian.com
           </a>{" "}
-          to enable "Login with Atlassian". Required scopes: <code className="text-xs bg-zinc-800 px-1 rounded">read:jira-work</code>,{" "}
-          <code className="text-xs bg-zinc-800 px-1 rounded">write:jira-work</code>,{" "}
-          <code className="text-xs bg-zinc-800 px-1 rounded">read:jira-user</code>.
+          → Permissions → enable <strong className="text-zinc-300">all</strong> required scopes below:
+        </p>
+        <details className="mb-3">
+          <summary className="text-sm text-blue-400 cursor-pointer hover:underline">Show required scopes (Jira Platform + Jira Software)</summary>
+          <div className="mt-2 rounded border border-zinc-700 bg-zinc-900 p-3 text-xs">
+            <p className="font-semibold text-zinc-300 mb-1">Jira Platform API</p>
+            <ul className="list-disc list-inside text-zinc-400 space-y-0.5 mb-2">
+              <li><code className="bg-zinc-800 px-1 rounded">read:jira-work</code> — read issues, projects, boards</li>
+              <li><code className="bg-zinc-800 px-1 rounded">write:jira-work</code> — create/edit issues, transitions</li>
+              <li><code className="bg-zinc-800 px-1 rounded">manage:jira-project</code> — create/edit projects</li>
+              <li><code className="bg-zinc-800 px-1 rounded">read:jira-user</code> — read user profiles</li>
+            </ul>
+            <p className="font-semibold text-zinc-300 mb-1">Jira Software API (for boards, sprints, epics)</p>
+            <ul className="list-disc list-inside text-zinc-400 space-y-0.5">
+              <li><code className="bg-zinc-800 px-1 rounded">read:board-scope:jira-software</code> — view boards &amp; backlogs</li>
+              <li><code className="bg-zinc-800 px-1 rounded">read:sprint:jira-software</code> — view sprints</li>
+              <li><code className="bg-zinc-800 px-1 rounded">write:sprint:jira-software</code> — manage sprints</li>
+              <li><code className="bg-zinc-800 px-1 rounded">read:issue:jira-software</code> — view issues on boards</li>
+              <li><code className="bg-zinc-800 px-1 rounded">read:epic:jira-software</code> — view epics</li>
+            </ul>
+          </div>
+        </details>
+        <p className="text-sm text-zinc-400 mb-4">
+          After adding scopes, <strong className="text-zinc-300">logout and login again</strong> to refresh your token.
         </p>
 
         <div className="space-y-4">
@@ -4958,8 +4979,8 @@ function Sidebar({
     { id: "list", label: "List View", icon: "\u2630" },
     { id: "board", label: "Board View", icon: "\u25A6" },
     { id: "sprint", label: "Sprint Dashboard", icon: "\u23F1" },
-    { id: "about", label: "About", icon: "\u24D8" },
     { id: "settings", label: "Settings", icon: "⚙" },
+    { id: "about", label: "About", icon: "\u24D8" },
   ];
 
   if (!open) {
