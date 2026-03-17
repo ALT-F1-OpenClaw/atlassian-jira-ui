@@ -2044,8 +2044,8 @@ function IssueDetailPanel({
       <div className="fixed inset-0 z-50 flex" role="dialog" aria-label="Issue detail">
         <div className="hidden md:block md:w-[10%] bg-black/50" onClick={onClose} />
         <div className="w-full md:w-[90%] bg-zinc-950 border-l border-zinc-800 p-6 overflow-y-auto">
-          <p className="text-red-400">Error loading issue.</p>
-          <button onClick={onClose} className="mt-4 text-zinc-400 hover:text-zinc-200 text-sm">Close</button>
+          <ErrorDisplay error={error as Error || new Error("Issue not found")} />
+          <button onClick={onClose} className="mt-4 text-zinc-400 hover:text-zinc-200 text-sm cursor-pointer">Close</button>
         </div>
       </div>
     );
@@ -2673,7 +2673,7 @@ function BoardView({
   };
 
   if (isLoading) return <LoadingSpinner message="Loading board…" />;
-  if (error) return <div className="p-8 text-red-400">Error: {(error as Error).message}</div>;
+  if (error) return <ErrorDisplay error={error as Error} />;
 
   const issues = data?.issues || [];
 
@@ -2803,12 +2803,7 @@ function ListView({ project, filters, onIssuesLoaded, onSelectIssue, highlighted
 
   if (isLoading)
     return <LoadingSpinner message="Loading issues…" />;
-  if (error)
-    return (
-      <div className="p-8 text-red-400">
-        Error: {(error as Error).message}
-      </div>
-    );
+  if (error) return <ErrorDisplay error={error as Error} />;
 
   if (data && data.issues.length === 0) {
     return (
@@ -5299,6 +5294,50 @@ function DashboardPage({
 
 /* ── Empty States (13.5) ── */
 
+function ErrorDisplay({ error }: { error: Error }) {
+  const is401 = error.message.includes("401") || error.message.includes("Unauthorized") || error.message.includes("Authentication");
+
+  if (is401) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+        <span className="text-5xl mb-4">🔒</span>
+        <h3 className="text-lg font-semibold text-zinc-200 mb-2">Authentication Required</h3>
+        <p className="text-sm text-zinc-400 max-w-md mb-4">
+          You need to log in to access Jira data. Use the <strong className="text-zinc-300">Login</strong> button in the header, or enable <strong className="text-zinc-300">API Token</strong> authentication in Settings.
+        </p>
+        <div className="flex gap-3">
+          <a
+            href={`${API}/auth/login`}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-blue-500 no-underline"
+          >
+            Login with Atlassian
+          </a>
+          <button
+            onClick={() => { const evt = new CustomEvent("navigate-settings"); window.dispatchEvent(evt); }}
+            className="rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer"
+          >
+            ⚙ Settings
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col items-center justify-center py-16 px-4 text-center">
+      <span className="text-5xl mb-4">⚠️</span>
+      <h3 className="text-lg font-semibold text-zinc-200 mb-2">Something went wrong</h3>
+      <p className="text-sm text-zinc-400 max-w-md mb-2">{error.message}</p>
+      <button
+        onClick={() => window.location.reload()}
+        className="mt-2 rounded-md border border-zinc-700 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer"
+      >
+        Reload page
+      </button>
+    </div>
+  );
+}
+
 function EmptyState({
   icon,
   title,
@@ -5491,6 +5530,13 @@ export default function App() {
   const { isOnline, queueCount, syncing, syncQueue, queueMutation, lastSyncResult, dismissSyncResult } = useOfflineQueue();
   const [view, setView] = useState<View>("list");
   const [authError, setAuthError] = useState("");
+
+  // Listen for navigate-settings events from ErrorDisplay
+  useEffect(() => {
+    const handler = () => setView("settings");
+    window.addEventListener("navigate-settings", handler);
+    return () => window.removeEventListener("navigate-settings", handler);
+  }, []);
 
   // Check for OAuth error in URL
   useEffect(() => {
