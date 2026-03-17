@@ -31,10 +31,18 @@ Your personal Jira API token is stored on the server. All API calls use your ide
 Each user logs in with their own Atlassian account. No shared credentials.
 
 1. Click the **Login** button in the top-right header
-2. You'll be redirected to Atlassian's consent screen
-3. Authorize the app to access your Jira data
+2. You'll be redirected to Atlassian's consent screen showing:
+   - **"atlf1be-raspberry-pi-4 is requesting access to your Atlassian account"**
+   - **Manage**: jira-project — create/edit project settings and project-level objects
+   - **View**: jira-user, jira-work — view user info, read project/issue data, search issues
+   - **Update**: jira-work — create/edit issues, post comments, create worklogs, delete issues
+3. Click **Accept** to authorize
 4. You'll be redirected back — your avatar and name appear in the header
 5. Click **↪** to logout
+
+> **Note:** If Firefox shows a certificate warning on redirect, click **"Advanced" → "Accept the Risk and Continue"**. This happens because the app uses Tailscale TLS certificates which Firefox doesn't trust by default. Fix permanently: go to `about:config` → set `security.enterprise_roots.enabled` to `true`.
+
+> **Note:** If you see a "429 Too Many Requests" error on the consent page, wait 5 minutes — Atlassian rate-limits authorization requests. Only click Login once.
 
 ---
 
