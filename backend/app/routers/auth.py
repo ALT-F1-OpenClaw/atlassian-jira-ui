@@ -15,9 +15,33 @@ from ..config import get_settings
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-# In-memory session store (replace with Redis/DB for production)
-# Key: session_id → { access_token, refresh_token, expires_at, cloud_id, user }
-_sessions: dict[str, dict] = {}
+# File-backed session store — survives container restarts
+# Stored at /app/sessions.json (mount a volume for persistence)
+import json as _json
+from pathlib import Path as _Path
+
+_SESSION_FILE = _Path("/app/sessions.json")
+
+
+def _load_sessions() -> dict[str, dict]:
+    """Load sessions from disk."""
+    if _SESSION_FILE.exists():
+        try:
+            return _json.loads(_SESSION_FILE.read_text())
+        except Exception:
+            return {}
+    return {}
+
+
+def _save_sessions() -> None:
+    """Persist sessions to disk."""
+    try:
+        _SESSION_FILE.write_text(_json.dumps(_sessions, default=str))
+    except Exception as e:
+        logger.warning("Failed to save sessions: %s", e)
+
+
+_sessions: dict[str, dict] = _load_sessions()
 
 # CSRF state tokens (temporary, expire after 10 min)
 _oauth_states: dict[str, float] = {}
@@ -159,6 +183,7 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
 
     logger.info("OAuth callback success: user=%s cloud_id=%s resources=%d",
                 user.get("displayName", "?"), cloud_id, len(resources))
+    _save_sessions()
 
     # Set session cookie and redirect to app
     response = RedirectResponse("/")
@@ -205,6 +230,7 @@ async def logout(request: Request, response: Response):
     session_id = request.cookies.get(SESSION_COOKIE)
     if session_id and session_id in _sessions:
         del _sessions[session_id]
+        _save_sessions()
 
     resp = JSONResponse({"status": "logged_out"})
     resp.delete_cookie(SESSION_COOKIE)
@@ -234,6 +260,7 @@ async def _refresh_token(session: dict) -> bool:
         session["access_token"] = tokens["access_token"]
         session["refresh_token"] = tokens.get("refresh_token", session["refresh_token"])
         session["expires_at"] = time.time() + tokens.get("expires_in", 3600)
+        _save_sessions()
         return True
 
 
