@@ -52,7 +52,7 @@ MOCK_ISSUE_DETAIL = {
 @pytest.mark.asyncio
 async def test_list_issues_returns_mapped_data(client):
     """Given Jira returns issues, when GET /api/issues, then return mapped issue list."""
-    with patch("app.routers.issues.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.issues.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = MOCK_ISSUES_RESPONSE
         resp = await client.get("/api/issues", params={"project": "PROJ"})
 
@@ -70,7 +70,7 @@ async def test_list_issues_returns_mapped_data(client):
 @pytest.mark.asyncio
 async def test_list_issues_default_pagination(client):
     """Given no pagination params, when GET /api/issues, then default to max_results=50, start_at=0."""
-    with patch("app.routers.issues.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.issues.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = {"issues": [], "total": 0}
         resp = await client.get("/api/issues")
 
@@ -84,7 +84,7 @@ async def test_list_issues_default_pagination(client):
 @pytest.mark.asyncio
 async def test_list_issues_max_results_capped(client):
     """Given max_results=999, when GET /api/issues, then cap at 200."""
-    with patch("app.routers.issues.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.issues.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = {"issues": [], "total": 0}
         resp = await client.get("/api/issues", params={"max_results": "999"})
 
@@ -95,7 +95,7 @@ async def test_list_issues_max_results_capped(client):
 @pytest.mark.asyncio
 async def test_get_issue_detail(client):
     """Given a valid issue key, when GET /api/issues/PROJ-1, then return full issue detail."""
-    with patch("app.routers.issues.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.issues.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = MOCK_ISSUE_DETAIL
         resp = await client.get("/api/issues/PROJ-1")
 
@@ -109,7 +109,7 @@ async def test_get_issue_detail(client):
 @pytest.mark.asyncio
 async def test_create_issue(client):
     """Given valid issue data, when POST /api/issues, then create and return new issue."""
-    with patch("app.routers.issues.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.issues.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = {"id": "10099", "key": "PROJ-99"}
         resp = await client.post("/api/issues", json={
             "project": "PROJ",
@@ -136,7 +136,7 @@ async def test_create_issue_missing_summary(client):
 @pytest.mark.asyncio
 async def test_transition_issue(client):
     """Given a valid transition, when POST /api/issues/PROJ-1/transition, then transition succeeds."""
-    with patch("app.routers.issues.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.issues.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = None  # 204 returns None
         resp = await client.post("/api/issues/PROJ-1/transition", json={"transition_id": "31"})
 

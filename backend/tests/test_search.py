@@ -38,7 +38,7 @@ MOCK_SEARCH_RESULT = {
 @pytest.mark.asyncio
 async def test_jql_search_returns_mapped_issues(client):
     """Given Jira returns search results, when GET /api/search?jql=..., then return mapped issues."""
-    with patch("app.routers.search.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.search.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = MOCK_SEARCH_RESULT
         resp = await client.get("/api/search", params={"jql": "project = PROJ"})
 
@@ -62,7 +62,7 @@ async def test_jql_search_requires_jql_param(client):
 @pytest.mark.asyncio
 async def test_quick_search_with_project_filter(client):
     """Given a project filter, when GET /api/search/quick?q=login&project=PROJ, then JQL includes project clause."""
-    with patch("app.routers.search.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.search.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = {"issues": [], "total": 0}
         resp = await client.get("/api/search/quick", params={"q": "login", "project": "PROJ"})
 
@@ -77,7 +77,7 @@ async def test_quick_search_with_project_filter(client):
 @pytest.mark.asyncio
 async def test_quick_search_without_project(client):
     """Given no project filter, when GET /api/search/quick?q=test, then JQL has no project clause."""
-    with patch("app.routers.search.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.search.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = {"issues": [], "total": 0}
         resp = await client.get("/api/search/quick", params={"q": "test"})
 

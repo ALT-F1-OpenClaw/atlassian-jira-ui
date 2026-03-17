@@ -1,10 +1,11 @@
 """Issue endpoints."""
 
 import logging
-from fastapi import APIRouter, HTTPException, Query
+from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 import httpx
 from ..jira_client import jira_request
+from ..deps import authed_jira_request
 
 logger = logging.getLogger(__name__)
 
@@ -85,6 +86,7 @@ SORT_FIELD_MAP = {
 
 @router.get("")
 async def list_issues(
+    request: Request,
     project: str | None = None,
     status: str | None = None,
     assignee: str | None = None,
@@ -113,7 +115,7 @@ async def list_issues(
     jql += f" ORDER BY {jql_field} {order}"
 
     fields = "summary,description,status,priority,issuetype,assignee,reporter,project,labels,created,updated,duedate"
-    data = await jira_request(
+    data = await authed_jira_request(request,
         "GET",
         "/search/jql",
         params={"jql": jql, "startAt": start_at, "maxResults": max_results, "fields": fields},
@@ -130,9 +132,9 @@ async def list_issues(
 
 
 @router.get("/{key}")
-async def get_issue(key: str):
+async def get_issue(request: Request, key: str):
     """Get issue details."""
-    data = await jira_request("GET", f"/issue/{key}", params={"expand": "transitions"})
+    data = await authed_jira_request(request, "GET", f"/issue/{key}", params={"expand": "transitions"})
     issue = _format_issue(data)
     issue["transitions"] = [
         {"id": t["id"], "name": t["name"]}
@@ -162,7 +164,7 @@ class CreateIssueRequest(BaseModel):
 
 
 @router.post("")
-async def create_issue(req: CreateIssueRequest):
+async def create_issue(request: Request, req: CreateIssueRequest):
     """Create a new issue."""
     payload = {
         "fields": {
@@ -187,7 +189,7 @@ async def create_issue(req: CreateIssueRequest):
     if req.assignee:
         payload["fields"]["assignee"] = {"accountId": req.assignee}
 
-    return await jira_request("POST", "/issue", json=payload)
+    return await authed_jira_request(request, "POST", "/issue", json=payload)
 
 
 class UpdateIssueRequest(BaseModel):
@@ -201,7 +203,7 @@ class UpdateIssueRequest(BaseModel):
 
 
 @router.patch("/{key}")
-async def update_issue(key: str, req: UpdateIssueRequest):
+async def update_issue(request: Request, key: str, req: UpdateIssueRequest):
     """Update an issue."""
     fields = {}
     if req.summary:
@@ -229,7 +231,7 @@ async def update_issue(key: str, req: UpdateIssueRequest):
         fields["labels"] = req.labels
 
     try:
-        await jira_request("PUT", f"/issue/{key}", json={"fields": fields})
+        await authed_jira_request(request, "PUT", f"/issue/{key}", json={"fields": fields})
     except httpx.HTTPStatusError as e:
         logger.error("Failed to update issue %s: %s", key, e.response.text)
         raise HTTPException(status_code=e.response.status_code, detail=e.response.text)
@@ -241,9 +243,9 @@ class TransitionRequest(BaseModel):
 
 
 @router.post("/{key}/transition")
-async def transition_issue(key: str, req: TransitionRequest):
+async def transition_issue(request: Request, key: str, req: TransitionRequest):
     """Transition an issue to a new status."""
-    await jira_request(
+    await authed_jira_request(request,
         "POST",
         f"/issue/{key}/transitions",
         json={"transition": {"id": req.transition_id}},
@@ -257,7 +259,7 @@ class LogWorkRequest(BaseModel):
 
 
 @router.post("/{key}/worklog")
-async def log_work(key: str, req: LogWorkRequest):
+async def log_work(request: Request, key: str, req: LogWorkRequest):
     """Log work on an issue."""
     payload: dict = {"timeSpent": req.timeSpent}
     if req.comment:
@@ -272,7 +274,7 @@ async def log_work(key: str, req: LogWorkRequest):
             ],
         }
     try:
-        result = await jira_request("POST", f"/issue/{key}/worklog", json=payload)
+        result = await authed_jira_request(request, "POST", f"/issue/{key}/worklog", json=payload)
         return {"status": "ok", "key": key, "worklog": result}
     except httpx.HTTPStatusError as e:
         logger.error("Failed to log work on %s: %s", key, e.response.text)
@@ -298,8 +300,8 @@ def _format_worklog(entry: dict) -> dict:
 
 
 @router.get("/{key}/worklog")
-async def get_worklogs(key: str):
+async def get_worklogs(request: Request, key: str):
     """Get work logs for an issue."""
-    data = await jira_request("GET", f"/issue/{key}/worklog")
+    data = await authed_jira_request(request, "GET", f"/issue/{key}/worklog")
     worklogs = [_format_worklog(w) for w in (data or {}).get("worklogs", [])]
     return {"worklogs": worklogs, "total": (data or {}).get("total", len(worklogs))}

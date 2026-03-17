@@ -1,15 +1,16 @@
 """Sprint endpoints (Jira Agile API)."""
 
 from datetime import datetime, timezone
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 from ..jira_client import jira_request
+from ..deps import authed_jira_request
 
 router = APIRouter(prefix="/api/sprints", tags=["sprints"])
 
 
 @router.get("")
-async def list_sprints(
+async def list_sprints(request: Request,
     project: str | None = None,
     state: str | None = None,
 ):
@@ -22,7 +23,7 @@ async def list_sprints(
     params = {}
     if project:
         params["projectKeyOrId"] = project
-    boards_data = await jira_request("GET", "/board", base="agile", params=params)
+    boards_data = await authed_jira_request(request, "GET", "/board", base="agile", params=params)
     boards = (boards_data or {}).get("values", [])
 
     sprint_state = state or "active"
@@ -31,7 +32,7 @@ async def list_sprints(
     for board in boards:
         board_id = board["id"]
         try:
-            sprint_data = await jira_request(
+            sprint_data = await authed_jira_request(request,
                 "GET",
                 f"/board/{board_id}/sprint",
                 base="agile",
@@ -55,9 +56,9 @@ async def list_sprints(
 
 
 @router.get("/{sprint_id}/issues")
-async def get_sprint_issues(sprint_id: int):
+async def get_sprint_issues(request: Request, sprint_id: int):
     """Get sprint issues with status counts."""
-    issues_data = await jira_request(
+    issues_data = await authed_jira_request(request,
         "GET",
         f"/sprint/{sprint_id}/issue",
         base="agile",
@@ -107,7 +108,7 @@ async def get_sprint_issues(sprint_id: int):
 
 
 @router.get("/{sprint_id}/burndown")
-async def get_sprint_burndown(
+async def get_sprint_burndown(request: Request,
     sprint_id: int,
     board_id: int = Query(..., description="Board ID for sprint lookup"),
 ):
@@ -118,7 +119,7 @@ async def get_sprint_burndown(
     via REST API, we approximate from sprint info + current issue states.
     """
     # Get sprint details
-    sprint_data = await jira_request(
+    sprint_data = await authed_jira_request(request,
         "GET", f"/sprint/{sprint_id}", base="agile"
     )
     if not sprint_data:
@@ -128,7 +129,7 @@ async def get_sprint_burndown(
     end_date = sprint_data.get("endDate", "")
 
     # Get sprint issues
-    issues_data = await jira_request(
+    issues_data = await authed_jira_request(request,
         "GET",
         f"/sprint/{sprint_id}/issue",
         base="agile",
@@ -193,13 +194,13 @@ async def get_sprint_burndown(
 
 
 @router.get("/{sprint_id}/velocity")
-async def get_sprint_velocity(
+async def get_sprint_velocity(request: Request,
     sprint_id: int,
     board_id: int = Query(..., description="Board ID for sprint lookup"),
 ):
     """Get velocity data: story points completed per recent sprint."""
     # Get recent closed sprints + active sprint from the board
-    sprints_data = await jira_request(
+    sprints_data = await authed_jira_request(request,
         "GET",
         f"/board/{board_id}/sprint",
         base="agile",
@@ -216,7 +217,7 @@ async def get_sprint_velocity(
     velocity = []
     for s in recent:
         sid = s["id"]
-        issues_data = await jira_request(
+        issues_data = await authed_jira_request(request,
             "GET",
             f"/sprint/{sid}/issue",
             base="agile",
@@ -286,7 +287,7 @@ def _format_sprint(s: dict) -> dict:
 
 
 @router.post("")
-async def create_sprint(body: CreateSprintBody):
+async def create_sprint(request: Request, body: CreateSprintBody):
     """Create a new sprint on a board."""
     payload: dict = {
         "name": body.name,
@@ -299,12 +300,12 @@ async def create_sprint(body: CreateSprintBody):
     if body.end_date is not None:
         payload["endDate"] = body.end_date
 
-    result = await jira_request("POST", "/sprint", base="agile", json=payload)
+    result = await authed_jira_request(request, "POST", "/sprint", base="agile", json=payload)
     return {"status": "ok", "sprint": _format_sprint(result or {})}
 
 
 @router.patch("/{sprint_id}")
-async def update_sprint(sprint_id: int, body: UpdateSprintBody):
+async def update_sprint(request: Request, sprint_id: int, body: UpdateSprintBody):
     """Update sprint name, goal, or dates."""
     payload: dict = {}
     if body.name is not None:
@@ -321,19 +322,19 @@ async def update_sprint(sprint_id: int, body: UpdateSprintBody):
 
     # Jira requires sprint name in every PUT — fetch if not provided
     if "name" not in payload:
-        sprint = await jira_request("GET", f"/sprint/{sprint_id}", base="agile")
+        sprint = await authed_jira_request(request, "GET", f"/sprint/{sprint_id}", base="agile")
         if sprint:
             payload["name"] = sprint["name"]
 
-    result = await jira_request("PUT", f"/sprint/{sprint_id}", base="agile", json=payload)
+    result = await authed_jira_request(request, "PUT", f"/sprint/{sprint_id}", base="agile", json=payload)
     return {"status": "ok", "sprint": _format_sprint(result or {})}
 
 
 @router.post("/{sprint_id}/start")
-async def start_sprint(sprint_id: int):
+async def start_sprint(request: Request, sprint_id: int):
     """Start a sprint (set state to active)."""
     # Get sprint to retrieve dates (required by Jira to start)
-    sprint = await jira_request("GET", f"/sprint/{sprint_id}", base="agile")
+    sprint = await authed_jira_request(request, "GET", f"/sprint/{sprint_id}", base="agile")
     payload: dict = {"state": "active", "name": sprint["name"]}
     # Jira requires startDate when starting a sprint
     if sprint and sprint.get("startDate"):
@@ -343,18 +344,18 @@ async def start_sprint(sprint_id: int):
     if sprint and sprint.get("endDate"):
         payload["endDate"] = sprint["endDate"]
 
-    result = await jira_request("PUT", f"/sprint/{sprint_id}", base="agile", json=payload)
+    result = await authed_jira_request(request, "PUT", f"/sprint/{sprint_id}", base="agile", json=payload)
     return {"status": "ok", "sprint": _format_sprint(result or {})}
 
 
 @router.post("/{sprint_id}/complete")
-async def complete_sprint(sprint_id: int):
+async def complete_sprint(request: Request, sprint_id: int):
     """Complete a sprint (set state to closed)."""
     # Jira requires sprint name in PUT body — fetch it first
-    sprint = await jira_request("GET", f"/sprint/{sprint_id}", base="agile")
+    sprint = await authed_jira_request(request, "GET", f"/sprint/{sprint_id}", base="agile")
     if not sprint:
         return {"status": "error", "message": "Sprint not found"}
-    result = await jira_request(
+    result = await authed_jira_request(request,
         "PUT", f"/sprint/{sprint_id}", base="agile",
         json={"state": "closed", "name": sprint["name"]},
     )
@@ -362,16 +363,16 @@ async def complete_sprint(sprint_id: int):
 
 
 @router.delete("/{sprint_id}")
-async def delete_sprint(sprint_id: int):
+async def delete_sprint(request: Request, sprint_id: int):
     """Delete a sprint. Issues are moved back to backlog."""
-    await jira_request("DELETE", f"/sprint/{sprint_id}", base="agile")
+    await authed_jira_request(request, "DELETE", f"/sprint/{sprint_id}", base="agile")
     return {"status": "ok"}
 
 
 @router.post("/{sprint_id}/issues")
-async def add_issues_to_sprint(sprint_id: int, body: SprintIssuesBody):
+async def add_issues_to_sprint(request: Request, sprint_id: int, body: SprintIssuesBody):
     """Add issues to a sprint."""
-    await jira_request(
+    await authed_jira_request(request,
         "POST",
         f"/sprint/{sprint_id}/issue",
         base="agile",
@@ -381,9 +382,9 @@ async def add_issues_to_sprint(sprint_id: int, body: SprintIssuesBody):
 
 
 @router.delete("/{sprint_id}/issues/{issue_key}")
-async def remove_issue_from_sprint(sprint_id: int, issue_key: str):
+async def remove_issue_from_sprint(request: Request, sprint_id: int, issue_key: str):
     """Remove an issue from a sprint (move to backlog)."""
-    await jira_request(
+    await authed_jira_request(request,
         "POST",
         "/backlog/issue",
         base="agile",

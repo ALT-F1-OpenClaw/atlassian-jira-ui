@@ -16,7 +16,7 @@ MOCK_PRIORITIES = [
 @pytest.mark.asyncio
 async def test_list_priorities(client):
     """Given Jira returns priorities, when GET /api/priorities, then return mapped list."""
-    with patch("app.routers.priorities.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.priorities.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = MOCK_PRIORITIES
         resp = await client.get("/api/priorities")
 
@@ -30,7 +30,7 @@ async def test_list_priorities(client):
 @pytest.mark.asyncio
 async def test_list_priorities_empty(client):
     """Given Jira returns no priorities, when GET /api/priorities, then return empty list."""
-    with patch("app.routers.priorities.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.priorities.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = []
         resp = await client.get("/api/priorities")
 

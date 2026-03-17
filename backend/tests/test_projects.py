@@ -44,7 +44,7 @@ MOCK_MEMBERS = [
 @pytest.mark.asyncio
 async def test_list_projects_returns_mapped_data(client):
     """Given Jira returns projects, when GET /api/projects, then return mapped fields including avatarUrl."""
-    with patch("app.routers.projects.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.projects.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = MOCK_PROJECTS
         resp = await client.get("/api/projects")
 
@@ -60,7 +60,7 @@ async def test_list_projects_returns_mapped_data(client):
 @pytest.mark.asyncio
 async def test_list_projects_empty(client):
     """Given Jira returns no projects, when GET /api/projects, then return empty list."""
-    with patch("app.routers.projects.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.projects.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = []
         resp = await client.get("/api/projects")
 
@@ -71,7 +71,7 @@ async def test_list_projects_empty(client):
 @pytest.mark.asyncio
 async def test_list_members_filters_non_atlassian(client):
     """Given members include app accounts, when GET /api/projects/PROJ/members, then only atlassian users returned."""
-    with patch("app.routers.projects.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.projects.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = MOCK_MEMBERS
         resp = await client.get("/api/projects/PROJ/members")
 
@@ -85,7 +85,7 @@ async def test_list_members_filters_non_atlassian(client):
 @pytest.mark.asyncio
 async def test_list_members_empty_project(client):
     """Given project has no members, when GET /api/projects/EMPTY/members, then return empty list."""
-    with patch("app.routers.projects.jira_request", new_callable=AsyncMock) as mock:
+    with patch("app.routers.projects.authed_jira_request", new_callable=AsyncMock) as mock:
         mock.return_value = []
         resp = await client.get("/api/projects/EMPTY/members")
 

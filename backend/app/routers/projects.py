@@ -1,8 +1,9 @@
 """Project endpoints."""
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 from ..jira_client import jira_request
+from ..deps import authed_jira_request
 
 
 class CreateProjectRequest(BaseModel):
@@ -17,9 +18,9 @@ router = APIRouter(prefix="/api/projects", tags=["projects"])
 
 
 @router.get("")
-async def list_projects():
+async def list_projects(request: Request):
     """List all accessible projects."""
-    data = await jira_request("GET", "/project", params={"expand": "description"})
+    data = await authed_jira_request(request, "GET", "/project", params={"expand": "description"})
     return [
         {
             "id": p["id"],
@@ -34,7 +35,7 @@ async def list_projects():
 
 
 @router.post("")
-async def create_project(body: CreateProjectRequest):
+async def create_project(request: Request, body: CreateProjectRequest):
     """Create a new Jira project."""
     payload: dict = {
         "key": body.key.upper(),
@@ -44,20 +45,20 @@ async def create_project(body: CreateProjectRequest):
     }
     if body.lead_account_id:
         payload["leadAccountId"] = body.lead_account_id
-    result = await jira_request("POST", "/project", json=payload)
+    result = await authed_jira_request(request, "POST", "/project", json=payload)
     return {"status": "created", "project": result}
 
 
 @router.get("/{key}")
-async def get_project(key: str):
+async def get_project(request: Request, key: str):
     """Get project details."""
-    return await jira_request("GET", f"/project/{key}")
+    return await authed_jira_request(request, "GET", f"/project/{key}")
 
 
 @router.get("/{key}/members")
-async def list_project_members(key: str, max_results: int = Query(default=50, le=1000)):
+async def list_project_members(request: Request, key: str, max_results: int = Query(default=50, le=1000)):
     """List users assignable to issues in a project."""
-    data = await jira_request(
+    data = await authed_jira_request(request,
         "GET",
         "/user/assignable/search",
         params={"project": key, "maxResults": max_results},

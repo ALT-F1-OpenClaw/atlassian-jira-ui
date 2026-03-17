@@ -1,18 +1,19 @@
 """Board & Sprint endpoints (Jira Agile API)."""
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Request
 from ..jira_client import jira_request
+from ..deps import authed_jira_request
 
 router = APIRouter(prefix="/api/boards", tags=["boards"])
 
 
 @router.get("")
-async def list_boards(project: str | None = None):
+async def list_boards(request: Request, project: str | None = None):
     """List Scrum/Kanban boards."""
     params = {}
     if project:
         params["projectKeyOrId"] = project
-    data = await jira_request("GET", "/board", base="agile", params=params)
+    data = await authed_jira_request(request, "GET", "/board", base="agile", params=params)
     return {
         "boards": [
             {
@@ -27,9 +28,9 @@ async def list_boards(project: str | None = None):
 
 
 @router.get("/{board_id}")
-async def get_board(board_id: int):
+async def get_board(request: Request, board_id: int):
     """Get board configuration with columns."""
-    config = await jira_request("GET", f"/board/{board_id}/configuration", base="agile")
+    config = await authed_jira_request(request, "GET", f"/board/{board_id}/configuration", base="agile")
     columns = []
     for col in (config or {}).get("columnConfig", {}).get("columns", []):
         statuses = [s.get("id") for s in col.get("statuses", [])]
@@ -45,9 +46,9 @@ async def get_board(board_id: int):
 
 
 @router.get("/{board_id}/sprint")
-async def get_active_sprint(board_id: int):
+async def get_active_sprint(request: Request, board_id: int):
     """Get active sprint with issues."""
-    sprints = await jira_request(
+    sprints = await authed_jira_request(request,
         "GET", f"/board/{board_id}/sprint", base="agile", params={"state": "active"}
     )
     values = (sprints or {}).get("values", [])
@@ -55,7 +56,7 @@ async def get_active_sprint(board_id: int):
         return {"sprint": None, "issues": []}
 
     sprint = values[0]
-    issues = await jira_request(
+    issues = await authed_jira_request(request,
         "GET",
         f"/sprint/{sprint['id']}/issue",
         base="agile",

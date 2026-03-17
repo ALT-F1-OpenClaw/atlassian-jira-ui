@@ -39,6 +39,8 @@ async def jira_request(
     params: dict | None = None,
     json: dict | None = None,
     retries: int = 3,
+    oauth_token: str | None = None,
+    cloud_id: str | None = None,
 ) -> dict | list | None:
     """Make an authenticated Jira API request with rate-limit retry.
 
@@ -49,17 +51,34 @@ async def jira_request(
         params: Query parameters
         json: JSON body
         retries: Max retry attempts on 429
+        oauth_token: OAuth 2.0 access token (overrides Basic Auth when provided)
+        cloud_id: Atlassian Cloud ID (required with oauth_token)
     """
     s = get_settings()
-    if base == "agile":
-        url = f"{s.jira_agile_url}{path}"
+
+    # OAuth 2.0: use Atlassian API gateway with cloud_id
+    if oauth_token and cloud_id:
+        if base == "agile":
+            url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/agile/1.0{path}"
+        else:
+            url = f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3{path}"
+        headers = {
+            "Authorization": f"Bearer {oauth_token}",
+            "Accept": "application/json",
+            "Content-Type": "application/json",
+        }
     else:
-        url = f"{s.jira_base_url}{path}"
+        # Fallback: Basic Auth from .env
+        if base == "agile":
+            url = f"{s.jira_agile_url}{path}"
+        else:
+            url = f"{s.jira_base_url}{path}"
+        headers = None  # Uses default client headers (Basic Auth)
 
     client = await get_client()
 
     for attempt in range(1, retries + 1):
-        response = await client.request(method, url, params=params, json=json)
+        response = await client.request(method, url, params=params, json=json, headers=headers)
 
         if response.status_code == 429:
             retry_after = int(response.headers.get("retry-after", "5"))

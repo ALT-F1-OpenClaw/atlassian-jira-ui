@@ -1,19 +1,20 @@
 """Search endpoints."""
 
-from fastapi import APIRouter, Query
+from fastapi import APIRouter, Query, Request
 from ..jira_client import jira_request
+from ..deps import authed_jira_request
 
 router = APIRouter(prefix="/api/search", tags=["search"])
 
 
 @router.get("")
-async def jql_search(
+async def jql_search(request: Request,
     jql: str = Query(..., description="JQL query string"),
     max_results: int = Query(default=50, le=100),
 ):
     """Execute a JQL search."""
     fields = "summary,status,priority,issuetype,assignee,updated"
-    data = await jira_request(
+    data = await authed_jira_request(request,
         "GET",
         "/search/jql",
         params={"jql": jql, "maxResults": max_results, "fields": fields},
@@ -37,7 +38,7 @@ async def jql_search(
 
 
 @router.get("/quick")
-async def quick_search(
+async def quick_search(request: Request,
     q: str = Query(..., description="Text to search for"),
     project: str | None = None,
     max_results: int = Query(default=20, le=50),
@@ -49,7 +50,7 @@ async def quick_search(
     jql += " ORDER BY updated DESC"
 
     fields = "summary,status,project"
-    data = await jira_request(
+    data = await authed_jira_request(request,
         "GET",
         "/search/jql",
         params={"jql": jql, "maxResults": max_results, "fields": fields},

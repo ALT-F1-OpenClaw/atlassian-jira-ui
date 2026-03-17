@@ -216,3 +216,16 @@ def get_session(request: Request) -> dict | None:
     if not session_id or session_id not in _sessions:
         return None
     return _sessions[session_id]
+
+
+def get_jira_auth(request: Request) -> tuple[str | None, str | None]:
+    """Get OAuth token + cloud_id from session, or (None, None) for Basic Auth fallback.
+
+    Usage in routers:
+        oauth_token, cloud_id = get_jira_auth(request)
+        await jira_request("GET", "/path", oauth_token=oauth_token, cloud_id=cloud_id)
+    """
+    session = get_session(request)
+    if not session:
+        return None, None
+    return session.get("access_token"), session.get("cloud_id")
