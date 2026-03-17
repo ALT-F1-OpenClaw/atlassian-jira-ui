@@ -22,7 +22,7 @@ _oauth_states: dict[str, float] = {}
 ATLASSIAN_AUTH_URL = "https://auth.atlassian.com/authorize"
 ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
 ATLASSIAN_RESOURCES_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
-ATLASSIAN_SCOPES = "read:jira-work write:jira-work read:jira-user offline_access"
+ATLASSIAN_SCOPES = "read:jira-work write:jira-work manage:jira-project read:jira-user offline_access"
 
 SESSION_COOKIE = "jira_ui_session"
 SESSION_MAX_AGE = 7 * 24 * 3600  # 7 days
