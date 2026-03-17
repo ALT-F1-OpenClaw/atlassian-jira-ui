@@ -1,3 +1,8 @@
+## [1.56.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.2...v1.56.3) (2026-03-17)
+
+### Bug Fixes
+
+* add manage:jira-project scope to OAuth — required for project creation ([3c4bc12](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/3c4bc12c24f2c2074cfe28e5f6564d6603cc9612))
 ## [1.56.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.1...v1.56.2) (2026-03-17)
 
 ### Bug Fixes
