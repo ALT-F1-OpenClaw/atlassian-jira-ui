@@ -5402,8 +5402,33 @@ function useTheme(): [Theme, () => void] {
 
 export default function App() {
   const [theme, toggleTheme] = useTheme();
+
+  // OAuth auth state
+  const { data: authData, refetch: refetchAuth } = useQuery({
+    queryKey: ["auth-me"],
+    queryFn: async () => {
+      const res = await fetch(`${API}/auth/me`);
+      if (!res.ok) return { authenticated: false };
+      return res.json() as Promise<{ authenticated: boolean; user?: { displayName: string; avatarUrl: string; emailAddress: string }; cloud_id?: string }>;
+    },
+    staleTime: CACHE_STATIC,
+  });
+  const isAuthenticated = authData?.authenticated || false;
+  const authUser = authData?.user;
   const { isOnline, queueCount, syncing, syncQueue, queueMutation, lastSyncResult, dismissSyncResult } = useOfflineQueue();
   const [view, setView] = useState<View>("list");
+  const [authError, setAuthError] = useState("");
+
+  // Check for OAuth error in URL
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const err = params.get("auth_error");
+    if (err) {
+      setAuthError(err.replace(/_/g, " "));
+      // Clean URL
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [project, setProject] = useState("");
   const [filters, setFilters] = useState<Filters>({ status: "", type: "", assignee: "" });
@@ -5590,6 +5615,13 @@ export default function App() {
   return (
     <JiraHostContext.Provider value={jiraHost}>
     <div className="flex h-screen flex-col">
+      {/* Auth error banner */}
+      {authError && (
+        <div className="bg-red-900/60 border-b border-red-700 px-4 py-2 text-sm text-red-200 flex items-center justify-between">
+          <span>⚠️ Login failed: {authError}</span>
+          <button onClick={() => setAuthError("")} className="text-red-300 hover:text-white cursor-pointer">✕</button>
+        </div>
+      )}
       {/* Offline indicator banner */}
       <OfflineIndicator
         isOnline={isOnline}
@@ -5680,6 +5712,35 @@ export default function App() {
             >
               {theme === "dark" ? "☀️" : "🌙"}
             </button>
+            {/* Auth: Login/User button */}
+            {isAuthenticated && authUser ? (
+              <div className="flex items-center gap-2">
+                {authUser.avatarUrl && (
+                  <img src={authUser.avatarUrl} alt="" className="h-6 w-6 rounded-full" />
+                )}
+                <span className="hidden sm:inline text-xs text-zinc-300">{authUser.displayName}</span>
+                <button
+                  onClick={async () => {
+                    await fetch(`${API}/auth/logout`, { method: "POST" });
+                    refetchAuth();
+                  }}
+                  className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-400 cursor-pointer"
+                  aria-label="Logout"
+                  title="Logout"
+                >
+                  ↪
+                </button>
+              </div>
+            ) : (
+              <a
+                href={`${API}/auth/login`}
+                className="rounded-md bg-blue-600 px-2.5 py-1.5 text-xs font-medium text-white transition-colors hover:bg-blue-500 no-underline"
+                aria-label="Login with Atlassian"
+                title="Login with Atlassian"
+              >
+                Login
+              </a>
+            )}
             <nav className="hidden sm:flex items-center rounded-lg border border-zinc-700 bg-zinc-900 p-0.5" role="tablist" aria-label="View switcher">
               {([
                 { id: "dashboard" as View, label: "Home", icon: "\u2302" },

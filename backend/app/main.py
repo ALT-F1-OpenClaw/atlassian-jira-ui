@@ -13,7 +13,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import get_settings
 from .jira_client import close_client
-from .routers import projects, issues, boards, search, priorities, labels, sprints
+from .routers import projects, issues, boards, search, priorities, labels, sprints, auth
 from .routers import settings as settings_router
 from .version import __version__
 
@@ -49,6 +49,7 @@ app.include_router(priorities.router)
 app.include_router(labels.router)
 app.include_router(sprints.router)
 app.include_router(settings_router.router)
+app.include_router(auth.router)
 
 
 @app.get("/api/health")
