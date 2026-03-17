@@ -1,3 +1,8 @@
+## [1.56.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.0...v1.56.1) (2026-03-17)
+
+### Bug Fixes
+
+* friendly error screen for 401 — guides user to Login or Settings ([2169cf5](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/2169cf5751e79766fffd43a6185dc65043ffd636))
 ## [1.56.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.55.0...v1.56.0) (2026-03-17)
 
 ### Features
