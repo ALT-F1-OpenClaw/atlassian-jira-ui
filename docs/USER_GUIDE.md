@@ -229,6 +229,37 @@ Click the **☰** button (top-left) to open the sidebar:
 - Ensure the callback URL in your Atlassian Developer Console matches: `https://your-host:port/auth/callback`
 - Check that required scopes are enabled: `read:jira-work`, `write:jira-work`, `read:jira-user`
 
+### "Something went wrong — scopes not added to the app"
+
+![OAuth Scope Error](screenshots/19-oauth-scope-error.png)
+
+If you see this error from Atlassian:
+
+> *This app has requested Jira API & Jira API scopes that have not been added to the app. Configure the app at https://developer.atlassian.com/apps and add the following scopes to the Jira API & Jira API: read:board-scope:jira-software, read:epic:jira-software, read:issue:jira-software, read:sprint:jira-software, write:sprint:jira-software.*
+
+**How to fix:**
+1. Go to [developer.atlassian.com/console/myapps](https://developer.atlassian.com/console/myapps)
+2. Open your app → **Permissions**
+3. Find **"Jira API"** (not "Jira platform") → click **Edit Scopes** or **Configure**
+4. Add **all** of these scopes under the Jira API section:
+
+| Scope | Purpose |
+|-------|---------|
+| `read:jira-work` | Read issues, projects, boards |
+| `write:jira-work` | Create/edit issues, transitions |
+| `manage:jira-project` | Create/edit projects |
+| `read:jira-user` | Read user profiles |
+| `read:board-scope:jira-software` | View boards and backlogs |
+| `read:sprint:jira-software` | View sprints |
+| `write:sprint:jira-software` | Manage sprints |
+| `read:issue:jira-software` | View issues on boards |
+| `read:epic:jira-software` | View epics |
+
+5. **Save** the changes
+6. **Logout (↪) and Login again** to get a fresh token with all scopes
+
+> **Note:** The `*:jira-software` scopes may appear under a separate "Jira Software" subsection in the permissions page, depending on your Atlassian Developer Console version.
+
 ### Issue not updating
 - The app caches data for performance. Click the browser refresh button to force a fresh load
 - Static data (projects, priorities) is cached for 30 min
