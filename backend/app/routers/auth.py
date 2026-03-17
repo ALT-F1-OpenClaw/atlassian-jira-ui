@@ -30,9 +30,13 @@ SESSION_MAX_AGE = 7 * 24 * 3600  # 7 days
 
 def _get_callback_url(request: Request) -> str:
     """Build callback URL from request origin."""
-    # Use X-Forwarded headers if behind proxy (Traefik)
-    proto = request.headers.get("x-forwarded-proto", request.url.scheme)
-    host = request.headers.get("x-forwarded-host", request.url.netloc)
+    # Use X-Forwarded headers if behind proxy (Traefik), fall back to Host header
+    proto = request.headers.get("x-forwarded-proto", "https")
+    host = (
+        request.headers.get("x-forwarded-host")
+        or request.headers.get("host")
+        or request.url.netloc
+    )
     return f"{proto}://{host}/auth/callback"
 
 
