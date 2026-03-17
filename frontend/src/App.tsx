@@ -3600,9 +3600,20 @@ function SettingsPage() {
     <div className="mx-auto max-w-2xl px-4 py-6">
       <h1 className="text-2xl font-bold text-zinc-100 mb-6">Settings</h1>
 
+      {/* Auth mode explanation */}
+      <section className="rounded-lg border border-blue-900/50 bg-blue-950/20 p-4 mb-6 text-sm text-zinc-300">
+        <h3 className="font-semibold text-zinc-200 mb-2">How authentication works</h3>
+        <p className="mb-2">This app connects to Jira Cloud in one of two ways:</p>
+        <ul className="list-disc list-inside space-y-1 text-zinc-400">
+          <li><strong className="text-zinc-300">API Token</strong> (current) — Your personal token is stored on the server. All API calls use your identity. Simple, single-user.</li>
+          <li><strong className="text-zinc-300">OAuth 2.0</strong> (planned) — Each user logs in with their own Atlassian account. No shared credentials. Multi-user ready.</li>
+        </ul>
+        <p className="mt-2 text-zinc-500">The "Test Connection" button verifies your API Token credentials against Jira's <code className="bg-zinc-800 px-1 rounded">/myself</code> endpoint.</p>
+      </section>
+
       {/* Jira Connection */}
       <section className="rounded-lg border border-zinc-700 bg-zinc-900/50 p-5 mb-6">
-        <h2 className="text-lg font-semibold text-zinc-200 mb-4">Jira Connection</h2>
+        <h2 className="text-lg font-semibold text-zinc-200 mb-4">Jira Connection (API Token)</h2>
 
         <div className="space-y-4">
           <div>
@@ -3709,6 +3720,7 @@ function SettingsPage() {
           }
         </div>
         <p className="text-sm text-zinc-400 mb-4">
+          <strong>Not yet active</strong> — these credentials are stored for when OAuth login is implemented.
           Register an app at{" "}
           <a href="https://developer.atlassian.com/console/myapps/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
             developer.atlassian.com
@@ -4984,6 +4996,7 @@ function Breadcrumbs({
     sprint: "Sprint Dashboard",
     detail: "Detail",
     about: "About",
+    settings: "Settings",
   };
 
   const crumbs: { label: string; onClick?: () => void }[] = [];
