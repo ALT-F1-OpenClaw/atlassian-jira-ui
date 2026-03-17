@@ -4641,11 +4641,34 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
         <EmptyState
           icon="🏃"
           title="No active sprint"
-          description="Create a new sprint to start tracking your team's progress."
+          description="Create a new sprint, or if using OAuth, ensure your Atlassian app has Jira Software scopes enabled."
           actionLabel={createBoardId > 0 ? "Create your first sprint" : undefined}
           onAction={createBoardId > 0 ? () => setShowCreateModal(true) : undefined}
         />
         {showCreateModal && createBoardId > 0 && <CreateSprintModal boardId={createBoardId} onClose={() => setShowCreateModal(false)} />}
+
+        {/* OAuth scope help */}
+        <div className="mt-6 mx-auto max-w-lg rounded-lg border border-zinc-700 bg-zinc-900/50 p-4 text-sm">
+          <h4 className="font-semibold text-zinc-200 mb-2">Using OAuth? Sprints require Jira Software scopes</h4>
+          <p className="text-zinc-400 mb-3">
+            If you logged in with Atlassian OAuth and don't see sprints, your app needs additional permissions.
+          </p>
+          <p className="text-zinc-400 mb-2">
+            Go to{" "}
+            <a href="https://developer.atlassian.com/console/myapps/" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">
+              developer.atlassian.com/console/myapps
+            </a>
+            {" "}→ your app → <strong className="text-zinc-300">Permissions</strong> → <strong className="text-zinc-300">Jira Software</strong> section and enable:
+          </p>
+          <ul className="list-disc list-inside text-zinc-400 space-y-0.5 mb-3 ml-2">
+            <li><code className="text-xs bg-zinc-800 px-1 rounded">read:board-scope:jira-software</code> — view boards</li>
+            <li><code className="text-xs bg-zinc-800 px-1 rounded">read:sprint:jira-software</code> — view sprints</li>
+            <li><code className="text-xs bg-zinc-800 px-1 rounded">write:sprint:jira-software</code> — manage sprints</li>
+            <li><code className="text-xs bg-zinc-800 px-1 rounded">read:issue:jira-software</code> — view issues on boards</li>
+            <li><code className="text-xs bg-zinc-800 px-1 rounded">read:epic:jira-software</code> — view epics</li>
+          </ul>
+          <p className="text-zinc-500 text-xs">After adding scopes, <strong>logout and login again</strong> to refresh your token.</p>
+        </div>
       </div>
     );
   }
