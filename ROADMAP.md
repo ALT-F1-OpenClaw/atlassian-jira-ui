@@ -266,7 +266,7 @@ Before going production-grade, re-enable these:
 ### Phase 5 — Multi-User Auth & Public SaaS
 | # | Feature | Status |
 |---|---------|--------|
-| 30 | Atlassian OAuth 2.0 (3LO) — "Login with Atlassian" SSO | Planned |
+| 30 | Atlassian OAuth 2.0 (3LO) — "Login with Atlassian" SSO | Complete |
 | 31 | Per-user session management (encrypted token store, refresh rotation) | Planned |
 | 32 | Login/logout UI (landing page, auth state, user avatar in header) | Planned |
 | 33 | Per-user Jira site selection (accessible-resources API) | Planned |
