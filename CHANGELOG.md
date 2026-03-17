@@ -1,3 +1,8 @@
+## [1.56.7](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.6...v1.56.7) (2026-03-17)
+
+### Features
+
+* list all OAuth scopes in Settings + move About below Settings in nav ([1d73269](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/1d7326980e7ccb097999e6f52b53634d6fb66557))
 ## [1.56.6](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.5...v1.56.6) (2026-03-17)
 
 ### Features
