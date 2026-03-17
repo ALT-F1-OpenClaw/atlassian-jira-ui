@@ -1,3 +1,8 @@
+## [1.56.5](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.4...v1.56.5) (2026-03-17)
+
+### Bug Fixes
+
+* add Jira Software (Agile) OAuth scopes — boards, sprints, epics ([8b19a57](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/8b19a57d4d910a71fc7ad7285c4458677b040594))
 ## [1.56.4](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.3...v1.56.4) (2026-03-17)
 
 ### Bug Fixes
