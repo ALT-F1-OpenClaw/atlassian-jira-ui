@@ -25,7 +25,22 @@ _oauth_states: dict[str, float] = {}
 ATLASSIAN_AUTH_URL = "https://auth.atlassian.com/authorize"
 ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
 ATLASSIAN_RESOURCES_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
-ATLASSIAN_SCOPES = "read:jira-work write:jira-work manage:jira-project read:jira-user offline_access"
+# Classic Jira Platform scopes + Jira Software (Agile) scopes
+ATLASSIAN_SCOPES = " ".join([
+    # Jira Platform
+    "read:jira-work",
+    "write:jira-work",
+    "manage:jira-project",
+    "read:jira-user",
+    # Jira Software (Agile API — boards, sprints, epics)
+    "read:board-scope:jira-software",
+    "read:sprint:jira-software",
+    "write:sprint:jira-software",
+    "read:issue:jira-software",
+    "read:epic:jira-software",
+    # Refresh tokens
+    "offline_access",
+])
 
 SESSION_COOKIE = "jira_ui_session"
 SESSION_MAX_AGE = 7 * 24 * 3600  # 7 days
