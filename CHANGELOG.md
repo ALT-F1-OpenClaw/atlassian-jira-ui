@@ -1,3 +1,8 @@
+## [1.55.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.54.2...v1.55.0) (2026-03-17)
+
+### Features
+
+* per-user session management — OAuth tokens route API calls ([#31](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/31)) ([45519c9](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/45519c9adce4bed9f277f3e661b5fa5d522559cb))
 ## [1.54.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.54.1...v1.54.2) (2026-03-17)
 
 ### Bug Fixes
