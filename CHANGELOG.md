@@ -1,3 +1,8 @@
+## [1.56.6](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.5...v1.56.6) (2026-03-17)
+
+### Features
+
+* show OAuth scope help when no sprints visible ([4f68007](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/4f6800722fbfad974c62f0478a94309253ca0194))
 ## [1.56.5](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.4...v1.56.5) (2026-03-17)
 
 ### Bug Fixes
