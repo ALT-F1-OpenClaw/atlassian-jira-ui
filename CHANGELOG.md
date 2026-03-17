@@ -1,3 +1,8 @@
+## [1.56.9](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.8...v1.56.9) (2026-03-17)
+
+### Bug Fixes
+
+* persist OAuth sessions to file — survive container restarts ([24b626a](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/24b626ae09f420e791f585a05caad9377f1aceec))
 ## [1.56.8](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.7...v1.56.8) (2026-03-17)
 ## [1.56.7](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.6...v1.56.7) (2026-03-17)
 
