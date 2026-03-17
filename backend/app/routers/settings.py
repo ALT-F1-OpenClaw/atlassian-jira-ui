@@ -23,12 +23,14 @@ class JiraConnection(BaseModel):
 
 
 class UpdateJiraConnection(BaseModel):
-    """Update Jira connection and OAuth settings."""
+    """Update Jira connection, OAuth, and auth toggle settings."""
     jira_host: str | None = None
     jira_email: str | None = None
     jira_api_token: str | None = None
     atlassian_client_id: str | None = None
     atlassian_client_secret: str | None = None
+    auth_api_token_enabled: bool | None = None
+    auth_oauth_enabled: bool | None = None
 
 
 class TestConnectionResult(BaseModel):
@@ -57,6 +59,8 @@ async def get_settings_view():
         "atlassian_client_id": s.atlassian_client_id,
         "atlassian_client_secret_masked": _mask(s.atlassian_client_secret) if s.atlassian_client_secret else "",
         "oauth_configured": bool(s.atlassian_client_id and s.atlassian_client_secret),
+        "auth_api_token_enabled": s.auth_api_token_enabled,
+        "auth_oauth_enabled": s.auth_oauth_enabled,
     }
 
 
@@ -153,6 +157,12 @@ async def update_settings(body: UpdateJiraConnection):
     if body.atlassian_client_secret is not None:
         env_dict["ATLASSIAN_CLIENT_SECRET"] = body.atlassian_client_secret
         changed.append("ATLASSIAN_CLIENT_SECRET")
+    if body.auth_api_token_enabled is not None:
+        env_dict["AUTH_API_TOKEN_ENABLED"] = str(body.auth_api_token_enabled).lower()
+        changed.append("AUTH_API_TOKEN_ENABLED")
+    if body.auth_oauth_enabled is not None:
+        env_dict["AUTH_OAUTH_ENABLED"] = str(body.auth_oauth_enabled).lower()
+        changed.append("AUTH_OAUTH_ENABLED")
 
     if not changed:
         return {"status": "no_changes", "changed": []}

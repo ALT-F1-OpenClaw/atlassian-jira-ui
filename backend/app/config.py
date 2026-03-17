@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     atlassian_client_id: str = ""
     atlassian_client_secret: str = ""
 
+    # Auth toggles
+    auth_api_token_enabled: bool = True
+    auth_oauth_enabled: bool = True
+
     # App
     app_secret_key: str = "change-me"
     cors_origins: str = "http://localhost:5173"

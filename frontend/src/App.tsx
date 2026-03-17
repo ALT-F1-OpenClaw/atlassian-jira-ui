@@ -3511,6 +3511,8 @@ function SettingsPage() {
   const [clientSecret, setClientSecret] = useState("");
   const [clientSecretMasked, setClientSecretMasked] = useState("");
   const [oauthConfigured, setOauthConfigured] = useState(false);
+  const [apiTokenEnabled, setApiTokenEnabled] = useState(true);
+  const [oauthEnabled, setOauthEnabled] = useState(true);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -3530,6 +3532,8 @@ function SettingsPage() {
         setClientId(data.atlassian_client_id || "");
         setClientSecretMasked(data.atlassian_client_secret_masked || "");
         setOauthConfigured(data.oauth_configured || false);
+        setApiTokenEnabled(data.auth_api_token_enabled ?? true);
+        setOauthEnabled(data.auth_oauth_enabled ?? true);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -3600,15 +3604,66 @@ function SettingsPage() {
     <div className="mx-auto max-w-2xl px-4 py-6">
       <h1 className="text-2xl font-bold text-zinc-100 mb-6">Settings</h1>
 
-      {/* Auth mode explanation */}
+      {/* Auth mode explanation + toggles */}
       <section className="rounded-lg border border-blue-900/50 bg-blue-950/20 p-4 mb-6 text-sm text-zinc-300">
-        <h3 className="font-semibold text-zinc-200 mb-2">How authentication works</h3>
-        <p className="mb-2">This app connects to Jira Cloud in one of two ways:</p>
-        <ul className="list-disc list-inside space-y-1 text-zinc-400">
-          <li><strong className="text-zinc-300">API Token</strong> (current) — Your personal token is stored on the server. All API calls use your identity. Simple, single-user.</li>
-          <li><strong className="text-zinc-300">OAuth 2.0</strong> (planned) — Each user logs in with their own Atlassian account. No shared credentials. Multi-user ready.</li>
-        </ul>
-        <p className="mt-2 text-zinc-500">The "Test Connection" button verifies your API Token credentials against Jira's <code className="bg-zinc-800 px-1 rounded">/myself</code> endpoint.</p>
+        <h3 className="font-semibold text-zinc-200 mb-3">Authentication Methods</h3>
+        <p className="mb-3 text-zinc-400">Both methods can coexist. OAuth takes priority when a user is logged in; API Token is the fallback.</p>
+
+        <div className="space-y-3">
+          {/* API Token toggle */}
+          <div className="flex items-center justify-between rounded-md border border-zinc-700 bg-zinc-900/50 px-4 py-3">
+            <div>
+              <div className="font-medium text-zinc-200">API Token (Basic Auth)</div>
+              <div className="text-xs text-zinc-500">Shared credentials from server .env — single-user, simple</div>
+            </div>
+            <button
+              onClick={async () => {
+                const next = !apiTokenEnabled;
+                setApiTokenEnabled(next);
+                await fetch(`${API}/api/settings`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ auth_api_token_enabled: next }),
+                });
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${apiTokenEnabled ? "bg-blue-600" : "bg-zinc-700"}`}
+              role="switch"
+              aria-checked={apiTokenEnabled}
+              aria-label="Toggle API Token authentication"
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${apiTokenEnabled ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </div>
+
+          {/* OAuth toggle */}
+          <div className="flex items-center justify-between rounded-md border border-zinc-700 bg-zinc-900/50 px-4 py-3">
+            <div>
+              <div className="font-medium text-zinc-200">OAuth 2.0 (Login with Atlassian)</div>
+              <div className="text-xs text-zinc-500">Per-user login — each user brings their own Atlassian account</div>
+            </div>
+            <button
+              onClick={async () => {
+                const next = !oauthEnabled;
+                setOauthEnabled(next);
+                await fetch(`${API}/api/settings`, {
+                  method: "PATCH",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ auth_oauth_enabled: next }),
+                });
+              }}
+              className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors cursor-pointer ${oauthEnabled ? "bg-blue-600" : "bg-zinc-700"}`}
+              role="switch"
+              aria-checked={oauthEnabled}
+              aria-label="Toggle OAuth authentication"
+            >
+              <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${oauthEnabled ? "translate-x-6" : "translate-x-1"}`} />
+            </button>
+          </div>
+        </div>
+
+        <p className="mt-3 text-xs text-zinc-500">
+          Priority: OAuth session → API Token fallback. Disabling both blocks all API access.
+        </p>
       </section>
 
       {/* Jira Connection */}
