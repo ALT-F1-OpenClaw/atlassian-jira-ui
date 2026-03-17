@@ -1,3 +1,8 @@
+## [1.56.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.1...v1.56.2) (2026-03-17)
+
+### Bug Fixes
+
+* OAuth login routing — add /auth to Traefik + fix callback URL detection ([1dce2dc](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/1dce2dc935040304e2045e34ce06fe7df01031ff))
 ## [1.56.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.0...v1.56.1) (2026-03-17)
 
 ### Bug Fixes
