@@ -1,3 +1,8 @@
+## [1.56.10](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.9...v1.56.10) (2026-03-17)
+
+### Bug Fixes
+
+* persist OAuth state tokens to file — fixes invalid_state on callback ([a604c61](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/a604c612e8f09ea6b078eda35222904c2d83155b))
 ## [1.56.9](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.8...v1.56.9) (2026-03-17)
 
 ### Bug Fixes
