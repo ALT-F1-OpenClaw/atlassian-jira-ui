@@ -12,6 +12,66 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/sprints", tags=["sprints"])
 
 
+async def _list_sprints_platform(request, project: str | None, state: str | None):
+    """Fallback: fetch sprints via Platform API (JQL search on customfield_10020).
+
+    Used when Agile API is not available (e.g., OAuth without Jira Software scopes).
+    Searches for issues in open/future/closed sprints and extracts sprint metadata.
+    """
+    sprint_state = state or "active"
+    jql_fns = []
+    if "active" in sprint_state:
+        jql_fns.append("openSprints()")
+    if "future" in sprint_state:
+        jql_fns.append("futureSprints()")
+    if "closed" in sprint_state:
+        jql_fns.append("closedSprints()")
+
+    if not jql_fns:
+        jql_fns = ["openSprints()"]
+
+    jql_parts = " OR ".join(f"sprint in {fn}" for fn in jql_fns)
+    jql = f"({jql_parts})"
+    if project:
+        jql = f"project = \"{project}\" AND {jql}"
+    jql += " ORDER BY updated DESC"
+
+    try:
+        data = await authed_jira_request(request, "GET", "/search/jql", params={
+            "jql": jql,
+            "maxResults": 200,
+            "fields": "customfield_10020",
+        })
+    except Exception as e:
+        logger.warning("Platform API sprint search failed: %s", e)
+        return {"sprints": []}
+
+    # Extract unique sprints from customfield_10020
+    seen_ids: set[int] = set()
+    sprints = []
+    for issue in (data or {}).get("issues", []):
+        sprint_field = issue.get("fields", {}).get("customfield_10020") or []
+        for s in (sprint_field if isinstance(sprint_field, list) else [sprint_field]):
+            if not isinstance(s, dict):
+                continue
+            sid = s.get("id")
+            if sid and sid not in seen_ids:
+                seen_ids.add(sid)
+                sprints.append({
+                    "id": sid,
+                    "name": s.get("name", ""),
+                    "state": s.get("state", ""),
+                    "startDate": s.get("startDate"),
+                    "endDate": s.get("endDate"),
+                    "goal": s.get("goal", ""),
+                    "boardId": s.get("boardId", 0),
+                    "boardName": "",  # Not available from Platform API
+                })
+
+    logger.info("Platform API fallback: found %d sprints via JQL", len(sprints))
+    return {"sprints": sprints}
+
+
 @router.get("")
 async def list_sprints(request: Request,
     project: str | None = None,
@@ -28,10 +88,10 @@ async def list_sprints(request: Request,
         params["projectKeyOrId"] = project
     try:
         boards_data = await authed_jira_request(request, "GET", "/board", base="agile", params=params)
+        boards = (boards_data or {}).get("values", [])
     except Exception as e:
-        logger.warning("Failed to fetch boards (possibly missing Jira Software scopes): %s", e)
-        return {"sprints": []}
-    boards = (boards_data or {}).get("values", [])
+        logger.warning("Agile API failed (%s) — falling back to Platform API for sprints", e)
+        return await _list_sprints_platform(request, project, state)
 
     sprint_state = state or "active"
 
