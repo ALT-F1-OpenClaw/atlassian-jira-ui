@@ -1,3 +1,8 @@
+## [1.57.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.1...v1.57.2) (2026-03-22)
+
+### Reverts
+
+* restore granular jira-software scopes for OAuth ([1360fab](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/1360fabaf55faa54f8301fcbe8c9adfce32ea6f7))
 ## [1.57.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.0...v1.57.1) (2026-03-22)
 
 ### Bug Fixes
