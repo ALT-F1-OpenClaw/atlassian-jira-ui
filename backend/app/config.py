@@ -20,8 +20,10 @@ class Settings(BaseSettings):
     auth_api_token_enabled: bool = True
     auth_oauth_enabled: bool = True
 
-    # Environment: "development" or "production"
-    # Production disables API Token auth entirely — OAuth only
+    # Environment: "development", "staging", or "production"
+    # - development: both API Token + OAuth available (default)
+    # - staging: both available, for pre-production testing
+    # - production: API Token disabled entirely, OAuth only
     app_env: str = "development"
 
     # App

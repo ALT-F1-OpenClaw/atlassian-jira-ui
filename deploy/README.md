@@ -53,10 +53,18 @@ Production deployment on Raspberry Pi 4 (ARM64) with Docker + Traefik.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `APP_ENV` | `development` | `production` disables API Token auth entirely |
+| `APP_ENV` | `development` | See values below |
 | `AUTH_API_TOKEN_ENABLED` | `true` | Toggle API Token auth (ignored in production) |
 | `AUTH_OAUTH_ENABLED` | `true` | Toggle OAuth auth |
 | `CORS_ORIGINS` | `http://localhost:5173` | Allowed CORS origins (set by docker-compose) |
+
+### APP_ENV Values
+
+| Value | API Token | OAuth | Use Case |
+|-------|-----------|-------|----------|
+| `development` | ✅ Available | ✅ Available | Local dev, self-hosted single-user |
+| `staging` | ✅ Available | ✅ Available | Pre-production testing |
+| `production` | ❌ Completely disabled | ✅ Only method | Customer-facing deployment |
 
 ### Production `.env` example
 

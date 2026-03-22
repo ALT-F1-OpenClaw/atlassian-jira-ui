@@ -15,9 +15,11 @@ A modern, fast alternative UI for Atlassian Jira Cloud.
 
 The app supports two authentication methods:
 
-#### API Token (Current)
+#### API Token (Development/Staging only)
 
 Your personal Jira API token is stored on the server. All API calls use your identity.
+
+> **Note:** This method is not available in production mode (`APP_ENV=production`). Production deployments use OAuth only.
 
 1. Go to **Settings** (⚙ in the sidebar)
 2. Enter your **Jira Host** (e.g., `https://yourcompany.atlassian.net`)
