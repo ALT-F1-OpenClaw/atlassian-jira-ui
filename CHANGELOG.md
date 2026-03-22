@@ -1,3 +1,8 @@
+## [1.58.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.3...v1.58.0) (2026-03-22)
+
+### Features
+
+* production mode — API Token auth completely disabled ([#54](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/54)) ([1caff5b](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/1caff5b5a8296878b2403b84101b2181e545d343))
 ## [1.57.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.2...v1.57.3) (2026-03-22)
 
 ### Bug Fixes
