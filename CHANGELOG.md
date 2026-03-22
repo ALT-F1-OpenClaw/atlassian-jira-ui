@@ -1,3 +1,8 @@
+## [1.59.8](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.7...v1.59.8) (2026-03-22)
+
+### Bug Fixes
+
+* env ribbon — small triangle in top-right corner, no longer hides Sprint button ([b1cfdaa](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/b1cfdaac73a627d81f73a890218432c01493a02e))
 ## [1.59.7](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.6...v1.59.7) (2026-03-22)
 
 ### Features
