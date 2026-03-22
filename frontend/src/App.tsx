@@ -4749,7 +4749,10 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
               className="mb-2"
             />
           )}
-          <h2 className="text-xl font-bold text-zinc-100" data-testid="sprint-name">{activeSprint.name}</h2>
+          <h2 className="text-xl font-bold text-zinc-100" data-testid="sprint-name">
+            {activeSprint.name}
+            {activeSprint.boardId && <OpenInJira path={`/jira/software/projects/${project || ""}/boards/${activeSprint.boardId}`} className="text-sm ml-2" />}
+          </h2>
           <p className="text-sm text-zinc-400 mt-1">
             {formatDate(activeSprint.startDate)} — {formatDate(activeSprint.endDate)}
             {daysRemaining !== null && (
