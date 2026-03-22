@@ -31,6 +31,20 @@ vi.mock("recharts", () => {
 // JSDOM doesn't implement scrollIntoView
 Element.prototype.scrollIntoView = vi.fn();
 
+// Auth/settings responses that all fetch mocks must include
+const MOCK_SETTINGS_RESPONSE = { jira_host: "https://test.atlassian.net", auth_api_token_enabled: true, auth_oauth_enabled: false, atlassian_client_id: "", atlassian_client_secret_masked: "", oauth_configured: false, jira_api_token_masked: "••••1234", jira_email: "test@test.com" };
+const MOCK_AUTH_ME_RESPONSE = { authenticated: false };
+
+function _handleAuthUrls(urlStr: string): Response | null {
+  if (urlStr.includes("/api/settings")) {
+    return { ok: true, json: () => Promise.resolve(MOCK_SETTINGS_RESPONSE) } as Response;
+  }
+  if (urlStr.includes("/auth/me")) {
+    return { ok: true, json: () => Promise.resolve(MOCK_AUTH_ME_RESPONSE) } as Response;
+  }
+  return null;
+}
+
 /**
  * Helper: select an option from a SearchableSelect component.
  * Opens the dropdown by clicking the button, then clicks the matching option.
@@ -282,6 +296,8 @@ function setupFetchMock(overrides?: { issueDetail?: object; patchResponse?: obje
 
   global.fetch = vi.fn((url: string | URL | Request, init?: RequestInit) => {
     const urlStr = typeof url === "string" ? url : url.toString();
+    const authResp = _handleAuthUrls(urlStr);
+    if (authResp) return Promise.resolve(authResp);
     if (urlStr.match(/\/api\/projects\/[A-Z]+\/members/)) {
       return Promise.resolve({
         ok: true,
@@ -859,6 +875,8 @@ describe("Feature: Pagination", () => {
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/projects")) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
         }
@@ -884,6 +902,8 @@ describe("Feature: Pagination", () => {
       };
       (global.fetch as ReturnType<typeof vi.fn>).mockImplementation((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/projects")) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
         }
@@ -3535,6 +3555,8 @@ describe("Feature: Sprint dashboard shows active sprint overview", () => {
       const user = userEvent.setup();
       global.fetch = vi.fn((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/sprints")) {
           return Promise.resolve({
             ok: true,
@@ -3710,6 +3732,8 @@ describe("Feature: Start/Complete sprint (9b.3)", () => {
       // Override sprints to have a future sprint
       global.fetch = vi.fn((url: string | URL | Request, init?: RequestInit) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/sprints") && !urlStr.match(/\/api\/sprints\/\d+/)) {
           return Promise.resolve({
             ok: true,
@@ -4068,6 +4092,8 @@ describe("Feature: Work log history (10.4)", () => {
       const originalImpl = originalFetch.getMockImplementation()!;
       global.fetch = vi.fn((url: string | URL | Request, init?: RequestInit) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.match(/\/api\/issues\/[A-Z]+-\d+\/worklog/) && (!init?.method || init.method === "GET")) {
           return Promise.resolve({
             ok: true,
@@ -4536,6 +4562,8 @@ describe("Feature: Empty states (13.5)", () => {
     it("Given no sprints exist, when viewing the sprint dashboard, then an empty state with 'Create your first sprint' button is shown", async () => {
       global.fetch = vi.fn((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/projects")) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
         }
@@ -4567,6 +4595,8 @@ describe("Feature: Empty states (13.5)", () => {
     it("Given no active sprints exist, when navigating to dashboard, then an empty sprints card is shown", async () => {
       global.fetch = vi.fn((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/projects")) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
         }
@@ -4598,6 +4628,8 @@ describe("Feature: Empty states (13.5)", () => {
     it("Given no issues exist, when navigating to dashboard, then an empty issues card with create button is shown", async () => {
       global.fetch = vi.fn((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/projects")) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
         }
@@ -4630,6 +4662,8 @@ describe("Feature: Empty states (13.5)", () => {
     it("Given the app is loaded, when user opens sidebar and clicks About, then the About page is displayed", async () => {
       global.fetch = vi.fn((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/projects")) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
         }
@@ -4659,6 +4693,8 @@ describe("Feature: Empty states (13.5)", () => {
     it("Given the About page is displayed, then all 23 features are listed with version badges", async () => {
       global.fetch = vi.fn((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/projects")) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
         }
@@ -4700,6 +4736,8 @@ describe("Feature: Empty states (13.5)", () => {
     it("Given the About page is displayed, then the current version, build date, GitHub link, and changelog link are shown", async () => {
       global.fetch = vi.fn((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/projects")) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
         }
@@ -4746,6 +4784,8 @@ describe("Feature: Empty states (13.5)", () => {
     it("Given the About page is displayed, then features are rendered in a grid with descriptions", async () => {
       global.fetch = vi.fn((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/projects")) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
         }
@@ -4786,6 +4826,8 @@ describe("Feature: Empty states (13.5)", () => {
     it("Given the About page is active, then breadcrumbs show Home / About", async () => {
       global.fetch = vi.fn((url: string | URL | Request) => {
         const urlStr = typeof url === "string" ? url : url.toString();
+        const authResp = _handleAuthUrls(urlStr);
+        if (authResp) return Promise.resolve(authResp);
         if (urlStr.includes("/api/projects")) {
           return Promise.resolve({ ok: true, json: () => Promise.resolve(mockProjects) } as Response);
         }

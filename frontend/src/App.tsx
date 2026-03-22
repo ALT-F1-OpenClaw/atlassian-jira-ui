@@ -5751,17 +5751,25 @@ export default function App() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [commandPaletteOpen, showShortcutHelp, showCreateModal, selectedIssueKey, view, highlightedIndex, issuesForFilters]);
 
-  // Fetch Jira host for "Open in Jira" links
-  const { data: jiraSettings } = useQuery({
+  // Fetch settings (includes auth config + jira host)
+  const { data: jiraSettings, isLoading: settingsLoading } = useQuery({
     queryKey: ["settings-host"],
     queryFn: async () => {
       const res = await fetch(`${API}/api/settings`);
-      if (!res.ok) return { jira_host: "" };
-      return res.json() as Promise<{ jira_host: string }>;
+      if (!res.ok) return { jira_host: "", auth_api_token_enabled: false, auth_oauth_enabled: false };
+      return res.json() as Promise<{ jira_host: string; auth_api_token_enabled: boolean; auth_oauth_enabled: boolean }>;
     },
     staleTime: CACHE_STATIC,
   });
   const jiraHost = jiraSettings?.jira_host?.replace(/\/$/, "") || "";
+
+  // Determine if we have a working auth method
+  // API Token mode doesn't need auth/me to resolve — it works immediately
+  const settingsReady = !settingsLoading && jiraSettings !== undefined;
+  const apiTokenWorks = settingsReady && jiraSettings?.auth_api_token_enabled;
+  const oauthWorks = settingsReady && jiraSettings?.auth_oauth_enabled && isAuthenticated;
+  const authReady = apiTokenWorks || oauthWorks;
+  const needsLogin = settingsReady && !authReady;
 
   const { data: projects } = useQuery({
     queryKey: ["projects"],
@@ -5773,7 +5781,61 @@ export default function App() {
       >;
     },
     staleTime: CACHE_STATIC,
+    enabled: authReady,
   });
+
+  // If auth check is done and no working method, show login screen
+  if (needsLogin && view !== "settings") {
+    return (
+      <JiraHostContext.Provider value={jiraHost}>
+      <div className="flex h-screen flex-col items-center justify-center bg-zinc-950 text-center px-4">
+        <span className="text-6xl mb-4">🔐</span>
+        <h1 className="text-2xl font-bold text-zinc-100 mb-2">Welcome to Jira UI</h1>
+        <p className="text-zinc-400 max-w-md mb-6">
+          {jiraSettings?.auth_oauth_enabled
+            ? "Log in with your Atlassian account to get started."
+            : "Configure authentication in Settings to connect to Jira."}
+        </p>
+        <div className="flex gap-3">
+          {jiraSettings?.auth_oauth_enabled && (
+            <a
+              href={`${API}/auth/login`}
+              className="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 no-underline"
+            >
+              Login with Atlassian
+            </a>
+          )}
+          <button
+            onClick={() => setView("settings")}
+            className="rounded-md border border-zinc-700 px-5 py-2.5 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer"
+          >
+            ⚙ Settings
+          </button>
+        </div>
+        <footer className="absolute bottom-4 text-xs text-zinc-600">
+          Built by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">ALT-F1</a> · v{APP_VERSION}
+        </footer>
+      </div>
+      </JiraHostContext.Provider>
+    );
+  }
+
+  // Settings page is always accessible (even without auth)
+  if (view === "settings" && needsLogin) {
+    return (
+      <JiraHostContext.Provider value={jiraHost}>
+      <div className="flex h-screen flex-col bg-zinc-950">
+        <header className="border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
+          <h1 className="text-lg font-bold text-zinc-100">Jira UI — Settings</h1>
+          <button onClick={() => setView("list")} className="text-sm text-zinc-400 hover:text-zinc-200 cursor-pointer">← Back</button>
+        </header>
+        <main className="flex-1 overflow-auto">
+          <SettingsPage />
+        </main>
+      </div>
+      </JiraHostContext.Provider>
+    );
+  }
 
   return (
     <JiraHostContext.Provider value={jiraHost}>
