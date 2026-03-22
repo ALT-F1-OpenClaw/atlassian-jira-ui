@@ -1,3 +1,8 @@
+## [1.57.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.11...v1.57.0) (2026-03-22)
+
+### Features
+
+* smart startup — login screen when no auth, no 401 spam ([92c2b19](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/92c2b193cdeb087f28fd693e4ca9fad008cf5611))
 ## [1.56.11](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.10...v1.56.11) (2026-03-22)
 
 ### Bug Fixes
