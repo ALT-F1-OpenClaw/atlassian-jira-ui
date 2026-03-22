@@ -36,7 +36,25 @@ Each user logs in with their own Atlassian account. No shared credentials.
    - **Manage**: jira-project — create/edit project settings and project-level objects
    - **View**: jira-user, jira-work — view user info, read project/issue data, search issues
    - **Update**: jira-work — create/edit issues, post comments, create worklogs, delete issues
-   ![OAuth Consent Screen](screenshots/18-oauth-consent.png)
+   ![OAuth Consent Screen](screenshots/20-oauth-consent-full-scopes.png)
+
+   The consent screen shows all permissions grouped by action:
+
+   **Manage:**
+   - `jira-project` — Create and edit project settings and project-level objects
+
+   **View:**
+   - `jira-user` — View user information (usernames, email, avatars)
+   - `jira-work` — Read project and issue data, search issues, attachments, worklogs
+   - `Boards and backlogs` — View boards, issues on boards, backlogs, reports, versions
+   - `Epics` — View and search epics and related issues
+   - `Issues` — View issues, estimations, and estimation fields
+   - `Sprints` — View sprints, sprint issues, and properties
+
+   **Update:**
+   - `jira-work` — Create/edit issues, post comments, create worklogs, delete issues
+   - `Sprints` — Update sprints, move issues to sprints, reorder sprints
+
 3. Click **Accept** to authorize
 4. You'll be redirected back — your avatar and name appear in the header
 5. Click **↪** to logout
@@ -241,24 +259,29 @@ If you see this error from Atlassian:
 1. Go to [developer.atlassian.com/console/myapps](https://developer.atlassian.com/console/myapps)
 2. Open your app → **Permissions**
 3. Find **"Jira API"** (not "Jira platform") → click **Edit Scopes** or **Configure**
-4. Add **all** of these scopes under the Jira API section:
+4. You need to add **two separate products** in Permissions:
 
-| Scope | Purpose |
-|-------|---------|
-| `read:jira-work` | Read issues, projects, boards |
-| `write:jira-work` | Create/edit issues, transitions |
-| `manage:jira-project` | Create/edit projects |
-| `read:jira-user` | Read user profiles |
-| `read:board-scope:jira-software` | View boards and backlogs |
-| `read:sprint:jira-software` | View sprints |
-| `write:sprint:jira-software` | Manage sprints |
-| `read:issue:jira-software` | View issues on boards |
-| `read:epic:jira-software` | View epics |
+   **Product 1: Jira API** (Jira platform) — click "Edit Scopes":
+   | Scope | Purpose |
+   |-------|---------|
+   | `read:jira-work` | Read issues, projects, boards |
+   | `write:jira-work` | Create/edit issues, transitions |
+   | `manage:jira-project` | Create/edit projects |
+   | `read:jira-user` | Read user profiles |
 
-5. **Save** the changes
+   **Product 2: Jira Software** — click **"+ Add"** to add this product, then "Edit Scopes":
+   | Scope | Purpose |
+   |-------|---------|
+   | `read:board-scope:jira-software` | View boards and backlogs |
+   | `read:sprint:jira-software` | View sprints |
+   | `write:sprint:jira-software` | Manage sprints |
+   | `read:issue:jira-software` | View issues on boards |
+   | `read:epic:jira-software` | View epics |
+
+5. **Save** the changes for both products
 6. **Logout (↪) and Login again** to get a fresh token with all scopes
 
-> **Note:** The `*:jira-software` scopes may appear under a separate "Jira Software" subsection in the permissions page, depending on your Atlassian Developer Console version.
+> **Important:** "Jira API" and "Jira Software" are **two separate products** in the Developer Console. You must add both. If you only see "Jira API", click the **"+ Add"** button to add "Jira Software" as a second product.
 
 ### Issue not updating
 - The app caches data for performance. Click the browser refresh button to force a fresh load
