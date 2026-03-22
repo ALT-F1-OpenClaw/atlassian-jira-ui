@@ -31,3 +31,5 @@ Each ADR follows the [MADR](https://adr.github.io/madr/) format:
 | 013 | [Port-based environment separation](013-port-based-environments.md) | Accepted | 2026-03-16 |
 | 014 | [Tailscale TLS certificates](014-tailscale-tls.md) | Accepted | 2026-03-16 |
 | 015 | [No server-side Jira data storage](015-no-server-jira-storage.md) | Accepted | 2026-03-11 |
+| 016 | [Platform API fallback for sprints](016-platform-api-sprint-fallback.md) | Accepted | 2026-03-23 |
+| 017 | [Dual auth — Strategy Pattern with production mode](017-dual-auth-strategy.md) | Accepted | 2026-03-22 |
