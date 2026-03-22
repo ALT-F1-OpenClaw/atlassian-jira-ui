@@ -137,8 +137,29 @@ async def authed_jira_request(
 
     Automatically picks OAuth (per-user) or Basic Auth (shared)
     based on session state and feature toggles.
+    Auto-refreshes expired OAuth tokens before making the call.
     """
     auth = resolve_auth(request)
+
+    # Auto-refresh expired OAuth tokens
+    if auth.method == "oauth":
+        import time
+        from .routers.auth import get_session, _refresh_token, _save_sessions
+        session = get_session(request)
+        if session and session.get("expires_at", 0) < time.time() + 120:
+            logger.info("OAuth token expired — attempting refresh")
+            refreshed = await _refresh_token(session)
+            if refreshed:
+                _save_sessions()
+                auth = JiraAuth(
+                    oauth_token=session["access_token"],
+                    cloud_id=session.get("cloud_id"),
+                    method="oauth",
+                )
+                logger.info("OAuth token refreshed successfully")
+            else:
+                logger.warning("OAuth token refresh failed — token may be revoked")
+
     return await _jira_request(
         method, path,
         base=base, params=params, json=json,
