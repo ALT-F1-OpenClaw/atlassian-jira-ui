@@ -1,3 +1,8 @@
+## [1.57.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.2...v1.57.3) (2026-03-22)
+
+### Bug Fixes
+
+* gracefully handle Agile API scope errors — return empty instead of 500 ([281da85](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/281da85209c97f47b03f950a60809ead13e7b6b9))
 ## [1.57.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.1...v1.57.2) (2026-03-22)
 
 ### Reverts
