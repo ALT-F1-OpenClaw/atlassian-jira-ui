@@ -3508,6 +3508,7 @@ function SettingsPage() {
   const [oauthConfigured, setOauthConfigured] = useState(false);
   const [apiTokenEnabled, setApiTokenEnabled] = useState(true);
   const [oauthEnabled, setOauthEnabled] = useState(true);
+  const [appEnv, setAppEnv] = useState("development");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState(false);
@@ -3529,6 +3530,7 @@ function SettingsPage() {
         setOauthConfigured(data.oauth_configured || false);
         setApiTokenEnabled(data.auth_api_token_enabled ?? true);
         setOauthEnabled(data.auth_oauth_enabled ?? true);
+        setAppEnv(data.app_env || "development");
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -3602,10 +3604,15 @@ function SettingsPage() {
       {/* Auth mode explanation + toggles */}
       <section className="rounded-lg border border-blue-900/50 bg-blue-950/20 p-4 mb-6 text-sm text-zinc-300">
         <h3 className="font-semibold text-zinc-200 mb-3">Authentication Methods</h3>
-        <p className="mb-3 text-zinc-400">Both methods can coexist. OAuth takes priority when a user is logged in; API Token is the fallback.</p>
+        <p className="mb-3 text-zinc-400">
+          {appEnv === "production"
+            ? "Production mode — only OAuth authentication is available."
+            : "Both methods can coexist. OAuth takes priority when a user is logged in; API Token is the fallback."}
+        </p>
 
         <div className="space-y-3">
-          {/* API Token toggle */}
+          {/* API Token toggle — hidden in production */}
+          {appEnv !== "production" && (
           <div className="flex items-center justify-between rounded-md border border-zinc-700 bg-zinc-900/50 px-4 py-3">
             <div>
               <div className="font-medium text-zinc-200">API Token (Basic Auth)</div>
@@ -3629,6 +3636,7 @@ function SettingsPage() {
               <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${apiTokenEnabled ? "translate-x-6" : "translate-x-1"}`} />
             </button>
           </div>
+          )}
 
           {/* OAuth toggle */}
           <div className="flex items-center justify-between rounded-md border border-zinc-700 bg-zinc-900/50 px-4 py-3">
@@ -3661,7 +3669,8 @@ function SettingsPage() {
         </p>
       </section>
 
-      {/* Jira Connection */}
+      {/* Jira Connection — hidden in production */}
+      {appEnv !== "production" && (
       <section className="rounded-lg border border-zinc-700 bg-zinc-900/50 p-5 mb-6">
         <h2 className="text-lg font-semibold text-zinc-200 mb-4">Jira Connection (API Token)</h2>
 
@@ -3759,6 +3768,7 @@ function SettingsPage() {
           </button>
         </div>
       </section>
+      )}
 
       {/* OAuth 2.0 */}
       <section className="rounded-lg border border-zinc-700 bg-zinc-900/50 p-5 mb-6">

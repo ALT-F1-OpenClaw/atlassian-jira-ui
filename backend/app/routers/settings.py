@@ -59,8 +59,9 @@ async def get_settings_view():
         "atlassian_client_id": s.atlassian_client_id,
         "atlassian_client_secret_masked": _mask(s.atlassian_client_secret) if s.atlassian_client_secret else "",
         "oauth_configured": bool(s.atlassian_client_id and s.atlassian_client_secret),
-        "auth_api_token_enabled": s.auth_api_token_enabled,
+        "auth_api_token_enabled": s.auth_api_token_enabled and s.app_env != "production",
         "auth_oauth_enabled": s.auth_oauth_enabled,
+        "app_env": s.app_env,
     }
 
 
