@@ -1,3 +1,8 @@
+## [1.59.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.0...v1.59.1) (2026-03-22)
+
+### Features
+
+* add 'Open in Jira' link on sprint name — links to board in Jira ([b4d6077](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/b4d607723f12d34d342b603200ebab4db707b4ce))
 ## [1.59.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.58.3...v1.59.0) (2026-03-22)
 
 ### Features
