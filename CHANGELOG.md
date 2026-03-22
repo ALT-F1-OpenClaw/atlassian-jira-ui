@@ -1,3 +1,8 @@
+## [1.59.4](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.3...v1.59.4) (2026-03-22)
+
+### Features
+
+* click avatar/name opens Jira profile page in new tab ([61905ef](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/61905ef8eeff1027fc032ffb3a4c07dd5b813ddc))
 ## [1.59.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.2...v1.59.3) (2026-03-22)
 
 ### Features
