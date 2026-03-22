@@ -1,3 +1,8 @@
+## [1.57.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.0...v1.57.1) (2026-03-22)
+
+### Bug Fixes
+
+* remove granular jira-software scopes — not supported by OAuth 2.0 (3LO) ([5432027](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/543202707c39d62b6b379aea27f9f25919f3df74))
 ## [1.57.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.11...v1.57.0) (2026-03-22)
 
 ### Features
