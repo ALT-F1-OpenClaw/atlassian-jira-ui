@@ -1,10 +1,13 @@
 """Sprint endpoints (Jira Agile API)."""
 
+import logging
 from datetime import datetime, timezone
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
 from ..jira_client import jira_request
 from ..deps import authed_jira_request
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/sprints", tags=["sprints"])
 
@@ -23,7 +26,11 @@ async def list_sprints(request: Request,
     params = {}
     if project:
         params["projectKeyOrId"] = project
-    boards_data = await authed_jira_request(request, "GET", "/board", base="agile", params=params)
+    try:
+        boards_data = await authed_jira_request(request, "GET", "/board", base="agile", params=params)
+    except Exception as e:
+        logger.warning("Failed to fetch boards (possibly missing Jira Software scopes): %s", e)
+        return {"sprints": []}
     boards = (boards_data or {}).get("values", [])
 
     sprint_state = state or "active"
