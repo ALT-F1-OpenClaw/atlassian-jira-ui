@@ -5769,8 +5769,8 @@ export default function App() {
     queryKey: ["settings-host"],
     queryFn: async () => {
       const res = await fetch(`${API}/api/settings`);
-      if (!res.ok) return { jira_host: "", auth_api_token_enabled: false, auth_oauth_enabled: false };
-      return res.json() as Promise<{ jira_host: string; auth_api_token_enabled: boolean; auth_oauth_enabled: boolean }>;
+      if (!res.ok) return { jira_host: "", auth_api_token_enabled: false, auth_oauth_enabled: false, app_env: "development" };
+      return res.json() as Promise<{ jira_host: string; auth_api_token_enabled: boolean; auth_oauth_enabled: boolean; app_env: string }>;
     },
     staleTime: CACHE_STATIC,
   });
@@ -5850,9 +5850,23 @@ export default function App() {
     );
   }
 
+  const appEnvFromSettings = jiraSettings?.app_env || "development";
+
   return (
     <JiraHostContext.Provider value={jiraHost}>
     <div className="flex h-screen flex-col">
+      {/* Environment ribbon */}
+      {appEnvFromSettings !== "production" && (
+        <div className={`fixed top-0 right-0 z-[100] overflow-hidden w-32 h-32 pointer-events-none`}>
+          <div className={`absolute top-[18px] right-[-34px] w-[170px] text-center text-[10px] font-bold uppercase tracking-wider py-1 transform rotate-45 shadow-md pointer-events-auto ${
+            appEnvFromSettings === "staging"
+              ? "bg-orange-500 text-white"
+              : "bg-green-600 text-white"
+          }`}>
+            {appEnvFromSettings === "staging" ? "Staging" : "Dev"}
+          </div>
+        </div>
+      )}
       {/* Auth error banner */}
       {authError && (
         <div className="bg-red-900/60 border-b border-red-700 px-4 py-2 text-sm text-red-200 flex items-center justify-between">
