@@ -44,6 +44,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff,woff2}"],
+        navigateFallbackDenylist: [/^\/auth\//], // Never cache auth routes
         runtimeCaching: [
           {
             urlPattern: /\/api\//,
@@ -56,7 +57,7 @@ export default defineConfig({
               },
               networkTimeoutSeconds: 5,
               cacheableResponse: {
-                statuses: [0, 200],
+                statuses: [200], // Only cache successful responses — never cache 401/500
               },
             },
           },
