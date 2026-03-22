@@ -5973,14 +5973,15 @@ export default function App() {
                 <span className="hidden sm:inline text-xs text-zinc-300">{authUser.displayName}</span>
                 <button
                   onClick={async () => {
+                    if (!window.confirm(`Sign out as ${authUser.displayName}?`)) return;
                     await fetch(`${API}/auth/logout`, { method: "POST" });
                     refetchAuth();
                   }}
-                  className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-500 hover:border-zinc-600 hover:text-zinc-400 cursor-pointer"
-                  aria-label="Logout"
-                  title="Logout"
+                  className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-500 hover:border-red-600 hover:text-red-400 cursor-pointer"
+                  aria-label="Sign out"
+                  title="Sign out"
                 >
-                  ↪
+                  Sign out
                 </button>
               </div>
             ) : (
