@@ -1,3 +1,8 @@
+## [1.59.7](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.6...v1.59.7) (2026-03-22)
+
+### Features
+
+* add 'Account settings' to avatar menu — links to Atlassian profile ([c73cd1c](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/c73cd1cb9676dd77d868039abb72813a127dedf0))
 ## [1.59.6](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.5...v1.59.6) (2026-03-22)
 
 ### Bug Fixes

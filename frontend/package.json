@@ -1,7 +1,7 @@
 {
   "name": "atlassian-jira-ui-frontend",
   "private": true,
-  "version": "1.59.6",
+  "version": "1.59.7",
   "type": "module",
   "scripts": {
     "dev": "vite",
