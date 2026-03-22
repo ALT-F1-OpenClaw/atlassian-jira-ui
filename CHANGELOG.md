@@ -1,3 +1,8 @@
+## [1.59.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.2...v1.59.3) (2026-03-22)
+
+### Features
+
+* logout confirmation + 'Sign out' label replaces ↪ icon ([c10e0f8](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/c10e0f89983bde598fe79b6e03f1d38976b76860))
 ## [1.59.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.1...v1.59.2) (2026-03-22)
 
 ### Features
