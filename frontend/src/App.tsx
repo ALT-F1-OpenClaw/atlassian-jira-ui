@@ -5431,6 +5431,15 @@ function UserMenu({
                 <span className="w-5 text-center">👤</span> Profile
               </a>
             )}
+            <a
+              href="https://id.atlassian.com/manage-profile/profile-and-visibility"
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer no-underline"
+            >
+              <span className="w-5 text-center">🔑</span> Account settings
+            </a>
             <button
               onClick={() => { setOpen(false); onSettings(); }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer text-left"
