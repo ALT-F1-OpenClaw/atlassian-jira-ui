@@ -3160,7 +3160,7 @@ const SHORTCUTS: { key: string; description: string }[] = [
   { key: "Enter", description: "Open highlighted issue" },
   { key: "Escape", description: "Close detail panel / modal" },
   { key: "b", description: "Switch to board view" },
-  { key: "l", description: "Switch to list view" },
+  { key: "i", description: "Switch to list view" },
   { key: "s", description: "Switch to sprint view" },
   { key: "c", description: "Create new issue" },
   { key: "?", description: "Show this help" },
@@ -5832,7 +5832,7 @@ export default function App() {
           setView("board");
           return;
         }
-        if (e.key === "l") {
+        if (e.key === "i") {
           e.preventDefault();
           setView("list");
           return;
