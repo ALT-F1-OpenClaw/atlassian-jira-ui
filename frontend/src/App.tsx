@@ -5967,10 +5967,18 @@ export default function App() {
             {/* Auth: Login/User button */}
             {isAuthenticated && authUser ? (
               <div className="flex items-center gap-2">
-                {authUser.avatarUrl && (
-                  <img src={authUser.avatarUrl} alt="" className="h-6 w-6 rounded-full" />
-                )}
-                <span className="hidden sm:inline text-xs text-zinc-300">{authUser.displayName}</span>
+                <a
+                  href={jiraHost ? `${jiraHost}/jira/people/me` : "#"}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                  title={`${authUser.displayName} — View profile in Jira`}
+                >
+                  {authUser.avatarUrl && (
+                    <img src={authUser.avatarUrl} alt="" className="h-6 w-6 rounded-full cursor-pointer" />
+                  )}
+                  <span className="hidden sm:inline text-xs text-zinc-300 hover:text-blue-400 cursor-pointer">{authUser.displayName}</span>
+                </a>
                 <button
                   onClick={async () => {
                     if (!window.confirm(`Sign out as ${authUser.displayName}?`)) return;
