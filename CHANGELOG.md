@@ -1,3 +1,8 @@
+## [1.59.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.58.3...v1.59.0) (2026-03-22)
+
+### Features
+
+* Platform API fallback for sprints — works without Jira Software ([#55](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/55)) ([4e6c1e1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/4e6c1e1ef468102bf99c1b6c3213ff814f123258))
 ## [1.58.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.12...v1.58.3) (2026-03-22)
 
 ### Bug Fixes
