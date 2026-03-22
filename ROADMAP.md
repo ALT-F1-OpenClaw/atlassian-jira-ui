@@ -235,6 +235,7 @@ Before going production-grade, re-enable these:
 | 51 | "Open in Jira" ↗ button — link to Jira on list rows, board cards, detail panel | Complete |
 | 52 | Upgrade tooling — Vite 7→8, jsdom 28→29, @vitejs/plugin-react 5→6, @tiptap/* 3.20.1→latest (when dist/ fixed) | Planned |
 | 53 | OpenTelemetry — distributed tracing, metrics, and logging across backend + Traefik | Planned |
+| 54 | Production mode — API Token auth completely disabled, OAuth only | Complete |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |

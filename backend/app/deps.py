@@ -73,10 +73,13 @@ class OAuthStrategy(AuthStrategy):
 
 
 class ApiTokenStrategy(AuthStrategy):
-    """API Token Basic Auth strategy — shared credentials from .env."""
+    """API Token Basic Auth strategy — shared credentials from .env.
+    Completely disabled in production (APP_ENV=production)."""
 
     def is_enabled(self) -> bool:
         s = get_settings()
+        if s.app_env == "production":
+            return False  # Never available in production
         return s.auth_api_token_enabled and bool(s.jira_api_token)
 
     def resolve(self, request: Request) -> JiraAuth | None:

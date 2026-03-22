@@ -1,8 +1,11 @@
 """Board & Sprint endpoints (Jira Agile API)."""
 
+import logging
 from fastapi import APIRouter, Request
 from ..jira_client import jira_request
 from ..deps import authed_jira_request
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/boards", tags=["boards"])
 
@@ -13,7 +16,11 @@ async def list_boards(request: Request, project: str | None = None):
     params = {}
     if project:
         params["projectKeyOrId"] = project
-    data = await authed_jira_request(request, "GET", "/board", base="agile", params=params)
+    try:
+        data = await authed_jira_request(request, "GET", "/board", base="agile", params=params)
+    except Exception as e:
+        logger.warning("Failed to fetch boards: %s", e)
+        return {"boards": []}
     return {
         "boards": [
             {

@@ -20,6 +20,10 @@ class Settings(BaseSettings):
     auth_api_token_enabled: bool = True
     auth_oauth_enabled: bool = True
 
+    # Environment: "development" or "production"
+    # Production disables API Token auth entirely — OAuth only
+    app_env: str = "development"
+
     # App
     app_secret_key: str = "change-me"
     cors_origins: str = "http://localhost:5173"

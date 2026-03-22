@@ -12,7 +12,7 @@
 [![GitHub issues](https://img.shields.io/github/issues/ALT-F1-OpenClaw/atlassian-jira-ui)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues)
 [![GitHub stars](https://img.shields.io/github/stars/ALT-F1-OpenClaw/atlassian-jira-ui)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/stargazers)
 
-A modern, fast, and opinionated alternative UI for Atlassian Jira Cloud. Because Jira's UI sucks.
+A modern, fast, and opinionated alternative UI for Atlassian Jira Cloud. Because Jira's UI deserves better.
 
 By [Abdelkrim BOUJRAF](https://www.alt-f1.be) / ALT-F1 SRL, Brussels 🇧🇪 🇲🇦
 
@@ -518,4 +518,4 @@ Abdelkrim BOUJRAF — [ALT-F1 SRL](https://www.alt-f1.be), Brussels 🇧🇪 �
 
 ## Contributing
 
-Contributions welcome! This is an opinionated project — if you also think Jira's UI sucks, you're in the right place.
+Contributions welcome! This is an opinionated project — if you also think Jira's UI could be faster and cleaner, you're in the right place.

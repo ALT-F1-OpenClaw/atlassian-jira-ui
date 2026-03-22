@@ -68,14 +68,14 @@ _oauth_states: dict[str, float] = _load_states()
 ATLASSIAN_AUTH_URL = "https://auth.atlassian.com/authorize"
 ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
 ATLASSIAN_RESOURCES_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
-# Classic Jira Platform scopes + Jira Software (Agile) scopes
+# Jira Platform + Jira Software scopes
 ATLASSIAN_SCOPES = " ".join([
-    # Jira Platform
+    # Jira Platform (classic)
     "read:jira-work",
     "write:jira-work",
     "manage:jira-project",
     "read:jira-user",
-    # Jira Software (Agile API — boards, sprints, epics)
+    # Jira Software (Agile — boards, sprints, epics)
     "read:board-scope:jira-software",
     "read:sprint:jira-software",
     "write:sprint:jira-software",
