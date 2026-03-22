@@ -1,3 +1,8 @@
+## [1.59.5](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.4...v1.59.5) (2026-03-22)
+
+### Features
+
+* avatar dropdown menu — Profile, Jira UI Settings, Theme, Sign out ([36287ee](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/36287ee68cc54c91b5f5411c35c4c1fce5720350))
 ## [1.59.4](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.3...v1.59.4) (2026-03-22)
 
 ### Features
