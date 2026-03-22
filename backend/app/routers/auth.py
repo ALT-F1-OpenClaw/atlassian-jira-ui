@@ -68,15 +68,20 @@ _oauth_states: dict[str, float] = _load_states()
 ATLASSIAN_AUTH_URL = "https://auth.atlassian.com/authorize"
 ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
 ATLASSIAN_RESOURCES_URL = "https://api.atlassian.com/oauth/token/accessible-resources"
-# Classic Jira Platform scopes only
-# The classic scopes (read:jira-work, write:jira-work) cover both
-# Platform API and Agile API. Granular jira-software scopes are
-# only needed for Forge apps, not OAuth 2.0 (3LO).
+# Jira Platform + Jira Software scopes
 ATLASSIAN_SCOPES = " ".join([
+    # Jira Platform (classic)
     "read:jira-work",
     "write:jira-work",
     "manage:jira-project",
     "read:jira-user",
+    # Jira Software (Agile — boards, sprints, epics)
+    "read:board-scope:jira-software",
+    "read:sprint:jira-software",
+    "write:sprint:jira-software",
+    "read:issue:jira-software",
+    "read:epic:jira-software",
+    # Refresh tokens
     "offline_access",
 ])
 
