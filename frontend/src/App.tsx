@@ -5974,16 +5974,15 @@ export default function App() {
   return (
     <JiraHostContext.Provider value={jiraHost}>
     <div className="flex h-screen flex-col">
-      {/* Environment ribbon */}
+      {/* Environment ribbon — small triangle in top-right corner */}
       {appEnvFromSettings !== "production" && (
-        <div className={`fixed top-0 right-0 z-[100] overflow-hidden w-32 h-32 pointer-events-none`}>
-          <div className={`absolute top-[18px] right-[-34px] w-[170px] text-center text-[10px] font-bold uppercase tracking-wider py-1 transform rotate-45 shadow-md pointer-events-auto ${
-            appEnvFromSettings === "staging"
-              ? "bg-orange-500 text-white"
-              : "bg-green-600 text-white"
-          }`}>
-            {appEnvFromSettings === "staging" ? "Staging" : "Dev"}
-          </div>
+        <div className="fixed top-0 right-0 z-[100] pointer-events-none">
+          <div className={`w-0 h-0 border-t-[40px] border-l-[40px] border-l-transparent ${
+            appEnvFromSettings === "staging" ? "border-t-orange-500" : "border-t-green-600"
+          }`} />
+          <span className={`absolute top-[4px] right-[2px] text-[8px] font-bold uppercase text-white pointer-events-auto`}>
+            {appEnvFromSettings === "staging" ? "STG" : "DEV"}
+          </span>
         </div>
       )}
       {/* Auth error banner */}
