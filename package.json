@@ -1,7 +1,7 @@
 {
   "name": "atlassian-jira-ui",
   "private": true,
-  "version": "1.56.10",
+  "version": "1.56.11",
   "description": "Modern alternative UI for Atlassian Jira Cloud",
   "repository": {
     "type": "git",

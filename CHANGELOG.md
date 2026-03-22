@@ -1,3 +1,8 @@
+## [1.56.11](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.10...v1.56.11) (2026-03-22)
+
+### Bug Fixes
+
+* service worker no longer caches error responses (401/500) ([32ae233](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/32ae233e5ffff5dc454845fdd6a888ed26c75f82))
 ## [1.56.10](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.9...v1.56.10) (2026-03-17)
 
 ### Bug Fixes
