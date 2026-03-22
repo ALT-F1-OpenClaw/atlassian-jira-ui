@@ -1,3 +1,8 @@
+## [1.59.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.1...v1.59.2) (2026-03-22)
+
+### Features
+
+* environment ribbon banner — Dev (green) / Staging (orange) / hidden in Prod ([4fffa9f](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/4fffa9f27156bc7914735da8b1c161ef9f818f8d))
 ## [1.59.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.0...v1.59.1) (2026-03-22)
 
 ### Features
