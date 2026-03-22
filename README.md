@@ -41,6 +41,8 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 
 ## CI/CD Pipeline
 
+> **Note:** The project targets **Node 22** and **Python 3.13** for development. CI tests against multiple versions (Node 20/22, Python 3.11–3.13) to ensure backward compatibility across supported LTS releases.
+
 ```
   ┌──────────────┐
   │   git push   │
@@ -224,7 +226,7 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 
 ## Deployment
 
-The app runs on a Raspberry Pi 4 (ARM64) with Docker + Traefik, accessible via Tailscale.
+The app runs on-premise on a Raspberry Pi 4 (ARM64) with Docker + Traefik, accessible via Tailscale.
 
 ```
 ┌──────────────────────────────────────────────────────┐
