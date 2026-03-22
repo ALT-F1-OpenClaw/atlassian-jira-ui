@@ -5351,6 +5351,116 @@ function DashboardPage({
 
 /* ── Empty States (13.5) ── */
 
+/* ── User Menu (avatar dropdown) ─────────────────────────────────── */
+function UserMenu({
+  user,
+  jiraHost,
+  theme,
+  onToggleTheme,
+  onSettings,
+  onSignOut,
+}: {
+  user: { displayName: string; avatarUrl: string; emailAddress: string };
+  jiraHost: string;
+  theme: string;
+  onToggleTheme: () => void;
+  onSettings: () => void;
+  onSignOut: () => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
+
+  return (
+    <div className="relative" ref={menuRef}>
+      <button
+        onClick={() => setOpen(!open)}
+        className="flex items-center gap-2 rounded-md px-1.5 py-1 hover:bg-zinc-800 transition-colors cursor-pointer"
+        aria-label="User menu"
+        aria-haspopup="true"
+        aria-expanded={open}
+      >
+        {user.avatarUrl ? (
+          <img src={user.avatarUrl} alt="" className="h-7 w-7 rounded-full" />
+        ) : (
+          <div className="h-7 w-7 rounded-full bg-blue-600 flex items-center justify-center text-xs font-bold text-white">
+            {user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+          </div>
+        )}
+        <span className="hidden sm:inline text-xs text-zinc-300">{user.displayName}</span>
+        <svg className="h-3 w-3 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={open ? "M18 15l-6-6-6 6" : "M6 9l6 6 6-6"} />
+        </svg>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-1 w-64 rounded-lg border border-zinc-700 bg-zinc-900 shadow-xl z-50">
+          {/* User info header */}
+          <div className="px-4 py-3 border-b border-zinc-800 flex items-center gap-3">
+            {user.avatarUrl ? (
+              <img src={user.avatarUrl} alt="" className="h-10 w-10 rounded-full" />
+            ) : (
+              <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center text-sm font-bold text-white">
+                {user.displayName.split(" ").map((n) => n[0]).join("").slice(0, 2)}
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="font-semibold text-sm text-zinc-100 truncate">{user.displayName}</div>
+              {user.emailAddress && <div className="text-xs text-zinc-500 truncate">{user.emailAddress}</div>}
+            </div>
+          </div>
+
+          {/* Menu items */}
+          <div className="py-1">
+            {jiraHost && (
+              <a
+                href={`${jiraHost}/jira/people/me`}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer no-underline"
+              >
+                <span className="w-5 text-center">👤</span> Profile
+              </a>
+            )}
+            <button
+              onClick={() => { setOpen(false); onSettings(); }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer text-left"
+            >
+              <span className="w-5 text-center">⚙</span> Jira UI Settings
+            </button>
+            <button
+              onClick={() => { onToggleTheme(); }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer text-left"
+            >
+              <span className="w-5 text-center">{theme === "dark" ? "☀️" : "🌙"}</span> {theme === "dark" ? "Light mode" : "Dark mode"}
+            </button>
+          </div>
+
+          {/* Sign out */}
+          <div className="border-t border-zinc-800 py-1">
+            <button
+              onClick={() => { setOpen(false); onSignOut(); }}
+              className="w-full flex items-center gap-3 px-4 py-2 text-sm text-red-400 hover:bg-zinc-800 cursor-pointer text-left"
+            >
+              <span className="w-5 text-center">🚪</span> Sign out
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+/* ── End User Menu ──────────────────────────────────────────────── */
+
 function ErrorDisplay({ error }: { error: Error }) {
   const is401 = error.message.includes("401") || error.message.includes("Unauthorized") || error.message.includes("Authentication");
 
@@ -5966,32 +6076,18 @@ export default function App() {
             </button>
             {/* Auth: Login/User button */}
             {isAuthenticated && authUser ? (
-              <div className="flex items-center gap-2">
-                <a
-                  href={jiraHost ? `${jiraHost}/jira/people/me` : "#"}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-                  title={`${authUser.displayName} — View profile in Jira`}
-                >
-                  {authUser.avatarUrl && (
-                    <img src={authUser.avatarUrl} alt="" className="h-6 w-6 rounded-full cursor-pointer" />
-                  )}
-                  <span className="hidden sm:inline text-xs text-zinc-300 hover:text-blue-400 cursor-pointer">{authUser.displayName}</span>
-                </a>
-                <button
-                  onClick={async () => {
-                    if (!window.confirm(`Sign out as ${authUser.displayName}?`)) return;
-                    await fetch(`${API}/auth/logout`, { method: "POST" });
-                    refetchAuth();
-                  }}
-                  className="rounded-md border border-zinc-700 bg-zinc-900 px-2 py-1.5 text-xs text-zinc-500 hover:border-red-600 hover:text-red-400 cursor-pointer"
-                  aria-label="Sign out"
-                  title="Sign out"
-                >
-                  Sign out
-                </button>
-              </div>
+              <UserMenu
+                user={authUser}
+                jiraHost={jiraHost}
+                theme={theme}
+                onToggleTheme={toggleTheme}
+                onSettings={() => setView("settings")}
+                onSignOut={async () => {
+                  if (!window.confirm(`Sign out as ${authUser.displayName}?`)) return;
+                  await fetch(`${API}/auth/logout`, { method: "POST" });
+                  refetchAuth();
+                }}
+              />
             ) : (
               <a
                 href={`${API}/auth/login`}
