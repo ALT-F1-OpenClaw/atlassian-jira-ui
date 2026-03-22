@@ -1,3 +1,8 @@
+## [1.59.6](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.5...v1.59.6) (2026-03-22)
+
+### Bug Fixes
+
+* change list view shortcut from 'l' to 'i' — stops hijacking Ctrl+L ([23eb002](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/23eb002b287dd461fc87b38d03346db283211681))
 ## [1.59.5](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.4...v1.59.5) (2026-03-22)
 
 ### Features
