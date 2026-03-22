@@ -1,3 +1,41 @@
+## [1.58.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.12...v1.58.3) (2026-03-22)
+
+### Bug Fixes
+
+* auto-refresh expired OAuth tokens before API calls ([d3267f4](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/d3267f4ccdaaa5c8f720d2a4dd7eae67d2ff45ce))
+* update undici to patch 3 high/medium npm vulnerabilities ([95f3840](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/95f3840f5f4a3fd654f3b0cebe2b873728d46e33))
+
+## [1.58.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.58.0...v1.58.1) (2026-03-22)
+
+## [1.58.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.3...v1.58.0) (2026-03-22)
+
+### Features
+
+* production mode — API Token auth completely disabled ([#54](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/54)) ([1caff5b](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/1caff5b5a8296878b2403b84101b2181e545d343))
+
+## [1.57.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.2...v1.57.3) (2026-03-22)
+
+### Bug Fixes
+
+* gracefully handle Agile API scope errors — return empty instead of 500 ([281da85](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/281da85209c97f47b03f950a60809ead13e7b6b9))
+
+## [1.57.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.1...v1.57.2) (2026-03-22)
+
+### Reverts
+
+* restore granular jira-software scopes for OAuth ([1360fab](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/1360fabaf55faa54f8301fcbe8c9adfce32ea6f7))
+
+## [1.57.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.0...v1.57.1) (2026-03-22)
+
+### Bug Fixes
+
+* remove granular jira-software scopes — not supported by OAuth 2.0 (3LO) ([5432027](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/543202707c39d62b6b379aea27f9f25919f3df74))
+
+## [1.57.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.56.11...v1.57.0) (2026-03-22)
+
+### Features
+
+* smart startup — login screen when no auth, no 401 spam ([92c2b19](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/92c2b193cdeb087f28fd693e4ca9fad008cf5611))
 ## [1.58.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.58.1...v1.58.2) (2026-03-22)
 ## [1.58.1](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.58.0...v1.58.1) (2026-03-22)
 ## [1.58.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.57.3...v1.58.0) (2026-03-22)
