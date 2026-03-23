@@ -1,3 +1,12 @@
+## [1.60.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.19...v1.60.0) (2026-03-23)
+
+### Features
+
+* Jira site selection ([#33](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/33)) + rate limiting ([#35](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/35)) ([a2f7094](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/a2f7094190904d1e3962cc13f599df735f15a7e3))
+
+### Bug Fixes
+
+* Docker DNS for Tailscale — explicit 1.1.1.1/8.8.8.8 on backends ([2592848](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/259284841a54e2fca59de6b468442b7ecfa88471))
 ## [1.59.19](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.18...v1.59.19) (2026-03-23)
 
 ### Features
