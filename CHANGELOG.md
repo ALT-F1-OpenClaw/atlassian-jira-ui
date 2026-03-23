@@ -1,3 +1,8 @@
+## [1.59.16](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.15...v1.59.16) (2026-03-23)
+
+### Features
+
+* clickable active sprint cards on Dashboard — navigate to Sprint view + Open in Jira ([7566cd0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/7566cd07ebc68af80fa9f97fe9e220fe5877c9e5))
 ## [1.59.15](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.14...v1.59.15) (2026-03-23)
 
 ### Features
