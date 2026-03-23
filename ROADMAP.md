@@ -340,6 +340,7 @@ Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has con
 | # | Task | Status |
 |---|------|--------|
 | 65 | Choose an app name — memorable, distinct, not infringing on Atlassian trademarks | Planned |
+| 65b | Design a logo — icon + wordmark, works in dark/light mode, favicon, PWA icon, social preview | Planned |
 | 66 | Register DNS: `<app-name>.alt-f1.be` — point to production server | Planned |
 | 67 | Landing page — product pitch, screenshots, "Login with Atlassian" CTA, origin story | Planned |
 | 68 | LinkedIn announcement — post on ALT-F1 company page + Abdelkrim's profile | Planned |
