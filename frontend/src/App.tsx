@@ -6055,7 +6055,9 @@ export default function App() {
               ☰
             </button>
             <h1 className="text-lg font-bold">
-              ⚡ <span className="text-zinc-300">Jira UI</span>
+              <button onClick={() => setView("dashboard")} className="hover:opacity-80 transition-opacity cursor-pointer" title="Go to Dashboard">
+                ⚡ <span className="text-zinc-300">Jira UI</span>
+              </button>
               <span className="ml-2 text-xs font-normal text-zinc-600">v{APP_VERSION}</span>
               {!isOnline && (
                 <span className="ml-2 inline-block h-2 w-2 rounded-full bg-amber-500" title="Offline" aria-label="Offline status indicator" />
