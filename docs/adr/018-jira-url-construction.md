@@ -26,13 +26,25 @@ Example: `https://altf1be.atlassian.net/browse/PITA-11`
 
 ### Boards / Sprints
 
-```
-{jira_host}/jira/software/c/projects/{projectKey}/boards/{boardId}
-```
+URL depends on **project style and type**:
 
-Example: `https://altf1be.atlassian.net/jira/software/c/projects/PITA/boards/151`
+| Style | Type | URL Pattern |
+|-------|------|-------------|
+| `next-gen` | `software` | `{host}/jira/software/projects/{key}/boards/{id}` |
+| `classic` | `software` | `{host}/jira/software/c/projects/{key}/boards/{id}` |
+| `next-gen` | `business` | `{host}/jira/core/projects/{key}/board` |
 
-**Note**: The `/c/` segment is required. Without it, some boards return "not found". The `/c/` path works for all project types (classic and next-gen).
+Examples:
+- DS4SCF (next-gen software): `https://altf1be.atlassian.net/jira/software/projects/DS4SCF/boards/4`
+- CA (classic software): `https://altf1be.atlassian.net/jira/software/c/projects/CA/boards/85`
+- AIBRIGHT (business): `https://altf1be.atlassian.net/jira/core/projects/AIBRIGHT/board`
+
+**Key rule**: Classic software projects require `/c/` in the path. Without it, boards return "not found".
+
+The API returns `projectTypeKey` which is enriched with style info:
+- `"software"` → next-gen software (no `/c/`)
+- `"software-classic"` → classic software (needs `/c/`)
+- `"business"` → business project (`/jira/core/` path)
 
 **Data source for `projectKey`** (in priority order):
 1. API response: `sprint.projectKey` (from `board.location.projectKey` via Agile API)

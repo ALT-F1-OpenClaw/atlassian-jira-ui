@@ -40,7 +40,7 @@ async def _list_sprints_platform(request, project: str | None, state: str | None
         data = await authed_jira_request(request, "GET", "/search/jql", params={
             "jql": jql,
             "maxResults": 200,
-            "fields": "customfield_10020,project",
+            "fields": "customfield_10020,project,issuetype",
         })
     except Exception as e:
         logger.warning("Platform API sprint search failed: %s", e)
@@ -75,8 +75,23 @@ async def _list_sprints_platform(request, project: str | None, state: str | None
                     "projectKey": "",  # Filled below
                 })
     # Fill project keys from board→project mapping
+    # Also fetch project styles for URL construction
+    project_styles: dict[str, str] = {}
+    try:
+        projects_data = await authed_jira_request(request, "GET", "/project")
+        for p in (projects_data or []):
+            project_styles[p.get("key", "")] = p.get("style", "next-gen")
+    except Exception:
+        pass
+
     for sprint in sprints:
-        sprint["projectKey"] = board_project.get(sprint["boardId"], "")
+        pk = board_project.get(sprint["boardId"], "")
+        sprint["projectKey"] = pk
+        sprint["projectTypeKey"] = "software"  # Default for sprints
+        # Determine style: classic projects need /c/ in URL
+        style = project_styles.get(pk, "next-gen")
+        if style == "classic":
+            sprint["projectTypeKey"] = "software-classic"
 
     logger.info("Platform API fallback: found %d sprints via JQL", len(sprints))
     return {"sprints": sprints}
@@ -119,6 +134,8 @@ async def list_sprints(request: Request,
             # Kanban boards don't support sprints — skip
             continue
         for s in (sprint_data or {}).get("values", []):
+            location = board.get("location", {})
+            pk = location.get("projectKey", "")
             sprints.append({
                 "id": s["id"],
                 "name": s["name"],
@@ -128,8 +145,23 @@ async def list_sprints(request: Request,
                 "goal": s.get("goal", ""),
                 "boardId": board_id,
                 "boardName": board.get("name", ""),
-                "projectKey": board.get("location", {}).get("projectKey", ""),
+                "projectKey": pk,
+                "projectTypeKey": location.get("projectTypeKey", ""),
             })
+
+    # Resolve project styles for URL construction (classic needs /c/)
+    if sprints:
+        try:
+            projects_data = await authed_jira_request(request, "GET", "/project")
+            styles = {p.get("key"): p.get("style") for p in (projects_data or [])}
+            for sprint in sprints:
+                if styles.get(sprint["projectKey"]) == "classic":
+                    sprint["projectTypeKey"] = "software-classic"
+                elif sprint["projectTypeKey"] == "business":
+                    pass  # Keep as-is
+        except Exception:
+            pass
+
     return {"sprints": sprints}
 
 

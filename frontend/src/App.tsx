@@ -4752,9 +4752,23 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
           <h2 className="text-xl font-bold text-zinc-100" data-testid="sprint-name">
             {activeSprint.name}
             {(() => {
-              const sprintProjectKey = (activeSprint as unknown as Record<string, string>).projectKey || project || issuesData?.issues?.[0]?.key?.split("-")[0] || "";
+              const s = activeSprint as unknown as Record<string, string>;
+              const sprintProjectKey = s.projectKey || project || issuesData?.issues?.[0]?.key?.split("-")[0] || "";
               if (!sprintProjectKey || !activeSprint.boardId) return null;
-              return <OpenInJira path={`/jira/software/c/projects/${sprintProjectKey}/boards/${activeSprint.boardId}`} className="text-sm ml-2" />;
+              const typeKey = s.projectTypeKey || "";
+              // URL depends on project type:
+              // - classic software: /jira/software/c/projects/{key}/boards/{id}
+              // - next-gen software: /jira/software/projects/{key}/boards/{id}
+              // - business: /jira/core/projects/{key}/board
+              let boardPath: string;
+              if (typeKey === "business") {
+                boardPath = `/jira/core/projects/${sprintProjectKey}/board`;
+              } else if (typeKey === "software-classic") {
+                boardPath = `/jira/software/c/projects/${sprintProjectKey}/boards/${activeSprint.boardId}`;
+              } else {
+                boardPath = `/jira/software/projects/${sprintProjectKey}/boards/${activeSprint.boardId}`;
+              }
+              return <OpenInJira path={boardPath} className="text-sm ml-2" />;
             })()}
           </h2>
           <p className="text-sm text-zinc-400 mt-1">
