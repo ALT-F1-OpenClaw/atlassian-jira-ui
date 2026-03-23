@@ -1,3 +1,8 @@
+## [1.59.9](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.8...v1.59.9) (2026-03-23)
+
+### Bug Fixes
+
+* sprint Jira link — add /c/ path segment + derive project key from issues ([8952dfa](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/8952dfa5047a28c3de0299c6bd4105f7a60c13a9))
 ## [1.59.8](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.7...v1.59.8) (2026-03-22)
 
 ### Bug Fixes
