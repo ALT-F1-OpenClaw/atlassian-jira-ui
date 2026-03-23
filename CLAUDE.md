@@ -173,9 +173,11 @@ Phase 1, Sections 1–2 complete + enhancements:
 
 **Phases 1–4 complete.** Phase 4b (CI Intelligence): #43-44 complete, #45 planned.
 Phase 5 (Multi-User Auth): OAuth 2.0 (#30) ✅, per-user sessions (#31) ✅, login UI (#32) ✅, HTTPS (#34) ✅, production mode (#54) ✅.
-Remaining: #33 (site selection), #35-36 (security), #37-39 (legal), #52 (tooling), #53 (OpenTelemetry), #56-62 (production deployment).
+Remaining: #33 (site selection), #35-36 (security), #37-39 (legal), #52a-c (tooling), #53 (OpenTelemetry), #56-61 (production deployment).
+- **Sprint State Filter** (#63): dropdown to filter sprints by state (Active & Future / Active / Future / Closed / All) on Sprint Dashboard
+- **Login Page Ribbon** (#64): environment ribbon (STG/DEV) shown on login page before authentication
 
-**Current version**: v1.59.15 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
+**Current version**: v1.60.0 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
 
 CI/CD: 6 GitHub Actions workflows (CI, release, Docker validate, Docker publish, CodeQL, CI auto-fix).
 Docker images on GHCR (multi-arch amd64+arm64). Bundle code-split into 5 chunks (app 300KB + vendors).

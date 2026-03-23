@@ -43,7 +43,7 @@ Tasks are tracked in `ROADMAP.md` with numbered IDs (e.g., `2.1`, `3.3`). When a
 - Create issue modal: `CreateIssueModal` — project/summary/type/priority/assignee/description, form validation, optimistic cache update
 - Create project modal: `CreateProjectModal` — name (required), key (auto-generated from name initials), type (software/service_desk/business), lead (SearchableSelect), description. Backend `POST /api/projects`
 - Saved filters: `SavedFiltersDropdown` component with save/apply/rename/delete, `SavedFilter` interface (`id`, `name`, `project`, `filters`), persisted via `localStorage` (`jira-ui-saved-filters` key), save button appears only when filters are active
-- Sprint dashboard: `SprintDashboard` component with `recharts` (PieChart, LineChart, BarChart). Fetches from `/api/sprints`, `/api/sprints/{id}/issues`, `/api/sprints/{id}/burndown`, `/api/sprints/{id}/velocity`. Sprint selector dropdown, issue counts by status category, progress bar, burndown chart, velocity chart, scope change tracking. `s` shortcut switches to sprint view
+- Sprint dashboard: `SprintDashboard` component with `recharts` (PieChart, LineChart, BarChart). Fetches from `/api/sprints`, `/api/sprints/{id}/issues`, `/api/sprints/{id}/burndown`, `/api/sprints/{id}/velocity`. Sprint selector dropdown, issue counts by status category, progress bar, burndown chart, velocity chart, scope change tracking. `s` shortcut switches to sprint view. Sprint state filter dropdown (`sprintStateFilter` state, default `"active,future"`) with options: Active & Future, Active, Future, Closed, All — changing filter resets selected sprint and re-fetches
 - Sprint CRUD: `CreateSprintModal` (name/goal/start date/end date → `POST /api/sprints`), `EditSprintModal` (pre-filled with current sprint data → `PATCH /api/sprints/{id}`), `ConfirmDialog` reusable component for start/complete/delete confirmations. Start sprint (`POST /api/sprints/{id}/start`), complete sprint (`POST /api/sprints/{id}/complete`), delete sprint (`DELETE /api/sprints/{id}`). `ManageSprintScopeModal` for adding (`POST /api/sprints/{id}/issues`) and removing (`DELETE /api/sprints/{id}/issues/{key}`) issues. Action buttons in sprint dashboard header. Backend uses Jira Agile API (`POST/PUT/DELETE /rest/agile/1.0/sprint/{id}`, `POST /rest/agile/1.0/sprint/{id}/issue`, `POST /rest/agile/1.0/backlog/issue`)
 - Time tracking: `IssueTimer` component (start/stop/pause) in issue detail header. Timer state persisted in `localStorage` (`jira-ui-timers` key) via `useIssueTimer` hook. `LogWorkModal` for manual time entry (sends `POST /api/issues/{key}/worklog`). `TimeTrackingBar` shows logged vs estimated progress. `WorklogHistory` fetches and displays `GET /api/issues/{key}/worklog` entries. Issue detail response includes `timeTracking` object
 - Offline mode: `useOnlineStatus` hook (navigator.onLine + online/offline events), `useOfflineQueue` hook (IndexedDB mutation queue + auto-sync on reconnect), `OfflineIndicator` component (dismissable banner + header dot), `offlineFetch` wrapper queues mutations when offline. Workbox runtime caching (`NetworkFirst`) for API responses configured in `vite.config.ts`. IndexedDB store: `jira-ui-offline` → `mutations`. Mutations passed through `isOnline` + `queueMutation` props on `IssueDetailPanel`, `BoardView`, `CreateIssueModal`
@@ -86,7 +86,7 @@ Issue & { transitions: { id: string, name: string }[], timeTracking: { originalE
 // Labels: GET /api/labels
 string[]
 
-// Sprints: GET /api/sprints?project=&state=
+// Sprints: GET /api/sprints?project=&state=  (state: "active", "future", "closed", or comma-separated e.g. "active,future,closed")
 { sprints: { id: number, name: string, state: string, startDate: string, endDate: string, goal: string, boardId: number, boardName: string }[] }
 
 // Create sprint: POST /api/sprints
@@ -175,6 +175,7 @@ Dual auth via Strategy Pattern (ADR-017):
 - `OAuthStrategy`: per-user Atlassian login, Bearer token via `api.atlassian.com`
 - `ApiTokenStrategy`: shared Basic Auth from `.env` (disabled in production)
 - `APP_ENV=production` → API Token completely disabled, OAuth only
+- Environment ribbon (STG/DEV) shown on both login page and main app (top-right corner, `z-[100]`). Uses `jiraSettings.app_env` from `/api/config`
 - Auto token refresh before API calls (`authed_jira_request()`)
 - Sessions + CSRF states persisted to JSON files (Docker volumes)
 - `auth.py`: `/auth/login`, `/auth/callback`, `/auth/me`, `/auth/logout`
