@@ -337,6 +337,8 @@ Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has con
 
 > **Disclaimer**: ALT-F1 is an independent company and is **not affiliated with, endorsed by, or connected to Atlassian** in any way. This is a third-party alternative frontend that uses Jira's public REST APIs.
 
+> **Trademark constraint**: "Jira" is a registered trademark of Atlassian. The app name **must not** contain "Jira", "JIRA", or any variation. The name must be original and legally safe.
+
 | # | Task | Status |
 |---|------|--------|
 | 65 | Choose an app name — memorable, distinct, not infringing on Atlassian trademarks | Planned |
