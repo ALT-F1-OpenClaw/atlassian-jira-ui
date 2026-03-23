@@ -5378,7 +5378,7 @@ function UserMenu({
   onSettings,
   onSignOut,
 }: {
-  user: { displayName: string; avatarUrl: string; emailAddress: string };
+  user: { displayName: string; avatarUrl: string; emailAddress: string; accountId?: string };
   jiraHost: string;
   theme: string;
   onToggleTheme: () => void;
@@ -5440,7 +5440,7 @@ function UserMenu({
           <div className="py-1">
             {jiraHost && (
               <a
-                href={`${jiraHost}/jira/people/me`}
+                href={jiraHost && user.accountId ? `${jiraHost}/jira/people/${user.accountId}` : "https://id.atlassian.com/manage-profile/profile-and-visibility"}
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => setOpen(false)}
@@ -5715,7 +5715,7 @@ export default function App() {
     queryFn: async () => {
       const res = await fetch(`${API}/auth/me`);
       if (!res.ok) return { authenticated: false };
-      return res.json() as Promise<{ authenticated: boolean; user?: { displayName: string; avatarUrl: string; emailAddress: string }; cloud_id?: string }>;
+      return res.json() as Promise<{ authenticated: boolean; user?: { accountId: string; displayName: string; avatarUrl: string; emailAddress: string }; cloud_id?: string }>;
     },
     staleTime: CACHE_STATIC,
   });
