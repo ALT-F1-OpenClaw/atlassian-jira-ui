@@ -6008,6 +6008,17 @@ export default function App() {
     return (
       <JiraHostContext.Provider value={jiraHost}>
       <div className="flex h-screen flex-col items-center justify-center bg-zinc-950 text-center px-4">
+        {/* Environment ribbon on login page */}
+        {jiraSettings?.app_env && jiraSettings.app_env !== "production" && (
+          <div className="fixed top-0 right-0 z-[100] pointer-events-none">
+            <div className={`w-0 h-0 border-t-[40px] border-l-[40px] border-l-transparent ${
+              jiraSettings.app_env === "staging" ? "border-t-orange-500" : "border-t-green-600"
+            }`} />
+            <span className="absolute top-[4px] right-[2px] text-[8px] font-bold uppercase text-white pointer-events-auto">
+              {jiraSettings.app_env === "staging" ? "STG" : "DEV"}
+            </span>
+          </div>
+        )}
         <span className="text-6xl mb-4">🔐</span>
         <h1 className="text-2xl font-bold text-zinc-100 mb-2">Welcome to Jira UI</h1>
         <p className="text-zinc-400 max-w-md mb-6">
