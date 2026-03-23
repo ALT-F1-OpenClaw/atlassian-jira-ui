@@ -33,3 +33,4 @@ Each ADR follows the [MADR](https://adr.github.io/madr/) format:
 | 015 | [No server-side Jira data storage](015-no-server-jira-storage.md) | Accepted | 2026-03-11 |
 | 016 | [Platform API fallback for sprints](016-platform-api-sprint-fallback.md) | Accepted | 2026-03-23 |
 | 017 | [Dual auth — Strategy Pattern with production mode](017-dual-auth-strategy.md) | Accepted | 2026-03-22 |
+| 018 | [Jira URL construction rules](018-jira-url-construction.md) | Accepted | 2026-03-23 |
