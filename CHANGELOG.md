@@ -1,3 +1,8 @@
+## [1.59.18](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.17...v1.59.18) (2026-03-23)
+
+### Features
+
+* show project name on recent issues in Dashboard ([bbc17c8](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/bbc17c88d3ef74ddceffbd1d7036c1c99d75687b))
 ## [1.59.17](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.16...v1.59.17) (2026-03-23)
 
 ### Features
