@@ -1,3 +1,8 @@
+## [1.59.15](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.14...v1.59.15) (2026-03-23)
+
+### Features
+
+* clickable recent issues on Dashboard — opens issue detail panel ([bafeb58](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/bafeb58cf94be543ce62a643e3200d01067c4382))
 ## [1.59.14](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.13...v1.59.14) (2026-03-23)
 
 ### Bug Fixes
