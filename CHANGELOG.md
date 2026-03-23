@@ -1,3 +1,8 @@
+## [1.59.13](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.12...v1.59.13) (2026-03-23)
+
+### Bug Fixes
+
+* board URL varies by project type — next-gen vs classic vs business ([0ee2e0f](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/0ee2e0faa81fd6a15e5382667e92a6cede143c6e))
 ## [1.59.12](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.11...v1.59.12) (2026-03-23)
 
 ### Bug Fixes
