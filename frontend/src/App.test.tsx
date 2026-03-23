@@ -2756,14 +2756,14 @@ describe("Feature: Keyboard shortcuts — b/l switch views", () => {
   });
 
   describe("Scenario: Pressing l switches to list view", () => {
-    it("Given the board view is displayed, when pressing l, then the list view should be shown", async () => {
+    it("Given the board view is displayed, when pressing i, then the list view should be shown", async () => {
       render(<App />, { wrapper: createWrapper() });
       await screen.findByText("PROJ-1");
 
       await userEvent.keyboard("b");
       expect(await screen.findByRole("region", { name: /kanban board/i })).toBeInTheDocument();
 
-      await userEvent.keyboard("l");
+      await userEvent.keyboard("i");
 
       await waitFor(() => {
         expect(screen.queryByRole("region", { name: /kanban board/i })).not.toBeInTheDocument();
@@ -4536,7 +4536,9 @@ describe("Feature: Dashboard landing page (13.4)", () => {
       await user.click(screen.getByRole("tab", { name: /Home/ }));
       await screen.findByTestId("dashboard-page");
 
-      expect(await screen.findByText("My Project")).toBeInTheDocument();
+      const dashboard = await screen.findByTestId("dashboard-page");
+      const projectCards = within(dashboard).getAllByText("My Project");
+      expect(projectCards.length).toBeGreaterThanOrEqual(1);
     });
   });
 

@@ -103,6 +103,7 @@ def _get_callback_url(request: Request) -> str:
 
 @router.get("/login")
 async def login(request: Request):
+    # Rate limited at 10/minute globally (see main.py)
     """Redirect user to Atlassian OAuth consent screen."""
     s = get_settings()
     if not s.atlassian_client_id or not s.atlassian_client_secret:
@@ -257,6 +258,71 @@ async def logout(request: Request, response: Response):
     resp = JSONResponse({"status": "logged_out"})
     resp.delete_cookie(SESSION_COOKIE)
     return resp
+
+
+@router.get("/sites")
+async def list_sites(request: Request):
+    """List Jira sites the user has access to."""
+    session = get_session(request)
+    if not session:
+        return {"sites": [], "current_cloud_id": ""}
+    resources = session.get("resources", [])
+    return {
+        "sites": [
+            {
+                "id": r.get("id", ""),
+                "name": r.get("name", ""),
+                "url": r.get("url", ""),
+                "avatarUrl": r.get("avatarUrl", ""),
+                "scopes": r.get("scopes", []),
+            }
+            for r in resources
+        ],
+        "current_cloud_id": session.get("cloud_id", ""),
+    }
+
+
+@router.post("/select-site")
+async def select_site(request: Request):
+    """Switch to a different Jira site."""
+    session = get_session(request)
+    if not session:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    body = await request.json()
+    cloud_id = body.get("cloud_id", "")
+    if not cloud_id:
+        raise HTTPException(status_code=400, detail="cloud_id is required")
+
+    # Verify the site is in accessible resources
+    resources = session.get("resources", [])
+    site = next((r for r in resources if r.get("id") == cloud_id), None)
+    if not site:
+        raise HTTPException(status_code=403, detail="Site not accessible")
+
+    # Update session with new cloud_id and fetch user info for new site
+    session["cloud_id"] = cloud_id
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            user_resp = await client.get(
+                f"https://api.atlassian.com/ex/jira/{cloud_id}/rest/api/3/myself",
+                headers={"Authorization": f"Bearer {session['access_token']}"},
+            )
+            if user_resp.status_code == 200:
+                user = user_resp.json()
+                session["user"] = {
+                    "accountId": user.get("accountId", ""),
+                    "displayName": user.get("displayName", ""),
+                    "emailAddress": user.get("emailAddress", ""),
+                    "avatarUrl": user.get("avatarUrls", {}).get("48x48", ""),
+                }
+    except Exception:
+        pass
+
+    _save_sessions()
+    logger.info("Site switched to cloud_id=%s (%s)", cloud_id, site.get("name", "?"))
+    return {"status": "switched", "cloud_id": cloud_id, "site_name": site.get("name", "")}
 
 
 async def _refresh_token(session: dict) -> bool:

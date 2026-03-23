@@ -5409,6 +5409,9 @@ function UserMenu({
   onToggleTheme,
   onSettings,
   onSignOut,
+  resources,
+  currentCloudId,
+  onSwitchSite,
 }: {
   user: { displayName: string; avatarUrl: string; emailAddress: string; accountId?: string };
   jiraHost: string;
@@ -5416,6 +5419,9 @@ function UserMenu({
   onToggleTheme: () => void;
   onSettings: () => void;
   onSignOut: () => void;
+  resources?: { id: string; name: string; url: string }[];
+  currentCloudId?: string;
+  onSwitchSite?: (cloudId: string) => void;
 }) {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -5490,6 +5496,21 @@ function UserMenu({
             >
               <span className="w-5 text-center">🔑</span> Account settings
             </a>
+            {resources && resources.length > 1 && (
+              <div className="border-t border-zinc-800 py-1">
+                <div className="px-4 py-1 text-xs text-zinc-500 uppercase tracking-wider">Jira Sites</div>
+                {resources.map((site) => (
+                  <button
+                    key={site.id}
+                    onClick={() => { if (onSwitchSite && site.id !== currentCloudId) { onSwitchSite(site.id); setOpen(false); } }}
+                    className={`w-full flex items-center gap-3 px-4 py-2 text-sm cursor-pointer text-left ${site.id === currentCloudId ? "text-blue-400 bg-zinc-800/50" : "text-zinc-300 hover:bg-zinc-800"}`}
+                  >
+                    <span className="w-5 text-center">{site.id === currentCloudId ? "✓" : "○"}</span>
+                    {site.name}
+                  </button>
+                ))}
+              </div>
+            )}
             <button
               onClick={() => { setOpen(false); onSettings(); }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer text-left"
@@ -5739,6 +5760,7 @@ function useTheme(): [Theme, () => void] {
 }
 
 export default function App() {
+  const appQueryClient = useQueryClient();
   const [theme, toggleTheme] = useTheme();
 
   // OAuth auth state
@@ -5747,7 +5769,7 @@ export default function App() {
     queryFn: async () => {
       const res = await fetch(`${API}/auth/me`);
       if (!res.ok) return { authenticated: false };
-      return res.json() as Promise<{ authenticated: boolean; user?: { accountId: string; displayName: string; avatarUrl: string; emailAddress: string }; cloud_id?: string }>;
+      return res.json() as Promise<{ authenticated: boolean; user?: { accountId: string; displayName: string; avatarUrl: string; emailAddress: string }; cloud_id?: string; resources?: { id: string; name: string; url: string }[] }>;
     },
     staleTime: CACHE_STATIC,
   });
@@ -6146,6 +6168,18 @@ export default function App() {
                   if (!window.confirm(`Sign out as ${authUser.displayName}?`)) return;
                   await fetch(`${API}/auth/logout`, { method: "POST" });
                   refetchAuth();
+                }}
+                resources={authData?.resources?.map((r: { id: string; name: string; url: string }) => ({ id: r.id, name: r.name, url: r.url }))}
+                currentCloudId={authData?.cloud_id}
+                onSwitchSite={async (cloudId: string) => {
+                  await fetch(`${API}/auth/select-site`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ cloud_id: cloudId }),
+                  });
+                  refetchAuth();
+                  // Invalidate all cached data for new site
+                  appQueryClient.invalidateQueries();
                 }}
               />
             ) : (
