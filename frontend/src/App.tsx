@@ -4751,7 +4751,11 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
           )}
           <h2 className="text-xl font-bold text-zinc-100" data-testid="sprint-name">
             {activeSprint.name}
-            {activeSprint.boardId && <OpenInJira path={`/jira/software/projects/${project || ""}/boards/${activeSprint.boardId}`} className="text-sm ml-2" />}
+            {activeSprint.boardId && (() => {
+              // Derive project key from sprint issues or selected project
+              const sprintProjectKey = project || issuesData?.issues?.[0]?.key?.split("-")[0] || "";
+              return sprintProjectKey ? <OpenInJira path={`/jira/software/c/projects/${sprintProjectKey}/boards/${activeSprint.boardId}`} className="text-sm ml-2" /> : null;
+            })()}
           </h2>
           <p className="text-sm text-zinc-400 mt-1">
             {formatDate(activeSprint.startDate)} — {formatDate(activeSprint.endDate)}
