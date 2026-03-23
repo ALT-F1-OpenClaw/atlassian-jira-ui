@@ -327,6 +327,29 @@ Before going production-grade, re-enable these:
 - **Footer**: "Built by [ALT-F1](https://www.alt-f1.be)" with company logo/link on every page
 - **About page**: credit ALT-F1 as project creator with link to www.alt-f1.be
 
+---
+
+### Phase 6 — Branding & Marketing
+
+#### Origin Story
+
+Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has consistently lacked in UX quality — poor navigation, clunky exports, slow workflows, and a general friction that adds stress to every workday. This project is an attempt to build the Jira frontend that should have existed: fast, keyboard-driven, and designed for people who actually use Jira every day. A better UI to reduce the daily pain of Jira users.
+
+> **Disclaimer**: ALT-F1 is an independent company and is **not affiliated with, endorsed by, or connected to Atlassian** in any way. This is a third-party alternative frontend that uses Jira's public REST APIs.
+
+| # | Task | Status |
+|---|------|--------|
+| 65 | Choose an app name — memorable, distinct, not infringing on Atlassian trademarks | Planned |
+| 66 | Register DNS: `<app-name>.alt-f1.be` — point to production server | Planned |
+| 67 | Landing page — product pitch, screenshots, "Login with Atlassian" CTA, origin story | Planned |
+| 68 | LinkedIn announcement — post on ALT-F1 company page + Abdelkrim's profile | Planned |
+| 69 | Twitter/X announcement — launch thread with screenshots/demo GIF | Planned |
+| 70 | LinkedIn Groups — share in Atlassian/Jira/Agile communities (Atlassian Community, Jira Users, Agile Project Management) | Planned |
+| 71 | Product Hunt launch (optional) — listing with tagline + screenshots | Planned |
+| 72 | README + About page — add origin story, ALT-F1 independence disclaimer, app name | Planned |
+
+---
+
 **Security requirements for public SaaS**:
 - HTTPS mandatory (OAuth callback + token transport)
 - CSRF protection on all mutation endpoints
