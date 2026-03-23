@@ -4751,10 +4751,13 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
           )}
           <h2 className="text-xl font-bold text-zinc-100" data-testid="sprint-name">
             {activeSprint.name}
-            {activeSprint.boardId && (() => {
-              // Derive project key from sprint issues or selected project
-              const sprintProjectKey = project || issuesData?.issues?.[0]?.key?.split("-")[0] || "";
-              return sprintProjectKey ? <OpenInJira path={`/jira/software/c/projects/${sprintProjectKey}/boards/${activeSprint.boardId}`} className="text-sm ml-2" /> : null;
+            {(() => {
+              // Derive project key from: 1) selected project, 2) sprint issues, 3) sprint name
+              const fromIssues = issuesData?.issues?.[0]?.key?.split("-")[0];
+              const fromName = activeSprint.name?.match(/^([A-Z]{2,10})\b/)?.[1];
+              const sprintProjectKey = project || fromIssues || fromName || "";
+              if (!sprintProjectKey || !activeSprint.boardId) return null;
+              return <OpenInJira path={`/jira/software/projects/${sprintProjectKey}/boards/${activeSprint.boardId}`} className="text-sm ml-2" />;
             })()}
           </h2>
           <p className="text-sm text-zinc-400 mt-1">
