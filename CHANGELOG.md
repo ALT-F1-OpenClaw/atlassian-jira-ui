@@ -1,3 +1,8 @@
+## [1.59.11](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.10...v1.59.11) (2026-03-23)
+
+### Bug Fixes
+
+* sprint Jira link — API now returns projectKey from board location ([06c9113](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/06c9113b114ee0b90625a8ab88d1198888436239))
 ## [1.59.10](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.9...v1.59.10) (2026-03-23)
 
 ### Bug Fixes
