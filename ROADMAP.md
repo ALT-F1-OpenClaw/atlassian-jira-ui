@@ -246,6 +246,8 @@ Before going production-grade, re-enable these:
 | 61 | Support Jira Product Discovery project URLs (`/jira/discovery/`) | Planned |
 | 62 | Board view: show warning when >100 issues (Jira API limit). Users use Jira UI for large projects | Complete |
 | 54 | Production mode — API Token auth completely disabled, OAuth only | Complete |
+| 63 | Sprint state filter dropdown — filter sprints by Active & Future / Active / Future / Closed / All | Complete |
+| 64 | Environment ribbon on login page — show STG/DEV indicator before authentication | Complete |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
