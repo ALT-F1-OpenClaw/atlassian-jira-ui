@@ -1,3 +1,8 @@
+## [1.59.10](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.9...v1.59.10) (2026-03-23)
+
+### Bug Fixes
+
+* sprint Jira link — derive project key from issues or sprint name ([b35b8cf](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/b35b8cfdf55cfa162247e3bcedf510ca7e85ca7a))
 ## [1.59.9](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.8...v1.59.9) (2026-03-23)
 
 ### Bug Fixes
