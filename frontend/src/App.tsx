@@ -4754,7 +4754,7 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
             {(() => {
               const sprintProjectKey = (activeSprint as unknown as Record<string, string>).projectKey || project || issuesData?.issues?.[0]?.key?.split("-")[0] || "";
               if (!sprintProjectKey || !activeSprint.boardId) return null;
-              return <OpenInJira path={`/jira/software/projects/${sprintProjectKey}/boards/${activeSprint.boardId}`} className="text-sm ml-2" />;
+              return <OpenInJira path={`/jira/software/c/projects/${sprintProjectKey}/boards/${activeSprint.boardId}`} className="text-sm ml-2" />;
             })()}
           </h2>
           <p className="text-sm text-zinc-400 mt-1">

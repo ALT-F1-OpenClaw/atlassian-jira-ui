@@ -27,12 +27,12 @@ Example: `https://altf1be.atlassian.net/browse/PITA-11`
 ### Boards / Sprints
 
 ```
-{jira_host}/jira/software/projects/{projectKey}/boards/{boardId}
+{jira_host}/jira/software/c/projects/{projectKey}/boards/{boardId}
 ```
 
-Example: `https://altf1be.atlassian.net/jira/software/projects/PITA/boards/151`
+Example: `https://altf1be.atlassian.net/jira/software/c/projects/PITA/boards/151`
 
-**Note**: Some older Jira instances use `/jira/software/c/projects/...` (with `/c/`), but the URL without `/c/` works universally — Jira redirects automatically.
+**Note**: The `/c/` segment is required. Without it, some boards return "not found". The `/c/` path works for all project types (classic and next-gen).
 
 **Data source for `projectKey`** (in priority order):
 1. API response: `sprint.projectKey` (from `board.location.projectKey` via Agile API)
