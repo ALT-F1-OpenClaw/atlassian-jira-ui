@@ -1,3 +1,8 @@
+## [1.59.12](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.11...v1.59.12) (2026-03-23)
+
+### Bug Fixes
+
+* board URL requires /c/ segment — without it some boards return not-found ([6e49d4a](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/6e49d4a5d9cb004034176b23cb6d0991bb20467d))
 ## [1.59.11](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.10...v1.59.11) (2026-03-23)
 
 ### Bug Fixes
