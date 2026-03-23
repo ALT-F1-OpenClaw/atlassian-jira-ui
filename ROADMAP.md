@@ -242,7 +242,7 @@ Before going production-grade, re-enable these:
 | 59 | Redis session store (replace file-based sessions.json) | Planned |
 | 60 | Support Jira Service Management project URLs (`/jira/servicedesk/`) | Planned |
 | 61 | Support Jira Product Discovery project URLs (`/jira/discovery/`) | Planned |
-| 62 | Board view pagination — fetch all issues via multiple API pages (Jira caps at 100/request). Show total count + warning when truncated | Planned |
+| 62 | Board view: show warning when >100 issues (Jira API limit). Users use Jira UI for large projects | Complete |
 | 54 | Production mode — API Token auth completely disabled, OAuth only | Complete |
 
 ### Phase 4b — CI Intelligence

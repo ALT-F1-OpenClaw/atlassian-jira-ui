@@ -15,7 +15,7 @@ Documented issues and constraints in the current version.
 ⚠ Showing 100 of 109 — some issues are not displayed
 ```
 
-**Fix planned**: Roadmap #62 — Backend will paginate across multiple API requests (`startAt=0`, `startAt=100`, etc.) to fetch all issues.
+**Status**: Accepted limitation. A warning banner is shown when issues are truncated. For projects with >100 issues, use the regular Jira UI.
 
 ---
 
