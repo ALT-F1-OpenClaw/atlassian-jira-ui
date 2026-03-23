@@ -2702,8 +2702,8 @@ function BoardView({
       onDragEnd={handleDragEnd}
     >
       <div className="p-3">
-        {/* Board header with swimlane toggle */}
-        <div className="mb-3 flex items-center gap-2">
+        {/* Board header with swimlane toggle + issue count */}
+        <div className="mb-3 flex items-center gap-2 flex-wrap">
           <label className="text-xs text-zinc-500">Swimlanes:</label>
           <select
             value={swimlane}
@@ -2715,6 +2715,14 @@ function BoardView({
             <option value="assignee">Assignee</option>
             <option value="priority">Priority</option>
           </select>
+          <span className="ml-auto text-xs text-zinc-500">
+            {issues.length}{data?.total && data.total > issues.length ? ` of ${data.total}` : ""} issues
+          </span>
+          {data?.total && data.total > issues.length && (
+            <span className="rounded bg-amber-900/50 border border-amber-700 px-2 py-0.5 text-xs text-amber-300">
+              ⚠ Showing {issues.length} of {data.total} — some issues are not displayed
+            </span>
+          )}
         </div>
 
         {/* Columns */}
