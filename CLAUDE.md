@@ -171,11 +171,11 @@ Phase 1, Sections 1–2 complete + enhancements:
 - **About / Features Page** (tasks 14.1–14.4): dedicated about page accessible from sidebar, lists all 21 features with version badges and descriptions, shows app version/build date/GitHub+changelog links, responsive card-based layout, tech stack section
 - **Total: 302 tests** (255 frontend unit + 25 backend pytest + 22 Playwright E2E)
 
-**Phases 1–3 complete.** Phase 4 nearly complete (only #29 HTTPS via Tailscale remaining).
-Phase 4b (CI Intelligence): #43 workflow trigger + #44 error extraction complete. #45 auto-fix PR planned.
-Phase 5 (Multi-User Auth & Public SaaS): 12 features (#30–#41) planned — OAuth 2.0, sessions, multi-tenant, legal.
+**Phases 1–4 complete.** Phase 4b (CI Intelligence): #43-44 complete, #45 planned.
+Phase 5 (Multi-User Auth): OAuth 2.0 (#30) ✅, per-user sessions (#31) ✅, login UI (#32) ✅, HTTPS (#34) ✅, production mode (#54) ✅.
+Remaining: #33 (site selection), #35-36 (security), #37-39 (legal), #52 (tooling), #53 (OpenTelemetry), #56-62 (production deployment).
 
-**Current version**: v1.49.1 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
+**Current version**: v1.59.15 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
 
 CI/CD: 6 GitHub Actions workflows (CI, release, Docker validate, Docker publish, CodeQL, CI auto-fix).
 Docker images on GHCR (multi-arch amd64+arm64). Bundle code-split into 5 chunks (app 300KB + vendors).
@@ -201,5 +201,29 @@ Runs on Raspberry Pi 4 (ARM64) with Docker + Traefik + Watchtower.
 - **Dev** (`:9443`): `:latest`, auto-updated by Watchtower every 5 min
 - **Systemd**: `jira-ui.service` auto-starts on boot
 - Tailscale TLS certs for HTTPS
+
+### Authentication (v1.54.0+)
+
+Dual auth via Strategy Pattern (ADR-017):
+- **API Token** (Basic Auth): for development/staging, disabled in production
+- **OAuth 2.0 (3LO)**: per-user Atlassian login, auto token refresh
+- `APP_ENV`: `development` | `staging` | `production` (controls auth availability)
+- Sessions persisted to `sessions.json` + `oauth_states.json` (Docker volumes)
+- User avatar dropdown menu: Profile, Account settings, Jira UI Settings, Theme, Sign out
+
+### Jira URL Construction (ADR-018)
+
+Board URLs vary by project type:
+- Team-managed software (`next-gen`): `/jira/software/projects/{key}/boards/{id}`
+- Company-managed software (`classic`): `/jira/software/c/projects/{key}/boards/{id}`
+- Business (`next-gen`): `/jira/core/projects/{key}/board`
+- API returns `projectTypeKey` enriched with style info (`software`, `software-classic`, `business`)
+
+### Sprint Platform API Fallback (ADR-016)
+
+When Agile API fails (OAuth without Jira Software scopes):
+- Falls back to Platform API: JQL `sprint in openSprints()`
+- Extracts sprint data from `customfield_10020`
+- Same response format — transparent to frontend
 
 See `ROADMAP.md` for full status.

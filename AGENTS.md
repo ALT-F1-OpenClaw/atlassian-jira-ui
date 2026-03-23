@@ -169,13 +169,39 @@ Always: CodeQL (weekly) + Dependabot (weekly)
 
 Error categories: `test-runner-conflict`, `missing-module`, `typescript-error`, `test-failure`, `dependency-error`, `lint-error`, `build-error`
 
+### Authentication
+
+Dual auth via Strategy Pattern (ADR-017):
+- `OAuthStrategy`: per-user Atlassian login, Bearer token via `api.atlassian.com`
+- `ApiTokenStrategy`: shared Basic Auth from `.env` (disabled in production)
+- `APP_ENV=production` → API Token completely disabled, OAuth only
+- Auto token refresh before API calls (`authed_jira_request()`)
+- Sessions + CSRF states persisted to JSON files (Docker volumes)
+- `auth.py`: `/auth/login`, `/auth/callback`, `/auth/me`, `/auth/logout`
+- `deps.py`: `resolve_auth()` strategy chain, `authed_jira_request()` with refresh
+
+### Jira URL Construction (ADR-018)
+
+Board URLs depend on project style + type:
+- `next-gen` + `software` → `/jira/software/projects/{key}/boards/{id}`
+- `classic` + `software` → `/jira/software/c/projects/{key}/boards/{id}` (needs `/c/`)
+- `next-gen` + `business` → `/jira/core/projects/{key}/board`
+- Backend resolves style via `/project` API, returns `projectTypeKey`
+
+### Sprint Platform API Fallback (ADR-016)
+
+When Agile API fails (OAuth without Jira Software scopes):
+- `_list_sprints_platform()` uses JQL: `sprint in openSprints()`
+- Extracts sprint data from `customfield_10020`
+- Derives `projectKey` from issue project field
+
 ### Production Deployment
 
 6 containers on Raspberry Pi 4 via Docker + Traefik + Watchtower:
 
 ```
-Traefik (:4443 prod, :9443 dev) → frontend (nginx) → backend (FastAPI)
-Watchtower polls GHCR every 5 min → auto-updates dev containers
+Traefik (:4443 prod, :9443 dev) → nginx (/api + /auth → backend) → FastAPI
+Watchtower (nicholas-fedor/watchtower) polls GHCR every 5 min → auto-updates dev
 Prod pinned to version tag → manual: ./deploy-prod.sh vX.Y.Z
 ```
 
@@ -184,6 +210,10 @@ Prod pinned to version tag → manual: ./deploy-prod.sh vX.Y.Z
 - Systemd service: `jira-ui.service` (auto-start on boot)
 - TLS: Tailscale certs for `atlf1be-raspberry-pi-4.tail981e59.ts.net`
 - Port 443 reserved for OpenClaw (Tailscale Serve)
+- Nginx routes both `/api/` AND `/auth/` to backend
+- Session files mounted as Docker volumes (survive container restarts)
+- `APP_ENV=production` on prod, `development` on dev
+- See `docs/PRODUCTION_DEPLOYMENT.md` for VPS deployment (Ansible, Let's Encrypt)
 
 ### Screenshots
 
