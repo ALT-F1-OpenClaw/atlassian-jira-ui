@@ -4562,18 +4562,19 @@ function ManageSprintScopeModal({ sprintId, currentIssues, onClose, onSelectIssu
 function SprintDashboard({ project, onSelectIssue }: { project: string; onSelectIssue?: (key: string) => void }) {
   const queryClient = useQueryClient();
   const [selectedSprintId, setSelectedSprintId] = useState<number | null>(null);
+  const [sprintStateFilter, setSprintStateFilter] = useState("active,future");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showScopeModal, setShowScopeModal] = useState(false);
   const [confirmAction, setConfirmAction] = useState<"start" | "complete" | "delete" | null>(null);
 
-  // Fetch available sprints (active + future for CRUD)
+  // Fetch available sprints filtered by state
   const { data: sprintsData, isLoading: sprintsLoading } = useQuery({
-    queryKey: ["sprints", project],
+    queryKey: ["sprints", project, sprintStateFilter],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (project) params.set("project", project);
-      params.set("state", "active,future");
+      params.set("state", sprintStateFilter);
       const res = await fetch(`${API}/api/sprints?${params}`);
       if (!res.ok) throw new Error(`${res.status}`);
       return res.json() as Promise<{ sprints: SprintInfo[] }>;
@@ -4747,16 +4748,30 @@ function SprintDashboard({ project, onSelectIssue }: { project: string; onSelect
       {/* Sprint selector + header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
         <div>
-          {sprints.length > 1 && (
+          <div className="flex flex-wrap items-end gap-2 mb-2">
             <SearchableSelect
-              value={String(selectedSprintId || "")}
-              onChange={(v) => setSelectedSprintId(Number(v))}
-              options={sprints.map((s) => ({ value: String(s.id), label: `${s.name} (${s.boardName}) [${s.state}]` }))}
-              placeholder="Select sprint..."
-              ariaLabel="Select sprint"
-              className="mb-2"
+              value={sprintStateFilter}
+              onChange={(v) => { setSprintStateFilter(v); setSelectedSprintId(null); }}
+              options={[
+                { value: "active,future", label: "Active & Future" },
+                { value: "active", label: "Active" },
+                { value: "future", label: "Future" },
+                { value: "closed", label: "Closed" },
+                { value: "active,future,closed", label: "All" },
+              ]}
+              placeholder="Sprint state..."
+              ariaLabel="Filter sprint state"
             />
-          )}
+            {sprints.length > 1 && (
+              <SearchableSelect
+                value={String(selectedSprintId || "")}
+                onChange={(v) => setSelectedSprintId(Number(v))}
+                options={sprints.map((s) => ({ value: String(s.id), label: `${s.name} (${s.boardName}) [${s.state}]` }))}
+                placeholder="Select sprint..."
+                ariaLabel="Select sprint"
+              />
+            )}
+          </div>
           <h2 className="text-xl font-bold text-zinc-100" data-testid="sprint-name">
             {activeSprint.name}
             {(() => {
