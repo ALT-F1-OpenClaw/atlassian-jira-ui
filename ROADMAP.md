@@ -288,7 +288,12 @@ Before going production-grade, re-enable these:
 | 35 | Rate limiting & abuse protection (per-user request throttling) | Planned |
 | 36 | Multi-tenant data isolation (no cross-user token leakage) | Planned |
 | 37 | Terms of Service page (usage terms, liability, SLA, acceptable use) | Planned |
-| 38 | Data Privacy Policy — GDPR (EU), CCPA (California), PIPEDA (Canada), LGPD (Brazil), POPIA (South Africa), APPs (Australia) | Planned |
+| 38a | Data Privacy Policy — GDPR (EU/EEA) | Planned |
+| 38b | Data Privacy Policy — CCPA (California) | Planned |
+| 38c | Data Privacy Policy — PIPEDA (Canada) | Planned |
+| 38d | Data Privacy Policy — LGPD (Brazil) | Planned |
+| 38e | Data Privacy Policy — POPIA (South Africa) | Planned |
+| 38f | Data Privacy Policy — APPs (Australia) | Planned |
 | 39 | Cookie consent banner (opt-in for EU/GDPR, opt-out for others) | Planned |
 | 40 | Footer with ALT-F1 branding — link to alt-f1.be + GitHub + version | Complete |
 | 41 | Production deployment (Docker + Traefik + Watchtower on Raspberry Pi) | Complete |
