@@ -1,3 +1,8 @@
+## [1.59.14](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.13...v1.59.14) (2026-03-23)
+
+### Bug Fixes
+
+* Profile link uses /jira/people/{accountId} instead of /jira/people/me ([8bdb477](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/8bdb477f6e4ce9211b4364926bc52c1c3f71aae5))
 ## [1.59.13](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.12...v1.59.13) (2026-03-23)
 
 ### Bug Fixes
