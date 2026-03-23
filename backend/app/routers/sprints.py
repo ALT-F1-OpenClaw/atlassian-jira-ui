@@ -40,21 +40,27 @@ async def _list_sprints_platform(request, project: str | None, state: str | None
         data = await authed_jira_request(request, "GET", "/search/jql", params={
             "jql": jql,
             "maxResults": 200,
-            "fields": "customfield_10020",
+            "fields": "customfield_10020,project",
         })
     except Exception as e:
         logger.warning("Platform API sprint search failed: %s", e)
         return {"sprints": []}
 
-    # Extract unique sprints from customfield_10020
+    # Extract unique sprints from customfield_10020, with project key per board
     seen_ids: set[int] = set()
+    board_project: dict[int, str] = {}  # boardId → projectKey
     sprints = []
     for issue in (data or {}).get("issues", []):
-        sprint_field = issue.get("fields", {}).get("customfield_10020") or []
+        fields = issue.get("fields", {})
+        issue_project = fields.get("project", {}).get("key", "")
+        sprint_field = fields.get("customfield_10020") or []
         for s in (sprint_field if isinstance(sprint_field, list) else [sprint_field]):
             if not isinstance(s, dict):
                 continue
             sid = s.get("id")
+            bid = s.get("boardId", 0)
+            if issue_project and bid:
+                board_project[bid] = issue_project
             if sid and sid not in seen_ids:
                 seen_ids.add(sid)
                 sprints.append({
@@ -64,9 +70,13 @@ async def _list_sprints_platform(request, project: str | None, state: str | None
                     "startDate": s.get("startDate"),
                     "endDate": s.get("endDate"),
                     "goal": s.get("goal", ""),
-                    "boardId": s.get("boardId", 0),
-                    "boardName": "",  # Not available from Platform API
+                    "boardId": bid,
+                    "boardName": "",
+                    "projectKey": "",  # Filled below
                 })
+    # Fill project keys from board→project mapping
+    for sprint in sprints:
+        sprint["projectKey"] = board_project.get(sprint["boardId"], "")
 
     logger.info("Platform API fallback: found %d sprints via JQL", len(sprints))
     return {"sprints": sprints}
@@ -118,6 +128,7 @@ async def list_sprints(request: Request,
                 "goal": s.get("goal", ""),
                 "boardId": board_id,
                 "boardName": board.get("name", ""),
+                "projectKey": board.get("location", {}).get("projectKey", ""),
             })
     return {"sprints": sprints}
 
