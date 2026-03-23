@@ -1,3 +1,8 @@
+## [1.59.19](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.18...v1.59.19) (2026-03-23)
+
+### Features
+
+* board shows total issue count + warning when >100 truncated ([#62](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/62) partial) ([19221fc](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/19221fc258ee93ed104c7530273de3e71464639a))
 ## [1.59.18](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.17...v1.59.18) (2026-03-23)
 
 ### Features
