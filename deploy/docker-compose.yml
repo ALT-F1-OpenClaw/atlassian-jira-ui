@@ -8,6 +8,9 @@
 #
 # Promote to prod:  ./deploy-prod.sh v1.49.1
 
+# DNS: Tailscale overrides /etc/resolv.conf with 100.100.100.100 which Docker
+# can't reach. Explicit DNS on backends ensures external API calls (Atlassian,
+# GHCR) always resolve after reboots.
 networks:
   traefik:
     driver: bridge
@@ -56,6 +59,7 @@ services:
     image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend:${PROD_VERSION:-latest}
     container_name: prod-backend
     restart: unless-stopped
+    dns: [1.1.1.1, 8.8.8.8]
     env_file: ./prod/.env
     environment:
       - CORS_ORIGINS=https://atlf1be-raspberry-pi-4.tail981e59.ts.net:4443
@@ -78,6 +82,7 @@ services:
     image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend:latest
     container_name: dev-backend
     restart: unless-stopped
+    dns: [1.1.1.1, 8.8.8.8]
     env_file: ./dev/.env
     environment:
       - CORS_ORIGINS=https://atlf1be-raspberry-pi-4.tail981e59.ts.net:9443

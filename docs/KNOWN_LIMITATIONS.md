@@ -45,6 +45,25 @@ Documented issues and constraints in the current version.
 
 ---
 
+## Docker DNS Failure After Reboot (Fixed)
+
+**Impact**: After rebooting the Raspberry Pi, Docker containers couldn't resolve external hostnames (`auth.atlassian.com`, `api.atlassian.com`). OAuth login and all Jira API calls failed with `[Errno -3] Temporary failure in name resolution`.
+
+**Cause**: Tailscale overrides `/etc/resolv.conf` with `nameserver 100.100.100.100` (Tailscale's DNS). Docker's internal resolver (`127.0.0.11`) couldn't reach Tailscale's DNS server from inside containers.
+
+**Fix applied**: Explicit DNS servers in `docker-compose.yml` for all backend services:
+```yaml
+dns: [1.1.1.1, 8.8.8.8]
+```
+
+**Optional belt-and-suspenders**: Create `/etc/docker/daemon.json` to set DNS globally:
+```json
+{"dns": ["1.1.1.1", "8.8.8.8"]}
+```
+Then `sudo systemctl restart docker`.
+
+---
+
 ## Firefox: Tailscale TLS Certificate Warning
 
 **Impact**: Firefox shows a certificate warning when accessing the app via Tailscale URLs (`*.ts.net`).
