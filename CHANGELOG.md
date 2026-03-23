@@ -1,3 +1,8 @@
+## [1.59.17](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.16...v1.59.17) (2026-03-23)
+
+### Features
+
+* click 'Jira UI' logo navigates to Dashboard ([04c02f5](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/04c02f54187100238c2b26bba18314780dd69b9e))
 ## [1.59.16](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.15...v1.59.16) (2026-03-23)
 
 ### Features
