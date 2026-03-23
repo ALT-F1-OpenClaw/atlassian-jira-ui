@@ -5186,12 +5186,14 @@ function DashboardPage({
   onSetView,
   onCreateIssue,
   onOpenSearch,
+  onSelectIssue,
 }: {
   projects: { key: string; name: string; id: string; avatarUrl?: string }[] | undefined;
   onSelectProject: (key: string) => void;
   onSetView: (v: View) => void;
   onCreateIssue: () => void;
   onOpenSearch: () => void;
+  onSelectIssue?: (key: string) => void;
 }) {
   const { data: sprintsData, isLoading: sprintsLoading } = useQuery({
     queryKey: ["dashboard-sprints"],
@@ -5328,11 +5330,16 @@ function DashboardPage({
         ) : (
           <div className="divide-y divide-zinc-800 rounded-lg border border-zinc-700">
             {recentIssues.issues.map((issue) => (
-              <div key={issue.id} className="flex items-center gap-3 px-4 py-2.5 text-sm">
+              <button
+                key={issue.id}
+                onClick={() => { onSelectIssue?.(issue.key); }}
+                className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-zinc-800 transition-colors cursor-pointer text-left"
+              >
                 <span className="font-mono text-xs text-blue-400">{issue.key}</span>
+                <OpenInJira path={`/browse/${issue.key}`} className="text-xs" />
                 <span className="flex-1 truncate text-zinc-200">{issue.summary}</span>
                 <StatusBadge status={issue.status?.name} />
-              </div>
+              </button>
             ))}
           </div>
         )}
@@ -6195,6 +6202,7 @@ export default function App() {
               onSetView={setView}
               onCreateIssue={() => setShowCreateModal(true)}
               onOpenSearch={() => setCommandPaletteOpen(true)}
+              onSelectIssue={setSelectedIssueKey}
             />
           )}
           {view === "list" && <ListView project={project} filters={filters} onIssuesLoaded={setIssuesForFilters} onSelectIssue={setSelectedIssueKey} highlightedIndex={highlightedIndex} onHighlightChange={setHighlightedIndex} selectedIssueIds={selectedIssueIds} onSelectionChange={setSelectedIssueIds} />}
