@@ -5288,9 +5288,25 @@ function DashboardPage({
               const elapsed = start ? Math.max(0, Math.ceil((now.getTime() - start.getTime()) / 86400000)) : 0;
               const pct = Math.min(100, Math.round((elapsed / totalDays) * 100));
               return (
-                <div key={sprint.id} className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4">
+                <button
+                  key={sprint.id}
+                  onClick={() => onSetView("sprint")}
+                  className="rounded-lg border border-zinc-700 bg-zinc-800/50 p-4 text-left hover:border-zinc-600 hover:bg-zinc-800 transition-colors cursor-pointer w-full"
+                >
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-medium text-zinc-200">{sprint.name}</h4>
+                    <h4 className="font-medium text-zinc-200">
+                      {sprint.name}
+                      {sprint.boardId && (() => {
+                        const pk = (sprint as unknown as Record<string, string>).projectKey || "";
+                        const typeKey = (sprint as unknown as Record<string, string>).projectTypeKey || "";
+                        if (!pk) return null;
+                        let boardPath: string;
+                        if (typeKey === "business") boardPath = `/jira/core/projects/${pk}/board`;
+                        else if (typeKey === "software-classic") boardPath = `/jira/software/c/projects/${pk}/boards/${sprint.boardId}`;
+                        else boardPath = `/jira/software/projects/${pk}/boards/${sprint.boardId}`;
+                        return <OpenInJira path={boardPath} className="text-xs ml-2" />;
+                      })()}
+                    </h4>
                     <span className="rounded-full bg-green-900 px-2 py-0.5 text-xs text-green-300">Active</span>
                   </div>
                   {sprint.goal && <p className="text-xs text-zinc-400 mb-2">{sprint.goal}</p>}
@@ -5304,7 +5320,7 @@ function DashboardPage({
                       <div className="h-full rounded-full bg-blue-600 transition-all" style={{ width: `${pct}%` }} />
                     </div>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
