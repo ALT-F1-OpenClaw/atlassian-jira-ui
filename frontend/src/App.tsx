@@ -5351,8 +5351,9 @@ function DashboardPage({
                 onClick={() => { onSelectIssue?.(issue.key); }}
                 className="w-full flex items-center gap-3 px-4 py-2.5 text-sm hover:bg-zinc-800 transition-colors cursor-pointer text-left"
               >
-                <span className="font-mono text-xs text-blue-400">{issue.key}</span>
+                <span className="font-mono text-xs text-blue-400 shrink-0">{issue.key}</span>
                 <OpenInJira path={`/browse/${issue.key}`} className="text-xs" />
+                <span className="text-xs text-zinc-500 shrink-0">{projects?.find((p) => issue.key.startsWith(p.key + "-"))?.name || ""}</span>
                 <span className="flex-1 truncate text-zinc-200">{issue.summary}</span>
                 <StatusBadge status={issue.status?.name} />
               </button>
