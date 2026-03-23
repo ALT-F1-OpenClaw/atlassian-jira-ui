@@ -101,6 +101,27 @@ function OpenInJira({ path, className }) {
 }
 ```
 
+## All Known Jira Project Types
+
+| `projectTypeKey` | `style` | Product | Board URL Pattern | Status |
+|---|---|---|---|---|
+| `software` | `next-gen` | Jira Software (team-managed) | `/jira/software/projects/{key}/boards/{id}` | ✅ Supported |
+| `software` | `classic` | Jira Software (company-managed) | `/jira/software/c/projects/{key}/boards/{id}` | ✅ Supported |
+| `business` | `next-gen` | Jira Work Management (team-managed) | `/jira/core/projects/{key}/board` | ✅ Supported |
+| `business` | `classic` | Jira Work Management (company-managed) | `/jira/core/projects/{key}/board` | ⚠️ Untested |
+| `service_desk` | `next-gen` | Jira Service Management (team-managed) | `/jira/servicedesk/projects/{key}/boards/{id}` | 🔲 Planned |
+| `service_desk` | `classic` | Jira Service Management (company-managed) | `/jira/servicedesk/projects/{key}/boards/{id}` | 🔲 Planned |
+| `product_discovery` | — | Jira Product Discovery | `/jira/discovery/projects/{key}/board` | 🔲 Planned |
+
+### Notes
+- `style` determines classic (`/c/`) vs next-gen (no `/c/`) for software projects
+- Business projects always use `/jira/core/` regardless of style
+- Service Desk projects use `/jira/servicedesk/` — not yet implemented
+- Product Discovery is a newer Atlassian product — URL pattern may differ
+- The `style` field is NOT returned by the Agile API board endpoint — must be fetched from `/project`
+
+![Jira Project Types](../screenshots/21-jira-project-types.png)
+
 ## Consequences
 
 **Good**: Centralized URL patterns, API provides `projectKey` so frontend doesn't guess.

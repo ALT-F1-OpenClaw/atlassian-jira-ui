@@ -240,6 +240,8 @@ Before going production-grade, re-enable these:
 | 57 | Production docker-compose with Let's Encrypt + real domain | Planned |
 | 58 | Deploy user + SSH key auth (no root deployment) | Planned |
 | 59 | Redis session store (replace file-based sessions.json) | Planned |
+| 60 | Support Jira Service Management project URLs (`/jira/servicedesk/`) | Planned |
+| 61 | Support Jira Product Discovery project URLs (`/jira/discovery/`) | Planned |
 | 54 | Production mode — API Token auth completely disabled, OAuth only | Complete |
 
 ### Phase 4b — CI Intelligence
