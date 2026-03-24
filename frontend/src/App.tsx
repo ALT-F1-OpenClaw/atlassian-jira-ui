@@ -6057,13 +6057,22 @@ export default function App() {
     return () => window.removeEventListener("navigate-view", handler);
   }, []);
 
-  // Check for OAuth error in URL
+  // Check for OAuth error or failed callback in URL
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const err = params.get("auth_error");
+    const detail = params.get("detail");
+    const code = params.get("code");
+    const state = params.get("state");
+
     if (err) {
-      setAuthError(err.replace(/_/g, " "));
-      // Clean URL
+      // Explicit error from backend
+      setAuthError(`${err.replace(/_/g, " ")}${detail ? `: ${detail}` : ""}`);
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (code && state && window.location.pathname === "/") {
+      // OAuth callback landed on frontend instead of backend — routing issue!
+      // This means /auth/callback isn't proxied to the backend
+      setAuthError("OAuth callback failed — the server did not process the login. This usually means /auth/ routes are not configured in the reverse proxy (nginx/Traefik). Contact your administrator.");
       window.history.replaceState({}, "", window.location.pathname);
     }
   }, []);
@@ -6278,11 +6287,25 @@ export default function App() {
         <span className="text-5xl mb-3">⚡</span>
         <h1 className="text-3xl font-bold text-zinc-100 mb-1">Taskara</h1>
         <p className="text-sm text-zinc-500 mb-4">A faster, modern UI for Jira Cloud</p>
-        <p className="text-zinc-400 max-w-lg mb-6 text-sm leading-relaxed">
+        <p className="text-zinc-400 max-w-lg mb-4 text-sm leading-relaxed">
           {jiraSettings?.auth_oauth_enabled
             ? "Log in with your Atlassian account. Your Jira, your browser — we just make it faster."
             : "Configure authentication in Settings to connect to Jira."}
         </p>
+
+        {/* Auth error banner on login page */}
+        {authError && (
+          <div className="max-w-xl w-full rounded-lg border border-red-800 bg-red-950/50 px-4 py-3 mb-6 text-left">
+            <div className="flex items-start gap-2">
+              <span className="text-red-400 shrink-0">⚠️</span>
+              <div>
+                <div className="text-sm font-medium text-red-300">Login failed</div>
+                <div className="text-xs text-red-400/80 mt-1">{authError}</div>
+              </div>
+              <button onClick={() => setAuthError("")} className="ml-auto text-red-400 hover:text-red-200 cursor-pointer bg-transparent border-none p-0 text-sm shrink-0">✕</button>
+            </div>
+          </div>
+        )}
 
         {/* Trust signals */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mb-8 text-left">
