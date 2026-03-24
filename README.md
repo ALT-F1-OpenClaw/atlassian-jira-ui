@@ -14,7 +14,7 @@
 
 A modern, fast, and opinionated alternative UI for Atlassian Jira Cloud. Because Jira's UI deserves better.
 
-By [Abdelkrim BOUJRAF](https://www.alt-f1.be) / ALT-F1 SRL, Brussels 🇧🇪 🇲🇦
+By [Abdelkrim BOUJRAF](https://github.com/Abdelkrim) / [ALT-F1 SRL](https://www.alt-f1.be), Brussels 🇧🇪 🇲🇦
 
 ## Why?
 
@@ -201,6 +201,15 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 - **Editable labels** — Add/remove with autocomplete from Jira labels
 - **Mobile Kanban arrows** — Arrow buttons on cards for status transitions (mobile only)
 - **PWA** — Web app manifest, service worker, installable on mobile
+- **Sprint state filter** — Filter sprints by Active & Future / Active / Future / Closed / All
+- **Environment ribbon** — STG/DEV indicator on login page and main app (top-right corner)
+
+### Authentication & Security
+- **OAuth 2.0 (3LO)** — "Login with Atlassian" per-user authentication
+- **Per-user Jira site selection** — Site picker after login for users with multiple Jira sites
+- **Multi-tenant isolation** — Encrypted tokens at rest (Fernet), session fingerprinting (IP + User-Agent), cloud ID scoping
+- **Rate limiting** — Tiered per-IP limits: API 60/min, auth 10/min, search 30/min, mutations 30/min
+- **Production mode** — API Token auth disabled, settings locked, OAuth only
 - **302 tests** — 255 Vitest BDD + 25 pytest backend + 22 Playwright E2E
 
 ## Tech Stack
@@ -494,11 +503,18 @@ The bump script updates the version in:
 
 ## Security
 
-- API token never sent to frontend — backend acts as proxy
-- CORS restricted to frontend origin
-- No credentials stored in browser
-- Rate limiting with exponential backoff
-- Session-based auth for multi-user deployment
+- **API token never sent to frontend** — backend acts as proxy
+- **CORS restricted** to frontend origin only
+- **No Jira data stored server-side** — only OAuth tokens (encrypted) + session metadata (ADR-015)
+- **Token encryption at rest** — Fernet (AES-128-CBC) for OAuth access + refresh tokens (ADR-021)
+- **Session fingerprinting** — sessions bound to IP + User-Agent, rejected on mismatch (ADR-021)
+- **Tiered rate limiting** — per-IP limits on API (60/min), auth (10/min), search (30/min), mutations (30/min) (ADR-020)
+- **Production lockdown** — API Token auth disabled, settings endpoint blocked (ADR-017)
+- **CSRF state tokens** — OAuth flow protected against CSRF attacks
+- **Secure cookies** — HttpOnly, SameSite=Lax, session-scoped
+- **Branch protection** — CI required, no force-push, CodeQL + Dependabot scanning
+
+> **Disclaimer**: This project is developed by [ALT-F1 SRL](https://www.alt-f1.be) and is **not affiliated with, endorsed by, or connected to Atlassian** in any way. "Jira" is a registered trademark of Atlassian.
 
 ## References
 
