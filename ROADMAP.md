@@ -272,6 +272,8 @@ Before going production-grade, re-enable these:
 | 56 | Ansible playbook — automated VPS deployment (Contabo/any Linux) | Planned |
 | 57 | Production docker-compose + Let's Encrypt + taskara.alt-f1.be — deploy/public/ | Complete |
 | 58 | Deploy user + SSH key auth (no root deployment) | Planned |
+| 86 | Cloudflare Tunnel (cloudflared) — expose Taskara via Cloudflare without opening ports 80/443, DDoS protection, WAF, caching ([docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)) | Planned |
+| 87 | OpenAppSec WAF — open-source web application firewall via Docker sidecar, ML-based threat detection, OWASP Top 10 protection ([docker](https://hub.docker.com/r/openappsec/open-appsec-gateway), [docs](https://docs.openappsec.io/)) | Planned |
 | 59 | Redis session store — abstract SessionStore with Redis + file fallback (ADR-022) | Complete |
 | 60 | Support Jira Service Management project URLs (`/jira/servicedesk/`) | Planned |
 | 61 | Support Jira Product Discovery project URLs (`/jira/discovery/`) | Planned |
