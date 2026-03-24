@@ -6275,18 +6275,36 @@ export default function App() {
             </span>
           </div>
         )}
-        <span className="text-6xl mb-4">🔐</span>
-        <h1 className="text-2xl font-bold text-zinc-100 mb-2">Welcome to Jira UI</h1>
-        <p className="text-zinc-400 max-w-md mb-6">
+        <span className="text-5xl mb-3">⚡</span>
+        <h1 className="text-3xl font-bold text-zinc-100 mb-1">Taskara</h1>
+        <p className="text-sm text-zinc-500 mb-4">A faster, modern UI for Jira Cloud</p>
+        <p className="text-zinc-400 max-w-lg mb-6 text-sm leading-relaxed">
           {jiraSettings?.auth_oauth_enabled
-            ? "Log in with your Atlassian account to get started."
+            ? "Log in with your Atlassian account. Your Jira, your browser — we just make it faster."
             : "Configure authentication in Settings to connect to Jira."}
         </p>
-        <div className="flex gap-3">
+
+        {/* Trust signals */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-xl mb-8 text-left">
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2.5">
+            <div className="text-sm font-medium text-zinc-200">🔒 No data stored</div>
+            <div className="text-xs text-zinc-500 mt-0.5">Your Jira content stays in your browser. We never store issues, comments, or attachments on our servers.</div>
+          </div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2.5">
+            <div className="text-sm font-medium text-zinc-200">🛡️ Encrypted &amp; private</div>
+            <div className="text-xs text-zinc-500 mt-0.5">OAuth tokens encrypted at rest. Session fingerprinting prevents unauthorized access. GDPR compliant.</div>
+          </div>
+          <div className="rounded-lg border border-zinc-800 bg-zinc-900/50 px-3 py-2.5">
+            <div className="text-sm font-medium text-zinc-200">⚡ Your Jira, faster</div>
+            <div className="text-xs text-zinc-500 mt-0.5">Keyboard-driven. Ctrl+K search. Kanban drag &amp; drop. Sprint charts. Dark mode. Works offline.</div>
+          </div>
+        </div>
+
+        <div className="flex gap-3 mb-6">
           {jiraSettings?.auth_oauth_enabled && (
             <a
               href={`${API}/auth/login`}
-              className="rounded-md bg-blue-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 no-underline"
+              className="rounded-md bg-blue-600 px-6 py-2.5 text-sm font-medium text-white transition-colors hover:bg-blue-500 no-underline"
             >
               Login with Atlassian
             </a>
@@ -6298,6 +6316,10 @@ export default function App() {
             ⚙ Settings
           </button>
         </div>
+
+        <p className="text-xs text-zinc-600 max-w-md">
+          Not affiliated with Atlassian. Open source (<a href="https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">GitHub</a>). Built by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">ALT-F1 SRL</a>, Brussels 🇧🇪
+        </p>
         <footer className="absolute bottom-4 text-xs text-zinc-600">
           Built by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">ALT-F1</a> · v{APP_VERSION} · <button onClick={() => setView("terms")} className="text-blue-500 hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">Terms</button> · <button onClick={() => setView("privacy")} className="text-blue-500 hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">Privacy</button>
         </footer>
