@@ -96,8 +96,7 @@ services:
     image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-frontend:${APP_VERSION:-latest}
     container_name: taskara-frontend
     restart: unless-stopped
-    volumes:
-      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    # nginx.conf is baked into the Docker image — no volume mount needed
     labels:
       - traefik.enable=true
       # HTTPS router
