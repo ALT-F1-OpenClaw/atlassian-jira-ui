@@ -384,10 +384,41 @@ Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has con
 | 66 | Register DNS: `taskara.alt-f1.be` — point to production server | Planned |
 | 67 | Landing page — product pitch, screenshots, "Login with Atlassian" CTA, origin story | Planned |
 | 68 | LinkedIn announcement — post on ALT-F1 company page + Abdelkrim's profile | Planned |
+| 68b | LinkedIn beta testers call — short post inviting Jira users to test Taskara and give feedback (see draft below) | Planned |
 | 69 | Twitter/X announcement — launch thread with screenshots/demo GIF | Planned |
 | 70 | LinkedIn Groups — share in Atlassian/Jira/Agile communities (Atlassian Community, Jira Users, Agile Project Management) | Planned |
 | 71 | Product Hunt launch (optional) — listing with tagline + screenshots | Planned |
 | 72 | README + About page — add origin story, ALT-F1 independence disclaimer, app name | Planned |
+
+### Phase 7 — Monetization (Stripe)
+
+#### LinkedIn Beta Testers Draft (#68b)
+
+> 🚀 **Tired of Jira's slow UI? I built something about it.**
+>
+> Since 2023, I've been using Jira daily. The navigation is clunky, the exports are painful, and every click feels like it takes too long.
+>
+> So I built **Taskara** — a modern, fast, keyboard-driven alternative frontend for Jira Cloud. Same data, better experience.
+>
+> ✅ Kanban board with drag & drop
+> ✅ Sprint dashboard with burndown & velocity charts
+> ✅ Ctrl+K command palette for instant search
+> ✅ Dark/light mode, offline support, PWA
+> ✅ Login with your own Atlassian account (OAuth 2.0)
+> ✅ No data stored on our servers — your Jira, your browser
+>
+> 🔎 **I'm looking for beta testers!**
+> If you use Jira daily and want a faster UI, I'd love your feedback.
+>
+> 👉 Try it: https://taskara.alt-f1.be
+> 💬 Feedback: [GitHub Issues](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/new/choose)
+>
+> Built by ALT-F1 SRL, Brussels 🇧🇪 — not affiliated with Atlassian.
+> Open source (MIT): https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui
+>
+> #Jira #Atlassian #ProjectManagement #Agile #OpenSource #SaaS #BetaTesters #DevTools
+
+---
 
 ### Phase 7 — Monetization (Stripe)
 
