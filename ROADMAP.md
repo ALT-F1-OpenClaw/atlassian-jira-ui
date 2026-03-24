@@ -389,6 +389,7 @@ Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has con
 | 70 | LinkedIn Groups — share in Atlassian/Jira/Agile communities (Atlassian Community, Jira Users, Agile Project Management) | Planned |
 | 71 | Product Hunt launch (optional) — listing with tagline + screenshots | Planned |
 | 72 | README + About page — add origin story, ALT-F1 independence disclaimer, app name | Planned |
+| 88 | Public demo gallery page — interactive screenshot showcase of all views (dashboard, list, board, sprint, detail, settings, about, terms, privacy) using mock data, accessible without login at `/demo` or landing page section | Planned |
 
 ### Phase 7 — Monetization (Stripe)
 
