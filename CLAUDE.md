@@ -21,6 +21,8 @@ backend/              → FastAPI app
   app/main.py          → App setup, CORS, router registration
   app/config.py        → Pydantic Settings (env vars)
   app/jira_client.py   → Async Jira API client with rate-limit retry
+  app/session_store.py → Abstract SessionStore (Redis + file fallback)
+  app/deps.py          → Auth strategy resolver + authed Jira request
   app/version.py       → Single version source (synced by bump script)
   app/routers/         → projects, issues, boards, search, sprints, priorities, labels
   start.sh             → Start backend with venv + uvicorn --reload
@@ -173,11 +175,19 @@ Phase 1, Sections 1–2 complete + enhancements:
 
 **Phases 1–4 complete.** Phase 4b (CI Intelligence): #43-44 complete, #45 planned.
 Phase 5 (Multi-User Auth): OAuth 2.0 (#30) ✅, per-user sessions (#31) ✅, login UI (#32) ✅, HTTPS (#34) ✅, production mode (#54) ✅.
-Remaining: #33 (site selection), #35-36 (security), #37-39 (legal), #52a-c (tooling), #53 (OpenTelemetry), #56-61 (production deployment).
+Remaining: #52a-c (tooling), #53 (OpenTelemetry), #56-58 (deployment), #60-61 (JSM/Discovery URLs), #73 (custom fields), #74 (Spaces).
 - **Sprint State Filter** (#63): dropdown to filter sprints by state (Active & Future / Active / Future / Closed / All) on Sprint Dashboard
 - **Login Page Ribbon** (#64): environment ribbon (STG/DEV) shown on login page before authentication
+- **Per-User Site Selection** (#33): site picker after OAuth login for users with multiple Jira sites (ADR-019)
+- **Rate Limiting** (#35): tiered per-IP limits — API 60/min, auth 10/min, search 30/min, mutations 30/min (ADR-020)
+- **Multi-Tenant Isolation** (#36): token encryption at rest (Fernet), session fingerprinting, settings lockdown, cloud ID scoping (ADR-021)
+- **Terms of Service** (#37): 11-section ToS page, Belgian law jurisdiction
+- **GDPR Privacy Policy** (#38a): 10-section policy, Belgian DPA, GDPR rights (Art. 15–22)
+- **Cookie Consent Banner** (#39): opt-in GDPR compliant, Accept / Necessary only, localStorage persistence
+- **Redis Session Store** (#59): abstract SessionStore with Redis + file fallback, async get_session/resolve_auth (ADR-022)
+- **GitHub Issue Templates** (#75): bug report, feature request, question with YAML forms
 
-**Current version**: v1.60.0 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
+**Current version**: v1.62.0 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
 
 CI/CD: 6 GitHub Actions workflows (CI, release, Docker validate, Docker publish, CodeQL, CI auto-fix).
 Docker images on GHCR (multi-arch amd64+arm64). Bundle code-split into 5 chunks (app 300KB + vendors).
@@ -210,7 +220,7 @@ Dual auth via Strategy Pattern (ADR-017):
 - **API Token** (Basic Auth): for development/staging, disabled in production
 - **OAuth 2.0 (3LO)**: per-user Atlassian login, auto token refresh
 - `APP_ENV`: `development` | `staging` | `production` (controls auth availability)
-- Sessions persisted to `sessions.json` + `oauth_states.json` (Docker volumes)
+- Sessions stored in Redis (`REDIS_URL`) or file fallback (`sessions.json` + `oauth_states.json`)
 - User avatar dropdown menu: Profile, Account settings, Jira UI Settings, Theme, Sign out
 
 ### Jira URL Construction (ADR-018)

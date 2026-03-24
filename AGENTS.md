@@ -177,7 +177,9 @@ Dual auth via Strategy Pattern (ADR-017):
 - `APP_ENV=production` → API Token completely disabled, OAuth only
 - Environment ribbon (STG/DEV) shown on both login page and main app (top-right corner, `z-[100]`). Uses `jiraSettings.app_env` from `/api/config`
 - Auto token refresh before API calls (`authed_jira_request()`)
-- Sessions + CSRF states persisted to JSON files (Docker volumes)
+- Sessions stored via abstract `SessionStore` (ADR-022): Redis if `REDIS_URL` is set, file-based fallback otherwise
+- Redis keys: `jira_ui:session:{id}` (7d TTL), `jira_ui:oauth_state:{state}` (10min TTL)
+- `get_session()`, `resolve_auth()`, strategy `resolve()` are all `async`
 - `auth.py`: `/auth/login`, `/auth/callback`, `/auth/me`, `/auth/logout`
 - `deps.py`: `resolve_auth()` strategy chain, `authed_jira_request()` with refresh
 
@@ -212,7 +214,7 @@ Prod pinned to version tag → manual: ./deploy-prod.sh vX.Y.Z
 - TLS: Tailscale certs for `atlf1be-raspberry-pi-4.tail981e59.ts.net`
 - Port 443 reserved for OpenClaw (Tailscale Serve)
 - Nginx routes both `/api/` AND `/auth/` to backend
-- Session files mounted as Docker volumes (survive container restarts)
+- Session storage: Redis (preferred) or file-based JSON fallback (set `REDIS_URL` env var for Redis)
 - `APP_ENV=production` on prod, `development` on dev
 - See `docs/PRODUCTION_DEPLOYMENT.md` for VPS deployment (Ansible, Let's Encrypt)
 
