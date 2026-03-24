@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📖 Documentation
+    url: https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui#readme
+    about: Check the README for setup guides and feature documentation.
+  - name: 🔒 Security Vulnerability
+    url: https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/security/policy
+    about: Please report security vulnerabilities privately via SECURITY.md.
+  - name: 🗺️ Roadmap
+    url: https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/blob/main/ROADMAP.md
+    about: Check the roadmap for planned features and current progress.

@@ -1,0 +1,58 @@
+name: ✨ Feature Request
+description: Suggest an improvement or new feature
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have an idea to make the Jira UI better? We'd love to hear it!
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem / Motivation
+      description: What problem does this solve? Why is it needed?
+      placeholder: |
+        The current board view doesn't support WIP limits, so teams can't
+        enforce work-in-progress policies visually.
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed Solution
+      description: How do you envision this working?
+      placeholder: |
+        Add a configurable WIP limit per column on the board view.
+        Show a red highlight when the column exceeds its limit.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives Considered
+      description: Any other approaches you've thought about?
+    validations:
+      required: false
+  - type: dropdown
+    id: category
+    attributes:
+      label: Category
+      options:
+        - UI / UX
+        - Backend / API
+        - Performance
+        - Security
+        - Accessibility
+        - Mobile
+        - Deployment / Infra
+        - Documentation
+        - Other
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Mockups / Screenshots
+      description: Visual examples if available.
+    validations:
+      required: false
