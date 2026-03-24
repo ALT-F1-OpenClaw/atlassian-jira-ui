@@ -179,7 +179,7 @@
 | 38a | Privacy Policy — GDPR (EU/EEA) — 10 sections, DPA contact, supervisory authority | Legal | Complete |
 | 39 | Cookie consent banner — GDPR opt-in, Accept/Necessary only, localStorage persistence | Complete |
 | 57 | Production docker-compose + Let's Encrypt + real domain | Infra | Planned |
-| 59 | Redis session store (replace file-based sessions.json) | Infra | Planned |
+| 59 | Redis session store — abstract SessionStore with Redis + file fallback (ADR-022) | Complete |
 | 65 | Choose an app name (no "Jira" — trademark) | Branding | Planned |
 
 ### 🟡 Strongly recommended (ship with or shortly after)
@@ -272,7 +272,7 @@ Before going production-grade, re-enable these:
 | 56 | Ansible playbook — automated VPS deployment (Contabo/any Linux) | Planned |
 | 57 | Production docker-compose with Let's Encrypt + real domain | Planned |
 | 58 | Deploy user + SSH key auth (no root deployment) | Planned |
-| 59 | Redis session store (replace file-based sessions.json) | Planned |
+| 59 | Redis session store — abstract SessionStore with Redis + file fallback (ADR-022) | Complete |
 | 60 | Support Jira Service Management project URLs (`/jira/servicedesk/`) | Planned |
 | 61 | Support Jira Product Discovery project URLs (`/jira/discovery/`) | Planned |
 | 62 | Board view: show warning when >100 issues (Jira API limit). Users use Jira UI for large projects | Complete |

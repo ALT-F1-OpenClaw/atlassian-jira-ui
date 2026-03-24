@@ -29,10 +29,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 # File-backed session store — survives container restarts
 # Stored at /app/sessions.json (mount a volume for persistence)
-import json as _json
-from pathlib import Path as _Path
-
-_SESSION_FILE = _Path("/app/sessions.json")
+from ..session_store import get_session_store
 
 
 # ── Token encryption (Fernet) ───────────────────────────────────────
@@ -76,49 +73,7 @@ def _session_fingerprint(request: Request) -> str:
     return hashlib.sha256(raw.encode()).hexdigest()[:16]
 
 
-# ── Session storage ─────────────────────────────────────────────────
-
-def _load_sessions() -> dict[str, dict]:
-    """Load sessions from disk."""
-    if _SESSION_FILE.exists():
-        try:
-            return _json.loads(_SESSION_FILE.read_text())
-        except Exception:
-            return {}
-    return {}
-
-
-def _save_sessions() -> None:
-    """Persist sessions to disk."""
-    try:
-        _SESSION_FILE.write_text(_json.dumps(_sessions, default=str))
-    except Exception as e:
-        logger.warning("Failed to save sessions: %s", e)
-
-
-_sessions: dict[str, dict] = _load_sessions()
-
-# CSRF state tokens — also file-backed to survive restarts
-_STATES_FILE = _Path("/app/oauth_states.json")
-
-
-def _load_states() -> dict[str, float]:
-    if _STATES_FILE.exists():
-        try:
-            return {k: float(v) for k, v in _json.loads(_STATES_FILE.read_text()).items()}
-        except Exception:
-            return {}
-    return {}
-
-
-def _save_states() -> None:
-    try:
-        _STATES_FILE.write_text(_json.dumps(_oauth_states))
-    except Exception as e:
-        logger.warning("Failed to save states: %s", e)
-
-
-_oauth_states: dict[str, float] = _load_states()
+# Session store is accessed via get_session_store() — Redis or file-based
 
 ATLASSIAN_AUTH_URL = "https://auth.atlassian.com/authorize"
 ATLASSIAN_TOKEN_URL = "https://auth.atlassian.com/oauth/token"
@@ -165,16 +120,9 @@ async def login(request: Request):
         raise HTTPException(status_code=500, detail="OAuth not configured. Set Client ID and Secret in Settings.")
 
     # Generate CSRF state token
+    store = get_session_store()
     state = secrets.token_urlsafe(32)
-    _oauth_states[state] = time.time()
-
-    # Clean expired states (older than 10 min)
-    now = time.time()
-    expired = [k for k, v in _oauth_states.items() if now - v > 600]
-    for k in expired:
-        del _oauth_states[k]
-
-    _save_states()
+    await store.set_state(state)
 
     params = {
         "audience": "api.atlassian.com",
@@ -196,10 +144,9 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
         return RedirectResponse(f"/?auth_error={error}")
 
     # Verify CSRF state
-    if state not in _oauth_states:
+    store = get_session_store()
+    if not await store.consume_state(state):
         return RedirectResponse("/?auth_error=invalid_state")
-    del _oauth_states[state]
-    _save_states()
 
     s = get_settings()
 
@@ -246,7 +193,7 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
 
     # Create session — tokens encrypted at rest, fingerprinted to client
     session_id = secrets.token_urlsafe(48)
-    _sessions[session_id] = {
+    session_data = {
         "access_token": _encrypt(access_token),
         "refresh_token": _encrypt(refresh_token),
         "expires_at": time.time() + expires_in,
@@ -260,10 +207,10 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
             "avatarUrl": user.get("avatarUrls", {}).get("48x48", ""),
         },
     }
+    await store.set(session_id, session_data)
 
     logger.info("OAuth callback success: user=%s cloud_id=%s resources=%d",
                 user.get("displayName", "?"), cloud_id, len(resources))
-    _save_sessions()
 
     # Set session cookie and redirect to app
     response = RedirectResponse("/")
@@ -292,9 +239,8 @@ async def get_current_user(request: Request):
     if session["expires_at"] < time.time() + 60:  # Refresh 1 min before expiry
         refreshed = await _refresh_token(session, session_id)
         if not refreshed:
-            if session_id in _sessions:
-                del _sessions[session_id]
-                _save_sessions()
+            store = get_session_store()
+            await store.delete(session_id)
             return {"authenticated": False}
 
     return {
@@ -310,9 +256,9 @@ async def get_current_user(request: Request):
 async def logout(request: Request, response: Response):
     """Clear the session."""
     session_id = request.cookies.get(SESSION_COOKIE)
-    if session_id and session_id in _sessions:
-        del _sessions[session_id]
-        _save_sessions()
+    if session_id:
+        store = get_session_store()
+        await store.delete(session_id)
 
     resp = JSONResponse({"status": "logged_out"})
     resp.delete_cookie(SESSION_COOKIE)
@@ -362,7 +308,8 @@ async def select_site(request: Request):
         raise HTTPException(status_code=403, detail="Site not accessible")
 
     # Update the persistent session with new cloud_id
-    _sessions[session_id]["cloud_id"] = cloud_id
+    store = get_session_store()
+    updates: dict = {"cloud_id": cloud_id}
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -372,7 +319,7 @@ async def select_site(request: Request):
             )
             if user_resp.status_code == 200:
                 user = user_resp.json()
-                _sessions[session_id]["user"] = {
+                updates["user"] = {
                     "accountId": user.get("accountId", ""),
                     "displayName": user.get("displayName", ""),
                     "emailAddress": user.get("emailAddress", ""),
@@ -381,7 +328,7 @@ async def select_site(request: Request):
     except Exception:
         pass
 
-    _save_sessions()
+    await store.update(session_id, updates)
     logger.info("Site switched to cloud_id=%s (%s)", cloud_id, site.get("name", "?"))
     return {"status": "switched", "cloud_id": cloud_id, "site_name": site.get("name", "")}
 
@@ -421,16 +368,18 @@ async def _refresh_token(session: dict, session_id: str | None = None) -> bool:
         session["refresh_token"] = new_refresh
         session["expires_at"] = new_expires
 
-        # Persist encrypted tokens to disk
-        if session_id and session_id in _sessions:
-            _sessions[session_id]["access_token"] = _encrypt(new_access)
-            _sessions[session_id]["refresh_token"] = _encrypt(new_refresh)
-            _sessions[session_id]["expires_at"] = new_expires
-        _save_sessions()
+        # Persist encrypted tokens to store
+        if session_id:
+            store = get_session_store()
+            await store.update(session_id, {
+                "access_token": _encrypt(new_access),
+                "refresh_token": _encrypt(new_refresh),
+                "expires_at": new_expires,
+            })
         return True
 
 
-def get_session(request: Request) -> dict | None:
+async def get_session(request: Request) -> dict | None:
     """Get the current session with fingerprint validation.
 
     Returns a copy with decrypted tokens for in-memory use.
@@ -438,9 +387,13 @@ def get_session(request: Request) -> dict | None:
     (prevents stolen cookie reuse from a different IP/browser).
     """
     session_id = request.cookies.get(SESSION_COOKIE)
-    if not session_id or session_id not in _sessions:
+    if not session_id:
         return None
-    session = _sessions[session_id]
+
+    store = get_session_store()
+    session = await store.get(session_id)
+    if session is None:
+        return None
 
     # Fingerprint validation — reject if client changed
     stored_fp = session.get("fingerprint", "")
@@ -458,14 +411,9 @@ def get_session(request: Request) -> dict | None:
     }
 
 
-def get_jira_auth(request: Request) -> tuple[str | None, str | None]:
-    """Get OAuth token + cloud_id from session, or (None, None) for Basic Auth fallback.
-
-    Usage in routers:
-        oauth_token, cloud_id = get_jira_auth(request)
-        await jira_request("GET", "/path", oauth_token=oauth_token, cloud_id=cloud_id)
-    """
-    session = get_session(request)
+async def get_jira_auth(request: Request) -> tuple[str | None, str | None]:
+    """Get OAuth token + cloud_id from session, or (None, None) for Basic Auth fallback."""
+    session = await get_session(request)
     if not session:
         return None, None
     return session.get("access_token"), session.get("cloud_id")

@@ -26,6 +26,9 @@ class Settings(BaseSettings):
     # - production: API Token disabled entirely, OAuth only
     app_env: str = "development"
 
+    # Redis (optional — falls back to file-based sessions if not set)
+    redis_url: str = ""
+
     # Rate limiting (per IP, per minute)
     rate_limit_api: str = "60/minute"       # General API endpoints
     rate_limit_auth: str = "10/minute"      # Auth endpoints (login, callback)

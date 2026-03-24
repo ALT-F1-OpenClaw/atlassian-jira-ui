@@ -44,7 +44,7 @@ class AuthStrategy(ABC):
         ...
 
     @abstractmethod
-    def resolve(self, request: Request) -> JiraAuth | None:
+    async def resolve(self, request: Request) -> JiraAuth | None:
         """Try to resolve auth from the request. Returns None if not applicable."""
         ...
 
@@ -58,11 +58,11 @@ class OAuthStrategy(AuthStrategy):
         s = get_settings()
         return s.auth_oauth_enabled and bool(s.atlassian_client_id and s.atlassian_client_secret)
 
-    def resolve(self, request: Request) -> JiraAuth | None:
+    async def resolve(self, request: Request) -> JiraAuth | None:
         if not self.is_enabled():
             return None
         from .routers.auth import get_session
-        session = get_session(request)
+        session = await get_session(request)
         if not session:
             return None
         token = session.get("access_token")
@@ -82,7 +82,7 @@ class ApiTokenStrategy(AuthStrategy):
             return False  # Never available in production
         return s.auth_api_token_enabled and bool(s.jira_api_token)
 
-    def resolve(self, request: Request) -> JiraAuth | None:
+    async def resolve(self, request: Request) -> JiraAuth | None:
         if not self.is_enabled():
             return None
         # Basic Auth uses None/None — jira_client falls back to .env credentials
@@ -98,13 +98,13 @@ _strategies: list[AuthStrategy] = [
 ]
 
 
-def resolve_auth(request: Request) -> JiraAuth:
+async def resolve_auth(request: Request) -> JiraAuth:
     """Resolve authentication using the strategy chain.
 
     Returns the first successful auth, or raises 401 if none work.
     """
     for strategy in _strategies:
-        auth = strategy.resolve(request)
+        auth = await strategy.resolve(request)
         if auth is not None:
             logger.debug("Auth resolved via %s", auth.method)
             return auth
@@ -139,13 +139,13 @@ async def authed_jira_request(
     based on session state and feature toggles.
     Auto-refreshes expired OAuth tokens before making the call.
     """
-    auth = resolve_auth(request)
+    auth = await resolve_auth(request)
 
     # Auto-refresh expired OAuth tokens
     if auth.method == "oauth":
         import time
         from .routers.auth import get_session, _refresh_token, SESSION_COOKIE
-        session = get_session(request)
+        session = await get_session(request)
         session_id = request.cookies.get(SESSION_COOKIE) or ""
         if session and session.get("expires_at", 0) < time.time() + 120:
             logger.info("OAuth token expired — attempting refresh")
@@ -169,14 +169,21 @@ async def authed_jira_request(
 
 # ── Auth Status (for frontend) ──────────────────────────────────────
 
-def get_auth_status(request: Request) -> dict:
+async def get_auth_status(request: Request) -> dict:
     """Get current auth configuration status for the Settings page."""
     s = get_settings()
     oauth_strategy = OAuthStrategy()
     token_strategy = ApiTokenStrategy()
 
     from .routers.auth import get_session
-    session = get_session(request)
+    session = await get_session(request)
+
+    active = "none"
+    try:
+        auth = await resolve_auth(request)
+        active = auth.method
+    except Exception:
+        pass
 
     return {
         "api_token": {
@@ -188,5 +195,5 @@ def get_auth_status(request: Request) -> dict:
             "configured": oauth_strategy.is_enabled(),
             "logged_in": session is not None,
         },
-        "active_method": resolve_auth(request).method if any(st.resolve(request) for st in _strategies) else "none",
+        "active_method": active,
     }
