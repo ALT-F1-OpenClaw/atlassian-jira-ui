@@ -281,6 +281,7 @@ Before going production-grade, re-enable these:
 | 64 | Environment ribbon on login page — show STG/DEV indicator before authentication | Complete |
 | 73 | Custom fields best practices — display/edit Jira custom fields (story points, sprint, epic link, team, environment, etc.) with proper field type handling (single/multi select, cascading, user picker, date, number, text, URL) | Planned |
 | 74 | Spaces support — display Jira Spaces (project groupings) in sidebar/dashboard with space name, type (team-managed/company-managed), quick links, open work items count, and boards. Jira uses Spaces instead of raw project lists on the "For you" page | Planned |
+| 75 | GitHub issue templates — bug report, feature request, and question templates with pre-filled labels. Quick link in sidebar/footer to [create a new issue](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/new/choose) | Planned |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
