@@ -128,7 +128,13 @@ async def test_connection(body: UpdateJiraConnection | None = None):
 
 @router.patch("")
 async def update_settings(body: UpdateJiraConnection):
-    """Update Jira connection settings. Writes to .env file and reloads config."""
+    """Update Jira connection settings. Writes to .env file and reloads config.
+
+    Blocked in production mode — OAuth users must not modify server config.
+    """
+    s = get_settings()
+    if s.app_env == "production":
+        raise HTTPException(status_code=403, detail="Settings cannot be modified in production mode")
     if not _ENV_PATH.exists():
         raise HTTPException(status_code=500, detail=".env file not found")
 

@@ -144,13 +144,13 @@ async def authed_jira_request(
     # Auto-refresh expired OAuth tokens
     if auth.method == "oauth":
         import time
-        from .routers.auth import get_session, _refresh_token, _save_sessions
+        from .routers.auth import get_session, _refresh_token, SESSION_COOKIE
         session = get_session(request)
+        session_id = request.cookies.get(SESSION_COOKIE) or ""
         if session and session.get("expires_at", 0) < time.time() + 120:
             logger.info("OAuth token expired — attempting refresh")
-            refreshed = await _refresh_token(session)
+            refreshed = await _refresh_token(session, session_id)
             if refreshed:
-                _save_sessions()
                 auth = JiraAuth(
                     oauth_token=session["access_token"],
                     cloud_id=session.get("cloud_id"),

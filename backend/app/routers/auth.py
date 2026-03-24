@@ -1,10 +1,19 @@
-"""OAuth 2.0 (3LO) authentication with Atlassian."""
+"""OAuth 2.0 (3LO) authentication with Atlassian.
 
+Multi-tenant isolation (ADR-021):
+- OAuth tokens encrypted at rest (Fernet symmetric encryption)
+- Sessions bound to IP + User-Agent fingerprint
+- Cloud ID validated on every API call
+- Settings write endpoints blocked in production for OAuth users
+"""
+
+import hashlib
 import logging
 import secrets
 import time
 from urllib.parse import urlencode
 
+from cryptography.fernet import Fernet, InvalidToken
 from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 import httpx
@@ -25,6 +34,49 @@ from pathlib import Path as _Path
 
 _SESSION_FILE = _Path("/app/sessions.json")
 
+
+# ── Token encryption (Fernet) ───────────────────────────────────────
+
+def _get_fernet() -> Fernet:
+    """Derive Fernet key from APP_SECRET_KEY."""
+    s = get_settings()
+    # Derive a 32-byte key from the app secret using SHA-256
+    import base64
+    key = base64.urlsafe_b64encode(hashlib.sha256(s.app_secret_key.encode()).digest())
+    return Fernet(key)
+
+
+def _encrypt(value: str) -> str:
+    """Encrypt a string value."""
+    if not value:
+        return ""
+    return _get_fernet().encrypt(value.encode()).decode()
+
+
+def _decrypt(value: str) -> str:
+    """Decrypt an encrypted string value."""
+    if not value:
+        return ""
+    try:
+        return _get_fernet().decrypt(value.encode()).decode()
+    except (InvalidToken, Exception) as e:
+        logger.warning("Token decryption failed: %s", e)
+        return ""
+
+
+# ── Session fingerprinting ──────────────────────────────────────────
+
+def _session_fingerprint(request: Request) -> str:
+    """Generate a fingerprint from client IP + User-Agent to bind sessions."""
+    ip = request.headers.get("x-forwarded-for", request.client.host if request.client else "unknown")
+    if "," in ip:
+        ip = ip.split(",")[0].strip()
+    ua = request.headers.get("user-agent", "")
+    raw = f"{ip}:{ua}"
+    return hashlib.sha256(raw.encode()).hexdigest()[:16]
+
+
+# ── Session storage ─────────────────────────────────────────────────
 
 def _load_sessions() -> dict[str, dict]:
     """Load sessions from disk."""
@@ -192,14 +244,15 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
             cloud_id = ""
             user = {}
 
-    # Create session
+    # Create session — tokens encrypted at rest, fingerprinted to client
     session_id = secrets.token_urlsafe(48)
     _sessions[session_id] = {
-        "access_token": access_token,
-        "refresh_token": refresh_token,
+        "access_token": _encrypt(access_token),
+        "refresh_token": _encrypt(refresh_token),
         "expires_at": time.time() + expires_in,
         "cloud_id": cloud_id,
         "resources": resources,
+        "fingerprint": _session_fingerprint(request),
         "user": {
             "accountId": user.get("accountId", ""),
             "displayName": user.get("displayName", ""),
@@ -230,17 +283,18 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
 @router.get("/me")
 async def get_current_user(request: Request):
     """Get the current authenticated user (if any)."""
-    session_id = request.cookies.get(SESSION_COOKIE)
-    if not session_id or session_id not in _sessions:
+    session = get_session(request)  # Fingerprint-validated + decrypted
+    session_id = request.cookies.get(SESSION_COOKIE) or ""
+    if not session:
         return {"authenticated": False}
-
-    session = _sessions[session_id]
 
     # Check if token needs refresh
     if session["expires_at"] < time.time() + 60:  # Refresh 1 min before expiry
-        refreshed = await _refresh_token(session)
+        refreshed = await _refresh_token(session, session_id)
         if not refreshed:
-            del _sessions[session_id]
+            if session_id in _sessions:
+                del _sessions[session_id]
+                _save_sessions()
             return {"authenticated": False}
 
     return {
@@ -291,8 +345,9 @@ async def list_sites(request: Request):
 @limiter.limit(get_settings().rate_limit_auth)
 async def select_site(request: Request):
     """Switch to a different Jira site."""
-    session = get_session(request)
-    if not session:
+    session = get_session(request)  # Decrypted copy
+    session_id = request.cookies.get(SESSION_COOKIE) or ""
+    if not session or session_id not in _sessions:
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     body = await request.json()
@@ -306,8 +361,8 @@ async def select_site(request: Request):
     if not site:
         raise HTTPException(status_code=403, detail="Site not accessible")
 
-    # Update session with new cloud_id and fetch user info for new site
-    session["cloud_id"] = cloud_id
+    # Update the persistent session with new cloud_id
+    _sessions[session_id]["cloud_id"] = cloud_id
 
     try:
         async with httpx.AsyncClient(timeout=10.0) as client:
@@ -317,7 +372,7 @@ async def select_site(request: Request):
             )
             if user_resp.status_code == 200:
                 user = user_resp.json()
-                session["user"] = {
+                _sessions[session_id]["user"] = {
                     "accountId": user.get("accountId", ""),
                     "displayName": user.get("displayName", ""),
                     "emailAddress": user.get("emailAddress", ""),
@@ -331,8 +386,14 @@ async def select_site(request: Request):
     return {"status": "switched", "cloud_id": cloud_id, "site_name": site.get("name", "")}
 
 
-async def _refresh_token(session: dict) -> bool:
-    """Refresh an expired access token."""
+async def _refresh_token(session: dict, session_id: str | None = None) -> bool:
+    """Refresh an expired access token.
+
+    Args:
+        session: Decrypted session dict (from get_session).
+        session_id: Session key in _sessions — if provided, encrypts and
+                    writes new tokens back to the persistent store.
+    """
     s = get_settings()
     if not session.get("refresh_token"):
         return False
@@ -351,19 +412,50 @@ async def _refresh_token(session: dict) -> bool:
             return False
 
         tokens = resp.json()
-        session["access_token"] = tokens["access_token"]
-        session["refresh_token"] = tokens.get("refresh_token", session["refresh_token"])
-        session["expires_at"] = time.time() + tokens.get("expires_in", 3600)
+        new_access = tokens["access_token"]
+        new_refresh = tokens.get("refresh_token", session["refresh_token"])
+        new_expires = time.time() + tokens.get("expires_in", 3600)
+
+        # Update the decrypted session (in-memory for this request)
+        session["access_token"] = new_access
+        session["refresh_token"] = new_refresh
+        session["expires_at"] = new_expires
+
+        # Persist encrypted tokens to disk
+        if session_id and session_id in _sessions:
+            _sessions[session_id]["access_token"] = _encrypt(new_access)
+            _sessions[session_id]["refresh_token"] = _encrypt(new_refresh)
+            _sessions[session_id]["expires_at"] = new_expires
         _save_sessions()
         return True
 
 
 def get_session(request: Request) -> dict | None:
-    """Get the current session (for use by other routers)."""
+    """Get the current session with fingerprint validation.
+
+    Returns a copy with decrypted tokens for in-memory use.
+    Rejects sessions where the client fingerprint doesn't match
+    (prevents stolen cookie reuse from a different IP/browser).
+    """
     session_id = request.cookies.get(SESSION_COOKIE)
     if not session_id or session_id not in _sessions:
         return None
-    return _sessions[session_id]
+    session = _sessions[session_id]
+
+    # Fingerprint validation — reject if client changed
+    stored_fp = session.get("fingerprint", "")
+    if stored_fp and stored_fp != _session_fingerprint(request):
+        logger.warning("Session fingerprint mismatch for user=%s (possible stolen cookie)",
+                       session.get("user", {}).get("displayName", "?"))
+        # Don't delete — could be a legitimate IP change. Just reject this request.
+        return None
+
+    # Return a copy with decrypted tokens (never expose encrypted values)
+    return {
+        **session,
+        "access_token": _decrypt(session.get("access_token", "")),
+        "refresh_token": _decrypt(session.get("refresh_token", "")),
+    }
 
 
 def get_jira_auth(request: Request) -> tuple[str | None, str | None]:
