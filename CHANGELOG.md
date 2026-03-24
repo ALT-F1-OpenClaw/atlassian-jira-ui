@@ -1,3 +1,15 @@
+## 1.62.1 (2026-03-24)
+
+### Features
+
+* add deploy/update-config.sh — clean config update from git ([3d06295](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/3d0629530347075b7df9f387e03fc2632b327def))
+* public production deployment with Let's Encrypt + Redis ([#57](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/57)) ([f837a23](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/f837a23c42c3004243e7467d7d4cede9721c3ef1))
+* redesign login page — Taskara branding + trust signals + privacy messaging ([1aa05ef](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/1aa05ef340f9f9862d7b366f9530ab0c8367b812))
+
+### Bug Fixes
+
+* bake nginx.conf into Docker image with /auth/ routing + BACKEND_HOST env ([9d08d47](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/9d08d4788a599dfc509420181ff7c7c531edadc3))
+* detect failed OAuth callback + show error on login page ([34862cc](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/34862cca824edc9cf4873695301d582f1a0a6178))
 ## [1.62.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.61.0...v1.62.0) (2026-03-24)
 
 ### Features
