@@ -26,7 +26,7 @@ const CACHE_STATIC = 30 * 60_000; // 30 min — priorities, labels, projects, me
 const CACHE_LIST = 2 * 60_000; // 2 min — issue lists, boards (change moderately)
 const CACHE_DETAIL = 60_000; // 1 min — single issue detail (may be edited)
 
-type View = "dashboard" | "board" | "list" | "detail" | "sprint" | "about" | "settings";
+type View = "dashboard" | "board" | "list" | "detail" | "sprint" | "about" | "settings" | "terms";
 
 const JiraHostContext = createContext("");
 function useJiraHost() { return useContext(JiraHostContext); }
@@ -5035,6 +5035,7 @@ function Sidebar({
     { id: "sprint", label: "Sprint Dashboard", icon: "\u23F1" },
     { id: "settings", label: "Settings", icon: "⚙" },
     { id: "about", label: "About", icon: "\u24D8" },
+    { id: "terms", label: "Terms of Service", icon: "📜" },
   ];
 
   if (!open) {
@@ -5162,6 +5163,7 @@ function Breadcrumbs({
     sprint: "Sprint Dashboard",
     detail: "Detail",
     about: "About",
+    terms: "Terms of Service",
     settings: "Settings",
   };
 
@@ -5774,6 +5776,101 @@ function useTheme(): [Theme, () => void] {
   return [theme, toggleTheme];
 }
 
+/* ── Terms of Service Page (37) ────────────────────────────────────── */
+function TermsPage() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8 text-zinc-300 space-y-6" data-testid="terms-page">
+      <h1 className="text-2xl font-bold text-zinc-100">Terms of Service</h1>
+      <p className="text-sm text-zinc-500">Last updated: March 24, 2026</p>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">1. Service Description</h2>
+        <p>This application (&quot;the Service&quot;) is a third-party alternative frontend for Atlassian Jira Cloud, developed and operated by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">ALT-F1 SRL</a>, Brussels, Belgium.</p>
+        <p>The Service communicates with Jira Cloud via Atlassian&apos;s public REST APIs using your own Atlassian credentials. <strong>ALT-F1 SRL is not affiliated with, endorsed by, or connected to Atlassian in any way.</strong> &quot;Jira&quot; is a registered trademark of Atlassian Pty Ltd.</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">2. Account &amp; Authentication</h2>
+        <p>To use the Service, you authenticate via Atlassian&apos;s OAuth 2.0 (&quot;Login with Atlassian&quot;). You bring your own Atlassian account — we do not create or manage Jira accounts on your behalf.</p>
+        <p>You are responsible for maintaining the security of your Atlassian credentials and for any activity that occurs through your session.</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">3. Data Handling</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Server-side:</strong> We store only encrypted OAuth tokens and session metadata required to maintain your login. No Jira content (issues, projects, sprints, comments) is ever persisted on our servers.</li>
+          <li><strong>Client-side:</strong> Jira data is cached in your browser only (React Query in-memory cache, IndexedDB for offline support, localStorage for preferences). All cached data stays on your device, is never transmitted to third parties, and is cleared on logout or browser cache clear.</li>
+          <li><strong>Encryption:</strong> OAuth tokens are encrypted at rest using Fernet (AES-128-CBC) symmetric encryption.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">4. Acceptable Use</h2>
+        <p>You agree not to:</p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>Use the Service for any unlawful purpose</li>
+          <li>Attempt to bypass rate limiting or abuse protections</li>
+          <li>Use automated tools to scrape or bulk-export data beyond normal use</li>
+          <li>Interfere with or disrupt the Service or its infrastructure</li>
+          <li>Reverse-engineer the Service (the source code is already open — MIT license)</li>
+        </ul>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">5. Availability &amp; Warranty</h2>
+        <p>The Service is provided <strong>&quot;as is&quot;</strong> and <strong>&quot;as available&quot;</strong> without warranties of any kind, express or implied. We do not guarantee uninterrupted or error-free operation.</p>
+        <p>Service availability depends on Atlassian&apos;s API availability. Downtime, API changes, or rate limiting by Atlassian may affect the Service without notice.</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">6. Limitation of Liability</h2>
+        <p>To the maximum extent permitted by applicable law, ALT-F1 SRL shall not be liable for any indirect, incidental, special, consequential, or punitive damages, including but not limited to:</p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>Loss of data, profits, or business opportunities</li>
+          <li>Service interruptions caused by Atlassian API changes or outages</li>
+          <li>Unauthorized access to your Jira data due to compromised Atlassian credentials</li>
+        </ul>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">7. Intellectual Property</h2>
+        <p>The Service is open-source software licensed under the <a href="https://opensource.org/licenses/MIT" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">MIT License</a>. Source code is available at <a href="https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">GitHub</a>.</p>
+        <p>&quot;Jira&quot;, &quot;Atlassian&quot;, and related logos are trademarks of Atlassian Pty Ltd. This project uses these names solely to describe compatibility and is not endorsed by Atlassian.</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">8. Account Termination</h2>
+        <p>You may stop using the Service at any time by logging out. Your session data is deleted on logout.</p>
+        <p>ALT-F1 SRL reserves the right to suspend or terminate access for users who violate these Terms or engage in abusive behavior, without prior notice.</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">9. Changes to Terms</h2>
+        <p>We may update these Terms from time to time. Material changes will be communicated via an in-app notification. Continued use of the Service after changes constitutes acceptance of the revised Terms.</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">10. Governing Law</h2>
+        <p>These Terms are governed by and construed in accordance with the laws of <strong>Belgium</strong>. Any disputes arising from these Terms shall be submitted to the exclusive jurisdiction of the courts of <strong>Brussels, Belgium</strong>.</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">11. Contact</h2>
+        <p>For questions about these Terms, contact:</p>
+        <p>
+          <strong>ALT-F1 SRL</strong><br />
+          Brussels, Belgium<br />
+          <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">www.alt-f1.be</a>
+        </p>
+      </section>
+
+      <hr className="border-zinc-800" />
+      <p className="text-xs text-zinc-600 italic">This document is a template and does not constitute legal advice. ALT-F1 SRL recommends having these Terms reviewed by a qualified legal professional before public deployment.</p>
+    </div>
+  );
+}
+/* ── End Terms of Service Page ────────────────────────────────────── */
+
 export default function App() {
   const appQueryClient = useQueryClient();
   const [theme, toggleTheme] = useTheme();
@@ -6044,7 +6141,7 @@ export default function App() {
           </button>
         </div>
         <footer className="absolute bottom-4 text-xs text-zinc-600">
-          Built by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">ALT-F1</a> · v{APP_VERSION}
+          Built by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">ALT-F1</a> · v{APP_VERSION} · <button onClick={() => setView("terms")} className="text-blue-500 hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">Terms</button>
         </footer>
       </div>
       </JiraHostContext.Provider>
@@ -6374,6 +6471,7 @@ export default function App() {
           )}
           {view === "sprint" && <SprintDashboard project={project} onSelectIssue={setSelectedIssueKey} />}
           {view === "about" && <AboutPage />}
+          {view === "terms" && <TermsPage />}
           {view === "settings" && <SettingsPage />}
         </main>
       </div>

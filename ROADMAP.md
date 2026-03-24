@@ -175,7 +175,7 @@
 |---|------|----------|--------|
 | 35 | Rate limiting & abuse protection (ADR-020) | Security | Complete |
 | 36 | Multi-tenant data isolation — token encryption, session fingerprinting, settings lockdown (ADR-021) | Security | Complete |
-| 37 | Terms of Service page | Legal | Planned |
+| 37 | Terms of Service page — 11 sections, accessible from sidebar + login footer | Legal | Complete |
 | 38a | Privacy Policy — GDPR (EU/EEA) | Legal | Planned |
 | 39 | Cookie consent banner (opt-in for EU/GDPR) | Legal | Planned |
 | 57 | Production docker-compose + Let's Encrypt + real domain | Infra | Planned |
