@@ -1,3 +1,15 @@
+## [1.61.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.60.0...v1.61.0) (2026-03-24)
+
+### Features
+
+* add sprint state filter dropdown on Sprint Dashboard ([9a32e81](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/9a32e815b5caec0d526954dd8df5db9f470f7d98))
+* GDPR Privacy Policy page ([#38a](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/38a)) + cookie consent banner ([#39](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/39)) ([74307d0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/74307d0bb2c4fc19c1a82cc38b464a1988fee576))
+* GitHub issue templates — bug report, feature request, question ([#75](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/75)) ([965db9d](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/965db9da7de54bde732ed67cb8b392c97e7e2b18))
+* multi-tenant data isolation — encrypted tokens, session fingerprinting ([#36](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/36)) ([7cd60a7](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/7cd60a7dfcc30813152bca44f89df95f65f13005))
+* per-user Jira site selection — site picker after OAuth login ([#33](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/33)) ([091748d](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/091748d106673fa7456e1c89de643d1732667e47))
+* show environment ribbon (STG/DEV) on login page ([a761df8](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/a761df843ead695416d9668edae4fb054c5a1c8c))
+* Terms of Service page — 11 sections with Belgian law jurisdiction ([#37](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/37)) ([a238569](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/a2385698a35b460cd8a3901bae8fcf6a86f3d6c7))
+* tiered per-IP rate limiting on all API endpoints ([#35](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/35)) ([f538a86](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/f538a860b2a35f03001dc0ddc12fa694bb7981c2))
 ## [1.60.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.59.19...v1.60.0) (2026-03-23)
 
 ### Features
