@@ -284,6 +284,7 @@ Before going production-grade, re-enable these:
 | 73 | Custom fields best practices — display/edit Jira custom fields (story points, sprint, epic link, team, environment, etc.) with proper field type handling (single/multi select, cascading, user picker, date, number, text, URL) | Planned |
 | 74 | Spaces support — display Jira Spaces (project groupings) in sidebar/dashboard with space name, type (team-managed/company-managed), quick links, open work items count, and boards. Jira uses Spaces instead of raw project lists on the "For you" page | Planned |
 | 75 | GitHub issue templates — bug report, feature request, question with pre-filled labels + config.yml with contact links | Complete |
+| 89 | feat: URL-based routing — reflect current view + context in the browser URL bar (e.g. `/board`, `/sprint/123`, `/issue/PROJ-45`, `/settings`) so browser refresh preserves state instead of going to homepage. Use React Router or `history.pushState` | Planned |
 | 76 | fix: Sprint Dashboard shows only 2 sprints with "All" filter — investigate Agile API pagination + closed sprint fetching ([#39](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/39)) | Planned |
 
 ### Phase 4b — CI Intelligence
