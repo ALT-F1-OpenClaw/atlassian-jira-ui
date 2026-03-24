@@ -26,7 +26,7 @@ const CACHE_STATIC = 30 * 60_000; // 30 min — priorities, labels, projects, me
 const CACHE_LIST = 2 * 60_000; // 2 min — issue lists, boards (change moderately)
 const CACHE_DETAIL = 60_000; // 1 min — single issue detail (may be edited)
 
-type View = "dashboard" | "board" | "list" | "detail" | "sprint" | "about" | "settings" | "terms";
+type View = "dashboard" | "board" | "list" | "detail" | "sprint" | "about" | "settings" | "terms" | "privacy";
 
 const JiraHostContext = createContext("");
 function useJiraHost() { return useContext(JiraHostContext); }
@@ -5036,6 +5036,7 @@ function Sidebar({
     { id: "settings", label: "Settings", icon: "⚙" },
     { id: "about", label: "About", icon: "\u24D8" },
     { id: "terms", label: "Terms of Service", icon: "📜" },
+    { id: "privacy", label: "Privacy Policy", icon: "🔒" },
   ];
 
   if (!open) {
@@ -5164,6 +5165,7 @@ function Breadcrumbs({
     detail: "Detail",
     about: "About",
     terms: "Terms of Service",
+    privacy: "Privacy Policy",
     settings: "Settings",
   };
 
@@ -5871,6 +5873,154 @@ function TermsPage() {
 }
 /* ── End Terms of Service Page ────────────────────────────────────── */
 
+/* ── Privacy Policy Page (38a — GDPR) ─────────────────────────────── */
+function PrivacyPage() {
+  return (
+    <div className="max-w-3xl mx-auto px-4 py-8 text-zinc-300 space-y-6" data-testid="privacy-page">
+      <h1 className="text-2xl font-bold text-zinc-100">Privacy Policy</h1>
+      <p className="text-sm text-zinc-500">Last updated: March 24, 2026</p>
+      <p>This Privacy Policy describes how <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">ALT-F1 SRL</a> (&quot;we&quot;, &quot;us&quot;, &quot;our&quot;), based in Brussels, Belgium, processes your personal data when you use this application (&quot;the Service&quot;). We are committed to protecting your privacy in accordance with the <strong>General Data Protection Regulation (EU) 2016/679 (GDPR)</strong>.</p>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">1. Data Controller</h2>
+        <p><strong>ALT-F1 SRL</strong><br />Brussels, Belgium<br />Website: <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">www.alt-f1.be</a></p>
+        <p>For any data protection inquiries, please contact us via our website.</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">2. Data We Process</h2>
+        <h3 className="text-md font-medium text-zinc-200">2.1 Data stored on our server</h3>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>OAuth tokens</strong> — Your Atlassian access token and refresh token, encrypted at rest (Fernet/AES-128-CBC). Used solely to authenticate API calls to your Jira instance on your behalf.</li>
+          <li><strong>Session metadata</strong> — Session ID, client fingerprint (hashed IP + User-Agent), token expiry timestamp, selected Jira site (cloud ID).</li>
+          <li><strong>User profile</strong> — Display name, email address, avatar URL, Atlassian account ID — as returned by Atlassian&apos;s OAuth flow.</li>
+        </ul>
+        <h3 className="text-md font-medium text-zinc-200">2.2 Data stored in your browser only</h3>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Jira content cache</strong> — Issues, projects, sprints, boards cached in browser memory (React Query) and IndexedDB (offline support). Never transmitted to our servers or third parties.</li>
+          <li><strong>Preferences</strong> — Theme (dark/light), saved filters, timer states, site selection — stored in <code>localStorage</code>.</li>
+          <li><strong>Session cookie</strong> — A single HttpOnly cookie (<code>jira_ui_session</code>) to maintain your login.</li>
+        </ul>
+        <h3 className="text-md font-medium text-zinc-200">2.3 Data we do NOT store</h3>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>Your Atlassian password (we use OAuth — we never see it)</li>
+          <li>Your Jira issues, comments, attachments, or any project content on our server</li>
+          <li>Analytics or tracking data</li>
+          <li>Advertising identifiers</li>
+        </ul>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">3. Legal Basis for Processing</h2>
+        <p>Under GDPR Article 6, we process your data based on:</p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Contract performance (Art. 6(1)(b))</strong> — Processing OAuth tokens and session data is necessary to provide the Service you requested.</li>
+          <li><strong>Legitimate interest (Art. 6(1)(f))</strong> — Session fingerprinting for security (preventing unauthorized access). Our legitimate interest in protecting user accounts outweighs the minimal privacy impact of hashing IP + User-Agent.</li>
+          <li><strong>Consent (Art. 6(1)(a))</strong> — For any optional cookies beyond the strictly necessary session cookie.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">4. Data Sharing &amp; Transfers</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Atlassian</strong> — Your API calls are routed through Atlassian&apos;s API gateway (<code>api.atlassian.com</code>). Atlassian&apos;s own privacy policy governs how they process your data.</li>
+          <li><strong>No other third parties</strong> — We do not sell, rent, or share your personal data with advertisers, analytics providers, or any other third party.</li>
+          <li><strong>International transfers</strong> — Our servers are located in the EU. If Atlassian processes your data outside the EU/EEA, this is governed by Atlassian&apos;s data processing agreements and Standard Contractual Clauses.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">5. Data Retention</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Sessions</strong> — Automatically expire after 7 days of inactivity. Deleted immediately on logout.</li>
+          <li><strong>OAuth tokens</strong> — Deleted with the session. If you revoke access in your Atlassian account settings, tokens become invalid immediately.</li>
+          <li><strong>Browser data</strong> — Cleared on logout or when you clear your browser cache. You control this entirely.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">6. Your Rights (GDPR Articles 15–22)</h2>
+        <p>As an EU/EEA resident, you have the right to:</p>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Access</strong> (Art. 15) — Request a copy of your personal data we hold.</li>
+          <li><strong>Rectification</strong> (Art. 16) — Request correction of inaccurate data. (Note: your profile data comes from Atlassian — update it there.)</li>
+          <li><strong>Erasure</strong> (Art. 17) — Request deletion of your data. Logging out deletes your session. You can also contact us for full erasure.</li>
+          <li><strong>Restriction</strong> (Art. 18) — Request restriction of processing in certain circumstances.</li>
+          <li><strong>Data portability</strong> (Art. 20) — Receive your data in a structured, machine-readable format.</li>
+          <li><strong>Object</strong> (Art. 21) — Object to processing based on legitimate interest.</li>
+          <li><strong>Withdraw consent</strong> (Art. 7) — Withdraw consent for optional cookies at any time via the cookie settings.</li>
+        </ul>
+        <p>To exercise these rights, contact us via <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">www.alt-f1.be</a>. We will respond within 30 days.</p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">7. Cookies</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li><strong>Strictly necessary</strong> — <code>jira_ui_session</code> (HttpOnly, SameSite=Lax, 7-day expiry). Required for authentication. Cannot be disabled.</li>
+          <li><strong>Functional</strong> — <code>localStorage</code> keys for theme preference, saved filters, timer states, site selection. These stay on your device and are never sent to our server.</li>
+          <li>We do <strong>not</strong> use analytics cookies, advertising cookies, or any third-party tracking cookies.</li>
+        </ul>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">8. Security Measures</h2>
+        <ul className="list-disc pl-6 space-y-1">
+          <li>OAuth tokens encrypted at rest (Fernet/AES-128-CBC)</li>
+          <li>HTTPS/TLS encryption for all data in transit</li>
+          <li>Session fingerprinting to prevent stolen cookie reuse</li>
+          <li>Per-IP rate limiting to prevent abuse</li>
+          <li>HttpOnly, SameSite cookies to prevent XSS/CSRF attacks</li>
+          <li>No Jira content stored server-side</li>
+        </ul>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">9. Supervisory Authority</h2>
+        <p>If you believe we have not adequately addressed your data protection concerns, you have the right to lodge a complaint with the Belgian Data Protection Authority:</p>
+        <p><strong>Autorité de protection des données / Gegevensbeschermingsautoriteit</strong><br />
+        Rue de la Presse 35 / Drukpersstraat 35, 1000 Brussels<br />
+        <a href="https://www.autoriteprotectiondonnees.be" target="_blank" rel="noopener noreferrer" className="text-blue-400 hover:underline">www.autoriteprotectiondonnees.be</a></p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold text-zinc-100">10. Changes to This Policy</h2>
+        <p>We may update this Privacy Policy from time to time. Material changes will be communicated via an in-app notification. The &quot;Last updated&quot; date at the top reflects the most recent revision.</p>
+      </section>
+
+      <hr className="border-zinc-800" />
+      <p className="text-xs text-zinc-600 italic">This document is a template and does not constitute legal advice. ALT-F1 SRL recommends having this Privacy Policy reviewed by a qualified legal professional, particularly a GDPR specialist, before public deployment.</p>
+    </div>
+  );
+}
+/* ── End Privacy Policy Page ─────────────────────────────────────── */
+
+/* ── Cookie Consent Banner (39) ──────────────────────────────────── */
+function CookieConsentBanner({ onAccept, onDecline }: { onAccept: () => void; onDecline: () => void }) {
+  return (
+    <div className="fixed bottom-0 left-0 right-0 z-[200] bg-zinc-900 border-t border-zinc-700 px-4 py-3 shadow-xl" data-testid="cookie-consent-banner">
+      <div className="max-w-4xl mx-auto flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <div className="flex-1 text-sm text-zinc-300">
+          <span className="mr-1">🍪</span>
+          This site uses a <strong>strictly necessary session cookie</strong> for authentication and <strong>localStorage</strong> for your preferences.
+          We do <strong>not</strong> use analytics, advertising, or third-party tracking cookies.{" "}
+          <button onClick={() => { /* navigate to privacy */ const evt = new CustomEvent("navigate-view", { detail: "privacy" }); window.dispatchEvent(evt); }} className="text-blue-400 hover:underline cursor-pointer bg-transparent border-none p-0 text-sm">
+            Privacy Policy
+          </button>
+        </div>
+        <div className="flex gap-2 shrink-0">
+          <button onClick={onAccept} className="rounded-md bg-blue-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-blue-500 cursor-pointer" data-testid="cookie-accept-btn">
+            Accept
+          </button>
+          <button onClick={onDecline} className="rounded-md border border-zinc-600 px-4 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer" data-testid="cookie-decline-btn">
+            Necessary only
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+/* ── End Cookie Consent Banner ───────────────────────────────────── */
+
 export default function App() {
   const appQueryClient = useQueryClient();
   const [theme, toggleTheme] = useTheme();
@@ -5891,12 +6041,20 @@ export default function App() {
   const [view, setView] = useState<View>("list");
   const [authError, setAuthError] = useState("");
   const [siteConfirmed, setSiteConfirmed] = useState(false);
+  const [cookieConsent, setCookieConsent] = useState<string | null>(() => localStorage.getItem("jira-ui-cookie-consent"));
 
   // Listen for navigate-settings events from ErrorDisplay
   useEffect(() => {
     const handler = () => setView("settings");
     window.addEventListener("navigate-settings", handler);
     return () => window.removeEventListener("navigate-settings", handler);
+  }, []);
+
+  // Listen for navigate-view events (from cookie banner → privacy page)
+  useEffect(() => {
+    const handler = (e: Event) => setView((e as CustomEvent).detail as View);
+    window.addEventListener("navigate-view", handler);
+    return () => window.removeEventListener("navigate-view", handler);
   }, []);
 
   // Check for OAuth error in URL
@@ -6141,7 +6299,7 @@ export default function App() {
           </button>
         </div>
         <footer className="absolute bottom-4 text-xs text-zinc-600">
-          Built by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">ALT-F1</a> · v{APP_VERSION} · <button onClick={() => setView("terms")} className="text-blue-500 hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">Terms</button>
+          Built by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">ALT-F1</a> · v{APP_VERSION} · <button onClick={() => setView("terms")} className="text-blue-500 hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">Terms</button> · <button onClick={() => setView("privacy")} className="text-blue-500 hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">Privacy</button>
         </footer>
       </div>
       </JiraHostContext.Provider>
@@ -6472,6 +6630,7 @@ export default function App() {
           {view === "sprint" && <SprintDashboard project={project} onSelectIssue={setSelectedIssueKey} />}
           {view === "about" && <AboutPage />}
           {view === "terms" && <TermsPage />}
+          {view === "privacy" && <PrivacyPage />}
           {view === "settings" && <SettingsPage />}
         </main>
       </div>
@@ -6518,6 +6677,13 @@ export default function App() {
         />
       )}
     </div>
+    {/* Cookie consent banner — shown once until user accepts/declines */}
+    {!cookieConsent && (
+      <CookieConsentBanner
+        onAccept={() => { localStorage.setItem("jira-ui-cookie-consent", "accepted"); setCookieConsent("accepted"); }}
+        onDecline={() => { localStorage.setItem("jira-ui-cookie-consent", "necessary"); setCookieConsent("necessary"); }}
+      />
+    )}
     </JiraHostContext.Provider>
   );
 }
