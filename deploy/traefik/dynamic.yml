@@ -9,6 +9,12 @@ http:
       service: prod-backend
       tls: {}
       priority: 10
+    prod-auth:
+      rule: "PathPrefix(`/auth`)"
+      entryPoints: ["prod"]
+      service: prod-backend
+      tls: {}
+      priority: 10
     prod-frontend:
       rule: "PathPrefix(`/`)"
       entryPoints: ["prod"]
@@ -19,6 +25,12 @@ http:
     # ── DEV (:9443) ──
     dev-api:
       rule: "PathPrefix(`/api`)"
+      entryPoints: ["dev"]
+      service: dev-backend
+      tls: {}
+      priority: 10
+    dev-auth:
+      rule: "PathPrefix(`/auth`)"
       entryPoints: ["dev"]
       service: dev-backend
       tls: {}

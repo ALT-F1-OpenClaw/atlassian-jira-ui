@@ -1,0 +1,127 @@
+# Taskara — Public Production Docker Compose
+# Domain: taskara.alt-f1.be (Let's Encrypt TLS)
+#
+# 5 containers: Traefik + Redis + Backend + Frontend + Watchtower
+#
+# Usage:
+#   1. Copy .env.example to .env and fill in values
+#   2. Point DNS: taskara.alt-f1.be → your server IP
+#   3. docker compose up -d
+#
+# Traefik handles Let's Encrypt automatically (HTTP-01 challenge on port 80).
+
+networks:
+  web:
+    driver: bridge
+  internal:
+    driver: bridge
+
+volumes:
+  letsencrypt:
+  redis-data:
+
+services:
+  # ══════════════════════════════════════════════
+  # TRAEFIK — Reverse Proxy + Let's Encrypt TLS
+  # ══════════════════════════════════════════════
+  traefik:
+    image: traefik:v3.4
+    container_name: taskara-traefik
+    restart: unless-stopped
+    ports:
+      - "80:80"       # HTTP (redirect to HTTPS + ACME challenge)
+      - "443:443"     # HTTPS
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - letsencrypt:/letsencrypt
+    command:
+      # API / Dashboard
+      - --api.dashboard=false
+      # Entrypoints
+      - --entrypoints.web.address=:80
+      - --entrypoints.websecure.address=:443
+      # HTTP → HTTPS redirect
+      - --entrypoints.web.http.redirections.entryPoint.to=websecure
+      - --entrypoints.web.http.redirections.entryPoint.scheme=https
+      # Let's Encrypt
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge=true
+      - --certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web
+      - --certificatesresolvers.letsencrypt.acme.email=${ACME_EMAIL}
+      - --certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json
+      # Docker provider
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --providers.docker.network=web
+      # Logging
+      - --log.level=INFO
+    networks:
+      - web
+
+  # ══════════════════════════════════════════════
+  # REDIS — Session Store
+  # ══════════════════════════════════════════════
+  redis:
+    image: redis:7-alpine
+    container_name: taskara-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    networks:
+      - internal
+
+  # ══════════════════════════════════════════════
+  # BACKEND — FastAPI
+  # ══════════════════════════════════════════════
+  backend:
+    image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend:${APP_VERSION:-latest}
+    container_name: taskara-backend
+    restart: unless-stopped
+    dns: [1.1.1.1, 8.8.8.8]
+    env_file: .env
+    environment:
+      - CORS_ORIGINS=https://${DOMAIN}
+      - REDIS_URL=redis://redis:6379/0
+      - APP_ENV=production
+    depends_on:
+      - redis
+    networks:
+      - web
+      - internal
+
+  # ══════════════════════════════════════════════
+  # FRONTEND — Nginx + React SPA
+  # ══════════════════════════════════════════════
+  frontend:
+    image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-frontend:${APP_VERSION:-latest}
+    container_name: taskara-frontend
+    restart: unless-stopped
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    labels:
+      - traefik.enable=true
+      # HTTPS router
+      - traefik.http.routers.taskara.rule=Host(`${DOMAIN}`)
+      - traefik.http.routers.taskara.entrypoints=websecure
+      - traefik.http.routers.taskara.tls.certresolver=letsencrypt
+      - traefik.http.services.taskara.loadbalancer.server.port=80
+    depends_on:
+      - backend
+    networks:
+      - web
+
+  # ══════════════════════════════════════════════
+  # WATCHTOWER — auto-update (optional)
+  # ══════════════════════════════════════════════
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: taskara-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_LABEL_ENABLE=true
+    networks:
+      - web

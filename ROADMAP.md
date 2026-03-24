@@ -178,7 +178,7 @@
 | 37 | Terms of Service page — 11 sections, accessible from sidebar + login footer | Legal | Complete |
 | 38a | Privacy Policy — GDPR (EU/EEA) — 10 sections, DPA contact, supervisory authority | Legal | Complete |
 | 39 | Cookie consent banner — GDPR opt-in, Accept/Necessary only, localStorage persistence | Complete |
-| 57 | Production docker-compose + Let's Encrypt + real domain | Infra | Planned |
+| 57 | Production docker-compose + Let's Encrypt + taskara.alt-f1.be — deploy/public/ (Redis, Traefik ACME) | Infra | Complete |
 | 59 | Redis session store — abstract SessionStore with Redis + file fallback (ADR-022) | Complete |
 | 65 | App name: **Taskara** — domain: taskara.alt-f1.be | Complete |
 
@@ -270,7 +270,7 @@ Before going production-grade, re-enable these:
 | 53 | OpenTelemetry — distributed tracing, metrics, and logging across backend + Traefik | Planned |
 | 55 | Refactor sprints/boards to Platform API — replace Agile API for OAuth compatibility | Complete |
 | 56 | Ansible playbook — automated VPS deployment (Contabo/any Linux) | Planned |
-| 57 | Production docker-compose with Let's Encrypt + real domain | Planned |
+| 57 | Production docker-compose + Let's Encrypt + taskara.alt-f1.be — deploy/public/ | Complete |
 | 58 | Deploy user + SSH key auth (no root deployment) | Planned |
 | 59 | Redis session store — abstract SessionStore with Redis + file fallback (ADR-022) | Complete |
 | 60 | Support Jira Service Management project URLs (`/jira/servicedesk/`) | Planned |
