@@ -1,13 +1,18 @@
 """Search endpoints."""
 
 from fastapi import APIRouter, Query, Request
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ..jira_client import jira_request
 from ..deps import authed_jira_request
+from ..config import get_settings
 
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/api/search", tags=["search"])
 
 
 @router.get("")
+@limiter.limit(get_settings().rate_limit_search)
 async def jql_search(request: Request,
     jql: str = Query(..., description="JQL query string"),
     max_results: int = Query(default=50, le=100),
@@ -38,6 +43,7 @@ async def jql_search(request: Request,
 
 
 @router.get("/quick")
+@limiter.limit(get_settings().rate_limit_search)
 async def quick_search(request: Request,
     q: str = Query(..., description="Text to search for"),
     project: str | None = None,

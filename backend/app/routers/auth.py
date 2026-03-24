@@ -8,11 +8,14 @@ from urllib.parse import urlencode
 from fastapi import APIRouter, Request, Response, HTTPException
 from fastapi.responses import RedirectResponse, JSONResponse
 import httpx
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 logger = logging.getLogger(__name__)
 
 from ..config import get_settings
 
+limiter = Limiter(key_func=get_remote_address)
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 # File-backed session store — survives container restarts
@@ -102,8 +105,8 @@ def _get_callback_url(request: Request) -> str:
 
 
 @router.get("/login")
+@limiter.limit(get_settings().rate_limit_auth)
 async def login(request: Request):
-    # Rate limited at 10/minute globally (see main.py)
     """Redirect user to Atlassian OAuth consent screen."""
     s = get_settings()
     if not s.atlassian_client_id or not s.atlassian_client_secret:
@@ -134,6 +137,7 @@ async def login(request: Request):
 
 
 @router.get("/callback")
+@limiter.limit(get_settings().rate_limit_auth)
 async def callback(request: Request, code: str = "", state: str = "", error: str = ""):
     """Handle OAuth callback from Atlassian."""
     if error:
@@ -248,6 +252,7 @@ async def get_current_user(request: Request):
 
 
 @router.post("/logout")
+@limiter.limit(get_settings().rate_limit_auth)
 async def logout(request: Request, response: Response):
     """Clear the session."""
     session_id = request.cookies.get(SESSION_COOKIE)
@@ -283,6 +288,7 @@ async def list_sites(request: Request):
 
 
 @router.post("/select-site")
+@limiter.limit(get_settings().rate_limit_auth)
 async def select_site(request: Request):
     """Switch to a different Jira site."""
     session = get_session(request)

@@ -4,9 +4,13 @@ import logging
 from datetime import datetime, timezone
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ..jira_client import jira_request
 from ..deps import authed_jira_request
+from ..config import get_settings
 
+limiter = Limiter(key_func=get_remote_address)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/sprints", tags=["sprints"])
@@ -397,6 +401,7 @@ def _format_sprint(s: dict) -> dict:
 
 
 @router.post("")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def create_sprint(request: Request, body: CreateSprintBody):
     """Create a new sprint on a board."""
     payload: dict = {
@@ -414,7 +419,9 @@ async def create_sprint(request: Request, body: CreateSprintBody):
     return {"status": "ok", "sprint": _format_sprint(result or {})}
 
 
+@limiter.limit(get_settings().rate_limit_mutation)
 @router.patch("/{sprint_id}")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def update_sprint(request: Request, sprint_id: int, body: UpdateSprintBody):
     """Update sprint name, goal, or dates."""
     payload: dict = {}
@@ -439,8 +446,10 @@ async def update_sprint(request: Request, sprint_id: int, body: UpdateSprintBody
     result = await authed_jira_request(request, "PUT", f"/sprint/{sprint_id}", base="agile", json=payload)
     return {"status": "ok", "sprint": _format_sprint(result or {})}
 
+@limiter.limit(get_settings().rate_limit_mutation)
 
 @router.post("/{sprint_id}/start")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def start_sprint(request: Request, sprint_id: int):
     """Start a sprint (set state to active)."""
     # Get sprint to retrieve dates (required by Jira to start)
@@ -456,9 +465,11 @@ async def start_sprint(request: Request, sprint_id: int):
 
     result = await authed_jira_request(request, "PUT", f"/sprint/{sprint_id}", base="agile", json=payload)
     return {"status": "ok", "sprint": _format_sprint(result or {})}
+@limiter.limit(get_settings().rate_limit_mutation)
 
 
 @router.post("/{sprint_id}/complete")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def complete_sprint(request: Request, sprint_id: int):
     """Complete a sprint (set state to closed)."""
     # Jira requires sprint name in PUT body — fetch it first
@@ -473,6 +484,7 @@ async def complete_sprint(request: Request, sprint_id: int):
 
 
 @router.delete("/{sprint_id}")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def delete_sprint(request: Request, sprint_id: int):
     """Delete a sprint. Issues are moved back to backlog."""
     await authed_jira_request(request, "DELETE", f"/sprint/{sprint_id}", base="agile")
@@ -480,6 +492,7 @@ async def delete_sprint(request: Request, sprint_id: int):
 
 
 @router.post("/{sprint_id}/issues")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def add_issues_to_sprint(request: Request, sprint_id: int, body: SprintIssuesBody):
     """Add issues to a sprint."""
     await authed_jira_request(request,
@@ -492,6 +505,7 @@ async def add_issues_to_sprint(request: Request, sprint_id: int, body: SprintIss
 
 
 @router.delete("/{sprint_id}/issues/{issue_key}")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def remove_issue_from_sprint(request: Request, sprint_id: int, issue_key: str):
     """Remove an issue from a sprint (move to backlog)."""
     await authed_jira_request(request,

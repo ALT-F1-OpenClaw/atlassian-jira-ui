@@ -26,6 +26,12 @@ class Settings(BaseSettings):
     # - production: API Token disabled entirely, OAuth only
     app_env: str = "development"
 
+    # Rate limiting (per IP, per minute)
+    rate_limit_api: str = "60/minute"       # General API endpoints
+    rate_limit_auth: str = "10/minute"      # Auth endpoints (login, callback)
+    rate_limit_search: str = "30/minute"    # Search endpoints (heavier queries)
+    rate_limit_mutation: str = "30/minute"  # Write operations (create, update, delete)
+
     # App
     app_secret_key: str = "change-me"
     cors_origins: str = "http://localhost:5173"

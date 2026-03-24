@@ -10,6 +10,7 @@ License: MIT
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
@@ -27,6 +28,8 @@ async def lifespan(app: FastAPI):
     await close_client()
 
 
+settings = get_settings()
+
 app = FastAPI(
     title="Atlassian Jira UI",
     description="Modern alternative frontend for Jira Cloud",
@@ -34,12 +37,27 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
-# Rate limiting: 60 requests/minute per IP for API, 10/minute for auth
-limiter = Limiter(key_func=get_remote_address, default_limits=["60/minute"])
+# Rate limiting per IP — configurable via env vars
+limiter = Limiter(
+    key_func=get_remote_address,
+    default_limits=[settings.rate_limit_api],
+)
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
-settings = get_settings()
+
+async def _rate_limit_handler(request: Request, exc: RateLimitExceeded):
+    """Custom 429 response with Retry-After header."""
+    return JSONResponse(
+        status_code=429,
+        content={
+            "error": "rate_limit_exceeded",
+            "detail": f"Too many requests. Limit: {exc.detail}",
+        },
+        headers={"Retry-After": "60"},
+    )
+
+
+app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 
 app.add_middleware(
     CORSMiddleware,

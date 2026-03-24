@@ -4,9 +4,13 @@ import logging
 from fastapi import APIRouter, HTTPException, Query, Request
 from pydantic import BaseModel
 import httpx
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ..jira_client import jira_request
 from ..deps import authed_jira_request
+from ..config import get_settings
 
+limiter = Limiter(key_func=get_remote_address)
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/issues", tags=["issues"])
@@ -164,6 +168,7 @@ class CreateIssueRequest(BaseModel):
 
 
 @router.post("")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def create_issue(request: Request, req: CreateIssueRequest):
     """Create a new issue."""
     payload = {
@@ -203,6 +208,7 @@ class UpdateIssueRequest(BaseModel):
 
 
 @router.patch("/{key}")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def update_issue(request: Request, key: str, req: UpdateIssueRequest):
     """Update an issue."""
     fields = {}
@@ -243,6 +249,7 @@ class TransitionRequest(BaseModel):
 
 
 @router.post("/{key}/transition")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def transition_issue(request: Request, key: str, req: TransitionRequest):
     """Transition an issue to a new status."""
     await authed_jira_request(request,
@@ -259,6 +266,7 @@ class LogWorkRequest(BaseModel):
 
 
 @router.post("/{key}/worklog")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def log_work(request: Request, key: str, req: LogWorkRequest):
     """Log work on an issue."""
     payload: dict = {"timeSpent": req.timeSpent}

@@ -173,7 +173,7 @@
 
 | # | Task | Category | Status |
 |---|------|----------|--------|
-| 35 | Rate limiting & abuse protection | Security | Planned |
+| 35 | Rate limiting & abuse protection (ADR-020) | Security | Complete |
 | 36 | Multi-tenant data isolation (no cross-user token leakage) | Security | Planned |
 | 37 | Terms of Service page | Legal | Planned |
 | 38a | Privacy Policy — GDPR (EU/EEA) | Legal | Planned |
@@ -318,7 +318,7 @@ Before going production-grade, re-enable these:
 | 32 | Login/logout UI (Login button, user avatar, logout in header) | Complete |
 | 33 | Per-user Jira site selection (accessible-resources API) — site picker after OAuth login (ADR-019) | Complete |
 | 34 | HTTPS via Traefik + Tailscale TLS (OAuth callbacks work) | Complete |
-| 35 | Rate limiting & abuse protection (per-user request throttling) | Planned |
+| 35 | Rate limiting & abuse protection — tiered per-IP limits (ADR-020) | Complete |
 | 36 | Multi-tenant data isolation (no cross-user token leakage) | Planned |
 | 37 | Terms of Service page (usage terms, liability, SLA, acceptable use) | Planned |
 | 38a | Data Privacy Policy — GDPR (EU/EEA) | Planned |

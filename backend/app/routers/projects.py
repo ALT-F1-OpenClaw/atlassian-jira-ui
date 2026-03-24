@@ -2,8 +2,13 @@
 
 from fastapi import APIRouter, Query, Request
 from pydantic import BaseModel
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from ..jira_client import jira_request
 from ..deps import authed_jira_request
+from ..config import get_settings
+
+limiter = Limiter(key_func=get_remote_address)
 
 
 class CreateProjectRequest(BaseModel):
@@ -35,6 +40,7 @@ async def list_projects(request: Request):
 
 
 @router.post("")
+@limiter.limit(get_settings().rate_limit_mutation)
 async def create_project(request: Request, body: CreateProjectRequest):
     """Create a new Jira project."""
     payload: dict = {
