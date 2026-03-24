@@ -167,6 +167,37 @@
 
 ---
 
+## 🎯 v1.0 Milestone — Production-Ready Public SaaS
+
+### 🔴 Must-have (ship-blocking)
+
+| # | Task | Category | Status |
+|---|------|----------|--------|
+| 35 | Rate limiting & abuse protection | Security | Planned |
+| 36 | Multi-tenant data isolation (no cross-user token leakage) | Security | Planned |
+| 37 | Terms of Service page | Legal | Planned |
+| 38a | Privacy Policy — GDPR (EU/EEA) | Legal | Planned |
+| 39 | Cookie consent banner (opt-in for EU/GDPR) | Legal | Planned |
+| 57 | Production docker-compose + Let's Encrypt + real domain | Infra | Planned |
+| 59 | Redis session store (replace file-based sessions.json) | Infra | Planned |
+| 65 | Choose an app name (no "Jira" — trademark) | Branding | Planned |
+
+### 🟡 Strongly recommended (ship with or shortly after)
+
+| # | Task | Category | Status |
+|---|------|----------|--------|
+| 38b | Privacy Policy — CCPA (California) | Legal | Planned |
+| 56 | Ansible playbook (automated VPS deployment) | Infra | Planned |
+| 58 | Deploy user + SSH key auth (no root) | Infra | Planned |
+| 65b | Design a logo (icon, wordmark, favicon, PWA icon) | Branding | Planned |
+| 66 | Register DNS `<app-name>.alt-f1.be` | Branding | Planned |
+
+### 🟢 Post-v1.0 (v1.1+)
+
+Everything else: tooling upgrades (52a-c), OpenTelemetry (53), remaining privacy laws (38c-f), Jira Service Management/Discovery URLs (60-61), custom fields (73), Spaces (74), CI auto-fix (42/45), marketing launch (67-72).
+
+---
+
 ## Build Order
 
 | # | Feature | Phase | Status |
