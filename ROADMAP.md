@@ -180,7 +180,7 @@
 | 39 | Cookie consent banner — GDPR opt-in, Accept/Necessary only, localStorage persistence | Complete |
 | 57 | Production docker-compose + Let's Encrypt + real domain | Infra | Planned |
 | 59 | Redis session store — abstract SessionStore with Redis + file fallback (ADR-022) | Complete |
-| 65 | Choose an app name (no "Jira" — trademark) | Branding | Planned |
+| 65 | App name: **Taskara** — domain: taskara.alt-f1.be | Complete |
 
 ### 🟡 Strongly recommended (ship with or shortly after)
 
@@ -376,9 +376,9 @@ Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has con
 
 | # | Task | Status |
 |---|------|--------|
-| 65 | Choose an app name — memorable, distinct, not infringing on Atlassian trademarks | Planned |
+| 65 | App name: **Taskara** — domain: taskara.alt-f1.be | Complete |
 | 65b | Design a logo — icon + wordmark, works in dark/light mode, favicon, PWA icon, social preview | Planned |
-| 66 | Register DNS: `<app-name>.alt-f1.be` — point to production server | Planned |
+| 66 | Register DNS: `taskara.alt-f1.be` — point to production server | Planned |
 | 67 | Landing page — product pitch, screenshots, "Login with Atlassian" CTA, origin story | Planned |
 | 68 | LinkedIn announcement — post on ALT-F1 company page + Abdelkrim's profile | Planned |
 | 69 | Twitter/X announcement — launch thread with screenshots/demo GIF | Planned |
