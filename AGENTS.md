@@ -200,23 +200,35 @@ When Agile API fails (OAuth without Jira Software scopes):
 
 ### Production Deployment
 
-6 containers on Raspberry Pi 4 via Docker + Traefik + Watchtower:
+Two deployment targets:
 
+**Public SaaS** — `deploy/public/` (ADR-023):
+```
+Internet → :80/:443 → Traefik (Let's Encrypt ACME) → nginx → FastAPI → Redis
+5 containers: Traefik + Redis + Backend + Frontend + Watchtower
+Domain: taskara.alt-f1.be
+```
+- `docker compose pull && docker compose up -d` to update
+- Pin version: `APP_VERSION=vX.Y.Z` in `.env`
+- Redis 7 Alpine for sessions (128MB, appendonly)
+- Nginx routes `/api/` AND `/auth/` to backend, `/*` to SPA
+- Security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, X-XSS-Protection
+
+**Private Pi** — `deploy/` (ADR-012/013/014):
 ```
 Traefik (:4443 prod, :9443 dev) → nginx (/api + /auth → backend) → FastAPI
-Watchtower (nicholas-fedor/watchtower) polls GHCR every 5 min → auto-updates dev
-Prod pinned to version tag → manual: ./deploy-prod.sh vX.Y.Z
+6 containers: Traefik + Watchtower + prod-backend + prod-frontend + dev-backend + dev-frontend
 ```
-
-- Deploy config: `deploy/` directory (docker-compose.yml, traefik configs, deploy script)
-- Live at: `/srv/atlassian-jira-ui/` on the Pi
-- Systemd service: `jira-ui.service` (auto-start on boot)
+- Watchtower auto-updates dev every 5 min from GHCR
+- Prod pinned: `./deploy-prod.sh vX.Y.Z` or `PROD_VERSION=vX.Y.Z docker compose up -d`
 - TLS: Tailscale certs for `atlf1be-raspberry-pi-4.tail981e59.ts.net`
-- Port 443 reserved for OpenClaw (Tailscale Serve)
-- Nginx routes both `/api/` AND `/auth/` to backend
-- Session storage: Redis (preferred) or file-based JSON fallback (set `REDIS_URL` env var for Redis)
-- `APP_ENV=production` on prod, `development` on dev
-- See `docs/PRODUCTION_DEPLOYMENT.md` for VPS deployment (Ansible, Let's Encrypt)
+- Systemd service: `jira-ui.service` (auto-start on boot)
+
+**Updating images** (both deployments):
+```bash
+docker compose pull        # Pull latest from GHCR
+docker compose up -d       # Recreate with new images
+```
 
 ### Screenshots
 

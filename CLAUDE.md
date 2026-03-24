@@ -198,21 +198,23 @@ Light mode WCAG AA compliant. 17 auto-generated screenshots.
 
 ### Production Deployment
 
-Runs on Raspberry Pi 4 (ARM64) with Docker + Traefik + Watchtower.
+Two deployment options:
 
-```
-/srv/atlassian-jira-ui/
-├── docker-compose.yml          ← 6 containers
-├── deploy-prod.sh              ← Pin prod to version tag
-├── traefik/                    ← TLS + routing config
-├── prod/.env + nginx.conf      ← Jira creds + nginx upstream
-└── dev/.env + nginx.conf
-```
+**Public SaaS** (`deploy/public/`, ADR-023): 5 containers on any VPS
+- Traefik + Let's Encrypt ACME (HTTP-01) on :80/:443
+- Redis 7 Alpine for sessions (128MB, appendonly)
+- Domain: `taskara.alt-f1.be`
+- `docker compose up -d` after configuring `.env`
 
-- **Prod** (`:4443`): pinned to specific version tag, manual promote via `./deploy-prod.sh vX.Y.Z`
-- **Dev** (`:9443`): `:latest`, auto-updated by Watchtower every 5 min
+**Private/Pi** (`deploy/`, ADR-012/013/014): 6 containers on Raspberry Pi
+- Traefik + Tailscale TLS on :4443/:9443
+- File-based sessions (Docker volumes)
+- **Prod** (`:4443`): pinned version, `./deploy-prod.sh vX.Y.Z`
+- **Dev** (`:9443`): `:latest`, Watchtower auto-update
 - **Systemd**: `jira-ui.service` auto-starts on boot
-- Tailscale TLS certs for HTTPS
+
+**Updating images**: `docker compose pull && docker compose up -d`
+**Pin version**: set `APP_VERSION=vX.Y.Z` in `.env`, then `docker compose up -d`
 
 ### Authentication (v1.54.0+)
 

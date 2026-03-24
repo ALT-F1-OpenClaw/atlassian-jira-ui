@@ -235,34 +235,59 @@ Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at ever
 
 ## Deployment
 
-The app runs on-premise on a Raspberry Pi 4 (ARM64) with Docker + Traefik, accessible via Tailscale.
+### Option A: Public SaaS (VPS + Let's Encrypt) — Recommended
 
+Deploy **Taskara** to any VPS with automatic TLS via Let's Encrypt. See [`deploy/public/README.md`](deploy/public/README.md) for full guide.
+
+```bash
+git clone https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui.git
+cd atlassian-jira-ui/deploy/public
+cp .env.example .env && nano .env    # Set domain, OAuth credentials, app secret
+docker compose up -d                  # 5 containers: Traefik + Redis + Backend + Frontend + Watchtower
 ```
-┌──────────────────────────────────────────────────────┐
-│                   Raspberry Pi 4                      │
-│                                                       │
-│  ┌─────────┐  ┌───────────┐                          │
-│  │ Traefik │  │Watchtower │                          │
-│  │  :4443  │  │  5 min    │                          │
-│  │  :9443  │  │  poll     │                          │
-│  └────┬────┘  └───────────┘                          │
-│       │                                               │
-│  ┌────┴──────────────────┐  ┌──────────────────────┐ │
-│  │   DEV (:9443)         │  │   PROD (:4443)       │ │
-│  │  :latest (auto)       │  │  pinned version      │ │
-│  └───────────────────────┘  └──────────────────────┘ │
-└──────────────────────────────────────────────────────┘
-```
+
+**5 containers**: Traefik (Let's Encrypt TLS on :80/:443), Redis (session store), Backend (FastAPI), Frontend (Nginx + React), Watchtower (auto-update).
+
+### Option B: Private (Raspberry Pi + Tailscale)
+
+For private/internal use behind Tailscale. See [`deploy/README.md`](deploy/README.md).
+
+**6 containers**: Traefik (Tailscale TLS on :4443/:9443), Watchtower, prod-backend, prod-frontend, dev-backend, dev-frontend.
 
 | Environment | URL | Update |
 |---|---|---|
 | **Prod** | `https://atlf1be-raspberry-pi-4.tail981e59.ts.net:4443` | Manual: `./deploy-prod.sh vX.Y.Z` |
 | **Dev** | `https://atlf1be-raspberry-pi-4.tail981e59.ts.net:9443` | Auto (Watchtower, 5 min) |
 
-**6 containers**: Traefik (reverse proxy + TLS), Watchtower (auto-update dev), prod-backend, prod-frontend, dev-backend, dev-frontend.
+### Updating Docker Images
+
+```bash
+# ── Auto-update (Watchtower) ──
+# Watchtower polls GHCR every 5 min and pulls new :latest images automatically.
+# No action needed for dev/staging.
+
+# ── Manual update (any environment) ──
+cd deploy/public   # or deploy/ for Pi
+docker compose pull                    # Pull latest images from GHCR
+docker compose up -d                   # Recreate containers with new images
+
+# ── Pin to a specific version ──
+# In .env:
+APP_VERSION=v1.62.0                    # Or PROD_VERSION for Pi deploy
+# Then:
+docker compose up -d
+
+# ── Check running versions ──
+docker compose ps                      # Show container status
+docker inspect taskara-backend | grep -i image   # Check exact image tag
+
+# ── Rollback ──
+APP_VERSION=v1.61.0 docker compose up -d   # Pin to previous version
+```
 
 📖 **[User Guide](docs/USER_GUIDE.md)** — full feature documentation
-🚀 **[Deployment Guide](deploy/README.md)** — production setup on Raspberry Pi
+🚀 **[Public Deployment Guide](deploy/public/README.md)** — VPS + Let's Encrypt
+🏠 **[Pi Deployment Guide](deploy/README.md)** — Raspberry Pi + Tailscale
 
 ## Getting Started
 
