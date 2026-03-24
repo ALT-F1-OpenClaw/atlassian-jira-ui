@@ -249,6 +249,7 @@ Before going production-grade, re-enable these:
 | 63 | Sprint state filter dropdown — filter sprints by Active & Future / Active / Future / Closed / All | Complete |
 | 64 | Environment ribbon on login page — show STG/DEV indicator before authentication | Complete |
 | 73 | Custom fields best practices — display/edit Jira custom fields (story points, sprint, epic link, team, environment, etc.) with proper field type handling (single/multi select, cascading, user picker, date, number, text, URL) | Planned |
+| 74 | Spaces support — display Jira Spaces (project groupings) in sidebar/dashboard with space name, type (team-managed/company-managed), quick links, open work items count, and boards. Jira uses Spaces instead of raw project lists on the "For you" page | Planned |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
