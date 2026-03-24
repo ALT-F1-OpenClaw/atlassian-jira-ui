@@ -379,7 +379,8 @@ Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has con
 | # | Task | Status |
 |---|------|--------|
 | 65 | App name: **Taskara** — domain: taskara.alt-f1.be | Complete |
-| 65b | Design a logo — icon + wordmark, works in dark/light mode, favicon, PWA icon, social preview | Planned |
+| 65b | Design a logo — icon + wordmark, works in dark/light mode | Planned |
+| 65c | Generate all brand assets from logo — favicon.ico (16/32/48px), apple-touch-icon (180px), PWA icons (192/512px maskable), Android adaptive icon, OG social preview image (1200×630), Twitter card image, GitHub social preview (1280×640), README header banner, email signature logo, loading/splash screen | Planned |
 | 66 | Register DNS: `taskara.alt-f1.be` — point to production server | Planned |
 | 67 | Landing page — product pitch, screenshots, "Login with Atlassian" CTA, origin story | Planned |
 | 68 | LinkedIn announcement — post on ALT-F1 company page + Abdelkrim's profile | Planned |
