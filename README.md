@@ -529,7 +529,8 @@ MIT — see [LICENSE](./LICENSE)
 ## Author
 
 Abdelkrim BOUJRAF — [ALT-F1 SRL](https://www.alt-f1.be), Brussels 🇧🇪 🇲🇦
-- GitHub: [@abdelkrim](https://github.com/abdelkrim)
+- GitHub: [@Abdelkrim](https://github.com/Abdelkrim)
+- LinkedIn: [abdelkrimboujraf](https://be.linkedin.com/in/abdelkrimboujraf)
 - X: [@altf1be](https://x.com/altf1be)
 
 ## Contributing
