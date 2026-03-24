@@ -386,6 +386,33 @@ Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has con
 | 71 | Product Hunt launch (optional) — listing with tagline + screenshots | Planned |
 | 72 | README + About page — add origin story, ALT-F1 independence disclaimer, app name | Planned |
 
+### Phase 7 — Monetization (Stripe)
+
+**Pricing**: €3.99/month excl. VAT. All payments in EUR regardless of customer country.
+
+**Stripe account**: Already owned by ALT-F1 SRL.
+
+| # | Task | Status |
+|---|------|--------|
+| 77 | Stripe Product + Price setup — create "Taskara Pro" product with €3.99/month recurring price in EUR ([Stripe Dashboard → Products](https://dashboard.stripe.com/products)) | Planned |
+| 78 | Stripe Checkout integration — backend endpoint to create Checkout Session, redirect to Stripe-hosted payment page ([docs](https://docs.stripe.com/checkout/quickstart)) | Planned |
+| 79 | Stripe Customer Portal — self-service billing management (update card, cancel, invoices) ([docs](https://docs.stripe.com/customer-management/integrate-customer-portal)) | Planned |
+| 80 | Stripe Webhooks — handle `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted` to activate/deactivate access ([docs](https://docs.stripe.com/webhooks)) | Planned |
+| 81 | Subscription status in session — store Stripe customer ID + subscription status per user, gate features behind active subscription | Planned |
+| 82 | Pricing page — show plan, price (€3.99/mo excl. VAT), features list, "Subscribe" CTA | Planned |
+| 83 | Stripe Tax — automatic VAT calculation based on customer location (EU VAT, reverse charge for B2B) ([docs](https://docs.stripe.com/tax)) | Planned |
+| 84 | Free trial (optional) — 14-day trial via Stripe subscription trial period | Planned |
+| 85 | Invoice + receipt emails — Stripe-managed or custom via webhooks | Planned |
+
+#### Stripe Setup Links
+- [Stripe Dashboard](https://dashboard.stripe.com/)
+- [Create Product + Price](https://dashboard.stripe.com/products/create)
+- [Checkout Integration Guide](https://docs.stripe.com/checkout/quickstart)
+- [Customer Portal Setup](https://dashboard.stripe.com/settings/billing/portal)
+- [Webhook Endpoints](https://dashboard.stripe.com/webhooks)
+- [Stripe Tax Configuration](https://dashboard.stripe.com/settings/tax)
+- [Test Mode (for development)](https://dashboard.stripe.com/test/products)
+
 ---
 
 **Security requirements for public SaaS**:
