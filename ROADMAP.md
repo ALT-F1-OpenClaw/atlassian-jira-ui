@@ -283,7 +283,7 @@ Before going production-grade, re-enable these:
 | 30 | Atlassian OAuth 2.0 (3LO) — "Login with Atlassian" SSO | Complete |
 | 31 | Per-user session management (OAuth tokens route API calls, auto-refresh) | Complete |
 | 32 | Login/logout UI (Login button, user avatar, logout in header) | Complete |
-| 33 | Per-user Jira site selection (accessible-resources API) | Planned |
+| 33 | Per-user Jira site selection (accessible-resources API) — site picker after OAuth login (ADR-019) | Complete |
 | 34 | HTTPS via Traefik + Tailscale TLS (OAuth callbacks work) | Complete |
 | 35 | Rate limiting & abuse protection (per-user request throttling) | Planned |
 | 36 | Multi-tenant data isolation (no cross-user token leakage) | Planned |

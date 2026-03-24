@@ -5434,7 +5434,7 @@ function UserMenu({
   onToggleTheme: () => void;
   onSettings: () => void;
   onSignOut: () => void;
-  resources?: { id: string; name: string; url: string }[];
+  resources?: { id: string; name: string; url: string; avatarUrl?: string }[];
   currentCloudId?: string;
   onSwitchSite?: (cloudId: string) => void;
 }) {
@@ -5784,7 +5784,7 @@ export default function App() {
     queryFn: async () => {
       const res = await fetch(`${API}/auth/me`);
       if (!res.ok) return { authenticated: false };
-      return res.json() as Promise<{ authenticated: boolean; user?: { accountId: string; displayName: string; avatarUrl: string; emailAddress: string }; cloud_id?: string; resources?: { id: string; name: string; url: string }[] }>;
+      return res.json() as Promise<{ authenticated: boolean; user?: { accountId: string; displayName: string; avatarUrl: string; emailAddress: string }; cloud_id?: string; resources?: { id: string; name: string; url: string; avatarUrl?: string }[] }>;
     },
     staleTime: CACHE_STATIC,
   });
@@ -5793,6 +5793,7 @@ export default function App() {
   const { isOnline, queueCount, syncing, syncQueue, queueMutation, lastSyncResult, dismissSyncResult } = useOfflineQueue();
   const [view, setView] = useState<View>("list");
   const [authError, setAuthError] = useState("");
+  const [siteConfirmed, setSiteConfirmed] = useState(false);
 
   // Listen for navigate-settings events from ErrorDisplay
   useEffect(() => {
@@ -6050,6 +6051,81 @@ export default function App() {
     );
   }
 
+  // Site picker: show after OAuth login when user has multiple Jira sites and hasn't confirmed selection
+  const oauthResources = authData?.resources || [];
+  const needsSiteSelection = oauthWorks && oauthResources.length > 1 && !siteConfirmed
+    && !localStorage.getItem(`jira-ui-site-confirmed-${authData?.user?.accountId}`);
+
+  if (needsSiteSelection && view !== "settings") {
+    return (
+      <JiraHostContext.Provider value={jiraHost}>
+      <div className="flex h-screen flex-col items-center justify-center bg-zinc-950 text-center px-4">
+        {/* Environment ribbon */}
+        {jiraSettings?.app_env && jiraSettings.app_env !== "production" && (
+          <div className="fixed top-0 right-0 z-[100] pointer-events-none">
+            <div className={`w-0 h-0 border-t-[40px] border-l-[40px] border-l-transparent ${
+              jiraSettings.app_env === "staging" ? "border-t-orange-500" : "border-t-green-600"
+            }`} />
+            <span className="absolute top-[4px] right-[2px] text-[8px] font-bold uppercase text-white pointer-events-auto">
+              {jiraSettings.app_env === "staging" ? "STG" : "DEV"}
+            </span>
+          </div>
+        )}
+        <span className="text-6xl mb-4">🌐</span>
+        <h1 className="text-2xl font-bold text-zinc-100 mb-2">Choose your Jira site</h1>
+        <p className="text-zinc-400 max-w-md mb-6">
+          You have access to {oauthResources.length} Jira sites. Select the one you'd like to work with.
+          You can switch sites later from the user menu.
+        </p>
+        <div className="w-full max-w-md space-y-2">
+          {oauthResources.map((site) => (
+            <button
+              key={site.id}
+              onClick={async () => {
+                if (site.id !== authData?.cloud_id) {
+                  await fetch(`${API}/auth/select-site`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ cloud_id: site.id }),
+                  });
+                  refetchAuth();
+                  appQueryClient.invalidateQueries();
+                }
+                localStorage.setItem(`jira-ui-site-confirmed-${authData?.user?.accountId}`, "1");
+                setSiteConfirmed(true);
+              }}
+              className={`w-full flex items-center gap-4 rounded-lg border px-4 py-3 text-left transition-colors cursor-pointer ${
+                site.id === authData?.cloud_id
+                  ? "border-blue-500 bg-blue-950/30 text-zinc-100"
+                  : "border-zinc-700 bg-zinc-900 text-zinc-300 hover:border-zinc-500 hover:bg-zinc-800"
+              }`}
+              data-testid={`site-option-${site.id}`}
+            >
+              {site.avatarUrl ? (
+                <img src={site.avatarUrl} alt="" className="h-8 w-8 rounded" />
+              ) : (
+                <div className="h-8 w-8 rounded bg-blue-600 flex items-center justify-center text-sm font-bold text-white">
+                  {site.name.charAt(0).toUpperCase()}
+                </div>
+              )}
+              <div className="min-w-0 flex-1">
+                <div className="font-semibold text-sm">{site.name}</div>
+                <div className="text-xs text-zinc-500 truncate">{site.url}</div>
+              </div>
+              {site.id === authData?.cloud_id && (
+                <span className="text-blue-400 text-sm">✓ Current</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <footer className="absolute bottom-4 text-xs text-zinc-600">
+          Built by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">ALT-F1</a> · v{APP_VERSION}
+        </footer>
+      </div>
+      </JiraHostContext.Provider>
+    );
+  }
+
   // Settings page is always accessible (even without auth)
   if (view === "settings" && needsLogin) {
     return (
@@ -6195,7 +6271,7 @@ export default function App() {
                   await fetch(`${API}/auth/logout`, { method: "POST" });
                   refetchAuth();
                 }}
-                resources={authData?.resources?.map((r: { id: string; name: string; url: string }) => ({ id: r.id, name: r.name, url: r.url }))}
+                resources={authData?.resources}
                 currentCloudId={authData?.cloud_id}
                 onSwitchSite={async (cloudId: string) => {
                   await fetch(`${API}/auth/select-site`, {
