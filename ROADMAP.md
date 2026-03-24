@@ -385,7 +385,7 @@ Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has con
 | 67 | Landing page — product pitch, screenshots, "Login with Atlassian" CTA, origin story | Planned |
 | 68 | LinkedIn announcement — post on ALT-F1 company page + Abdelkrim's profile | Planned |
 | 68b | LinkedIn beta testers call — short post inviting Jira users to test Taskara and give feedback (see draft below) | Planned |
-| 69 | Twitter/X announcement — launch thread with screenshots/demo GIF | Planned |
+| 69 | Twitter/X announcement — launch thread with screenshots/demo GIF (see draft below) | Planned |
 | 70 | LinkedIn Groups — share in Atlassian/Jira/Agile communities (Atlassian Community, Jira Users, Agile Project Management) | Planned |
 | 71 | Product Hunt launch (optional) — listing with tagline + screenshots | Planned |
 | 72 | README + About page — add origin story, ALT-F1 independence disclaimer, app name | Planned |
@@ -417,6 +417,58 @@ Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has con
 > Open source (MIT): https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui
 >
 > #Jira #Atlassian #ProjectManagement #Agile #OpenSource #SaaS #BetaTesters #DevTools
+
+#### Twitter/X Launch Thread Draft (#69) — @altf1be
+
+> **Tweet 1 (hook)**
+> Jira's UI is painfully slow. So I built a faster one.
+>
+> Introducing Taskara — a modern alternative frontend for Jira Cloud ⚡
+>
+> Same data. Better UX. Open source.
+>
+> 🧵 Thread 👇
+
+> **Tweet 2 (features)**
+> What you get:
+> ⌨️ Ctrl+K command palette
+> 📋 Kanban board with drag & drop
+> 📊 Sprint burndown & velocity charts
+> ⏱️ Built-in time tracking
+> 🌙 Dark/light mode
+> 📱 PWA — works offline
+> 🔐 Login with your Atlassian account
+
+> **Tweet 3 (privacy)**
+> Your data stays yours:
+> • No Jira content stored on our servers
+> • OAuth tokens encrypted at rest
+> • Session fingerprinting against stolen cookies
+> • Rate limited API
+> • GDPR compliant 🇪🇺
+
+> **Tweet 4 (tech)**
+> Built with:
+> • React 19 + Vite + TypeScript
+> • FastAPI + Redis
+> • Traefik + Let's Encrypt
+> • 302 tests (unit + E2E + backend)
+> • Docker multi-arch (amd64 + arm64)
+>
+> Open source: https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui
+
+> **Tweet 5 (CTA)**
+> 🔎 Looking for beta testers!
+>
+> If you use Jira daily and want a faster UI → try it:
+> 👉 https://taskara.alt-f1.be
+>
+> Feedback welcome: https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues
+>
+> Built by @altf1be 🇧🇪🇲🇦
+> Not affiliated with Atlassian.
+>
+> #Jira #OpenSource #DevTools #Agile
 
 ---
 
