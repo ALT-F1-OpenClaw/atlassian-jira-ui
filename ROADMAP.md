@@ -167,37 +167,6 @@
 
 ---
 
-## 🎯 v1.0 Milestone — Production-Ready Public SaaS
-
-### 🔴 Must-have (ship-blocking)
-
-| # | Task | Category | Status |
-|---|------|----------|--------|
-| 35 | Rate limiting & abuse protection (ADR-020) | Security | Complete |
-| 36 | Multi-tenant data isolation — token encryption, session fingerprinting, settings lockdown (ADR-021) | Security | Complete |
-| 37 | Terms of Service page — 11 sections, accessible from sidebar + login footer | Legal | Complete |
-| 38a | Privacy Policy — GDPR (EU/EEA) | Legal | Planned |
-| 39 | Cookie consent banner (opt-in for EU/GDPR) | Legal | Planned |
-| 57 | Production docker-compose + Let's Encrypt + real domain | Infra | Planned |
-| 59 | Redis session store (replace file-based sessions.json) | Infra | Planned |
-| 65 | Choose an app name (no "Jira" — trademark) | Branding | Planned |
-
-### 🟡 Strongly recommended (ship with or shortly after)
-
-| # | Task | Category | Status |
-|---|------|----------|--------|
-| 38b | Privacy Policy — CCPA (California) | Legal | Planned |
-| 56 | Ansible playbook (automated VPS deployment) | Infra | Planned |
-| 58 | Deploy user + SSH key auth (no root) | Infra | Planned |
-| 65b | Design a logo (icon, wordmark, favicon, PWA icon) | Branding | Planned |
-| 66 | Register DNS `<app-name>.alt-f1.be` | Branding | Planned |
-
-### 🟢 Post-v1.0 (v1.1+)
-
-Everything else: tooling upgrades (52a-c), OpenTelemetry (53), remaining privacy laws (38c-f), Jira Service Management/Discovery URLs (60-61), custom fields (73), Spaces (74), CI auto-fix (42/45), marketing launch (67-72).
-
----
-
 ## Build Order
 
 | # | Feature | Phase | Status |
@@ -264,9 +233,7 @@ Before going production-grade, re-enable these:
 | 49 | Settings page — view/edit Jira connection, test connection, app preferences | Complete |
 | 50 | Searchable sprint selector — type-to-filter sprint dropdown on Sprint Dashboard | Complete |
 | 51 | "Open in Jira" ↗ button — link to Jira on list rows, board cards, detail panel | Complete |
-| 52a | Upgrade Vite 7→8 + @vitejs/plugin-react 5→6 | Planned |
-| 52b | Upgrade jsdom 28→29 | Planned |
-| 52c | Upgrade @tiptap/* 3.20.1→latest (when dist/ fixed) | Planned |
+| 52 | Upgrade tooling — Vite 7→8, jsdom 28→29, @vitejs/plugin-react 5→6, @tiptap/* 3.20.1→latest (when dist/ fixed) | Planned |
 | 53 | OpenTelemetry — distributed tracing, metrics, and logging across backend + Traefik | Planned |
 | 55 | Refactor sprints/boards to Platform API — replace Agile API for OAuth compatibility | Complete |
 | 56 | Ansible playbook — automated VPS deployment (Contabo/any Linux) | Planned |
@@ -277,10 +244,6 @@ Before going production-grade, re-enable these:
 | 61 | Support Jira Product Discovery project URLs (`/jira/discovery/`) | Planned |
 | 62 | Board view: show warning when >100 issues (Jira API limit). Users use Jira UI for large projects | Complete |
 | 54 | Production mode — API Token auth completely disabled, OAuth only | Complete |
-| 63 | Sprint state filter dropdown — filter sprints by Active & Future / Active / Future / Closed / All | Complete |
-| 64 | Environment ribbon on login page — show STG/DEV indicator before authentication | Complete |
-| 73 | Custom fields best practices — display/edit Jira custom fields (story points, sprint, epic link, team, environment, etc.) with proper field type handling (single/multi select, cascading, user picker, date, number, text, URL) | Planned |
-| 74 | Spaces support — display Jira Spaces (project groupings) in sidebar/dashboard with space name, type (team-managed/company-managed), quick links, open work items count, and boards. Jira uses Spaces instead of raw project lists on the "For you" page | Planned |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
@@ -316,17 +279,12 @@ Before going production-grade, re-enable these:
 | 30 | Atlassian OAuth 2.0 (3LO) — "Login with Atlassian" SSO | Complete |
 | 31 | Per-user session management (OAuth tokens route API calls, auto-refresh) | Complete |
 | 32 | Login/logout UI (Login button, user avatar, logout in header) | Complete |
-| 33 | Per-user Jira site selection (accessible-resources API) — site picker after OAuth login (ADR-019) | Complete |
+| 33 | Per-user Jira site selection (accessible-resources API) | Complete |
 | 34 | HTTPS via Traefik + Tailscale TLS (OAuth callbacks work) | Complete |
-| 35 | Rate limiting & abuse protection — tiered per-IP limits (ADR-020) | Complete |
+| 35 | Rate limiting & abuse protection (60 req/min per IP via slowapi) | Complete |
 | 36 | Multi-tenant data isolation (no cross-user token leakage) | Planned |
 | 37 | Terms of Service page (usage terms, liability, SLA, acceptable use) | Planned |
-| 38a | Data Privacy Policy — GDPR (EU/EEA) | Planned |
-| 38b | Data Privacy Policy — CCPA (California) | Planned |
-| 38c | Data Privacy Policy — PIPEDA (Canada) | Planned |
-| 38d | Data Privacy Policy — LGPD (Brazil) | Planned |
-| 38e | Data Privacy Policy — POPIA (South Africa) | Planned |
-| 38f | Data Privacy Policy — APPs (Australia) | Planned |
+| 38 | Data Privacy Policy — GDPR (EU), CCPA (California), PIPEDA (Canada), LGPD (Brazil), POPIA (South Africa), APPs (Australia) | Planned |
 | 39 | Cookie consent banner (opt-in for EU/GDPR, opt-out for others) | Planned |
 | 40 | Footer with ALT-F1 branding — link to alt-f1.be + GitHub + version | Complete |
 | 41 | Production deployment (Docker + Traefik + Watchtower on Raspberry Pi) | Complete |
@@ -359,32 +317,6 @@ Before going production-grade, re-enable these:
 - **Client-side cache**: Jira data (issues, boards, sprints) is cached in the user's browser only (React Query in-memory cache, Workbox service worker cache in IndexedDB, localStorage for preferences). All cached data stays on the user's device, is never transmitted to third parties, and is cleared on logout or browser cache clear. Users must be informed of this in the Privacy Policy
 - **Footer**: "Built by [ALT-F1](https://www.alt-f1.be)" with company logo/link on every page
 - **About page**: credit ALT-F1 as project creator with link to www.alt-f1.be
-
----
-
-### Phase 6 — Branding & Marketing
-
-#### Origin Story
-
-Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has consistently lacked in UX quality — poor navigation, clunky exports, slow workflows, and a general friction that adds stress to every workday. This project is an attempt to build the Jira frontend that should have existed: fast, keyboard-driven, and designed for people who actually use Jira every day. A better UI to reduce the daily pain of Jira users.
-
-> **Disclaimer**: ALT-F1 is an independent company and is **not affiliated with, endorsed by, or connected to Atlassian** in any way. This is a third-party alternative frontend that uses Jira's public REST APIs.
-
-> **Trademark constraint**: "Jira" is a registered trademark of Atlassian. The app name **must not** contain "Jira", "JIRA", or any variation. The name must be original and legally safe.
-
-| # | Task | Status |
-|---|------|--------|
-| 65 | Choose an app name — memorable, distinct, not infringing on Atlassian trademarks | Planned |
-| 65b | Design a logo — icon + wordmark, works in dark/light mode, favicon, PWA icon, social preview | Planned |
-| 66 | Register DNS: `<app-name>.alt-f1.be` — point to production server | Planned |
-| 67 | Landing page — product pitch, screenshots, "Login with Atlassian" CTA, origin story | Planned |
-| 68 | LinkedIn announcement — post on ALT-F1 company page + Abdelkrim's profile | Planned |
-| 69 | Twitter/X announcement — launch thread with screenshots/demo GIF | Planned |
-| 70 | LinkedIn Groups — share in Atlassian/Jira/Agile communities (Atlassian Community, Jira Users, Agile Project Management) | Planned |
-| 71 | Product Hunt launch (optional) — listing with tagline + screenshots | Planned |
-| 72 | README + About page — add origin story, ALT-F1 independence disclaimer, app name | Planned |
-
----
 
 **Security requirements for public SaaS**:
 - HTTPS mandatory (OAuth callback + token transport)
