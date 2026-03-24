@@ -282,6 +282,7 @@ Before going production-grade, re-enable these:
 | 73 | Custom fields best practices — display/edit Jira custom fields (story points, sprint, epic link, team, environment, etc.) with proper field type handling (single/multi select, cascading, user picker, date, number, text, URL) | Planned |
 | 74 | Spaces support — display Jira Spaces (project groupings) in sidebar/dashboard with space name, type (team-managed/company-managed), quick links, open work items count, and boards. Jira uses Spaces instead of raw project lists on the "For you" page | Planned |
 | 75 | GitHub issue templates — bug report, feature request, question with pre-filled labels + config.yml with contact links | Complete |
+| 76 | fix: Sprint Dashboard shows only 2 sprints with "All" filter — investigate Agile API pagination + closed sprint fetching ([#39](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/39)) | Planned |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
