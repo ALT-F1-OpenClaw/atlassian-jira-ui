@@ -392,6 +392,8 @@ Since 2023, Abdelkrim has been using Jira daily. The native Atlassian UI has con
 
 **Stripe account**: Already owned by ALT-F1 SRL.
 
+**Billing dashboard**: [ALT-F1-OpenClaw/cashflow-lite](https://github.com/ALT-F1-OpenClaw/cashflow-lite) — self-hosted Stripe analytics (MRR, churn, subscriptions, invoices). Generic, reusable across all ALT-F1 SaaS products. Stack: FastAPI + React. License: EUPL-1.2.
+
 | # | Task | Status |
 |---|------|--------|
 | 77 | Stripe Product + Price setup — create "Taskara Pro" product with €3.99/month recurring price in EUR ([Stripe Dashboard → Products](https://dashboard.stripe.com/products)) | Planned |
