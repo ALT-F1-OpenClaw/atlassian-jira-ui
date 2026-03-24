@@ -1,3 +1,8 @@
+## [1.62.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.61.0...v1.62.0) (2026-03-24)
+
+### Features
+
+* Redis session store with file-based fallback ([#59](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/59)) ([8676e2b](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/8676e2b7d0af85bf53b52c8fa0adc2bfe47e1423))
 ## [1.61.0](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.60.0...v1.61.0) (2026-03-24)
 
 ### Features
