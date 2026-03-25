@@ -1,551 +1,240 @@
-# Taskara — atlassian-jira-ui
+# Taskara
 
 [![CI](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/ci.yml)
-[![Release](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/release.yml/badge.svg)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/release.yml)
-[![Docker](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/docker.yml/badge.svg)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/docker.yml)
 [![GitHub release](https://img.shields.io/github/v/release/ALT-F1-OpenClaw/atlassian-jira-ui)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/releases/latest)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Python](https://img.shields.io/badge/Python-%3E%3D3.11-blue.svg)](https://www.python.org/)
-[![React](https://img.shields.io/badge/React-19-61DAFB.svg)](https://react.dev/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-4-38B2AC.svg)](https://tailwindcss.com/)
-[![GitHub last commit](https://img.shields.io/github/last-commit/ALT-F1-OpenClaw/atlassian-jira-ui)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commits/main)
-[![GitHub issues](https://img.shields.io/github/issues/ALT-F1-OpenClaw/atlassian-jira-ui)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues)
 [![GitHub stars](https://img.shields.io/github/stars/ALT-F1-OpenClaw/atlassian-jira-ui)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/stargazers)
 
-A modern, fast, and opinionated alternative UI for Atlassian Jira Cloud. Because Jira's UI deserves better.
+**A faster, modern UI for Jira Cloud.** Because Jira's UI deserves better.
 
 By [Abdelkrim BOUJRAF](https://github.com/Abdelkrim) / [ALT-F1 SRL](https://www.alt-f1.be), Brussels 🇧🇪 🇲🇦
 
-## Why?
+> **Not affiliated with Atlassian.** Taskara is an independent, open-source project that uses Jira's public REST APIs. "Jira" is a registered trademark of Atlassian.
 
-Jira is powerful. Jira's UI is not. It's slow, cluttered, and fights you at every step.
+---
 
-**This project fixes that** — a clean, modern frontend that talks to Jira's REST API v3 through a Python backend.
+# For Users
 
-## Architecture
+## Why Taskara?
 
-```
-┌─────────────────────────────────────────────┐
-│                  Frontend                    │
-│         React 19 + Tailwind CSS 4           │
-│     Vite · TypeScript · Clean & Fast        │
-├─────────────────────────────────────────────┤
-│                  Backend                     │
-│          Python · FastAPI · Async           │
-│     Jira REST API v3 · Auth Proxy           │
-├─────────────────────────────────────────────┤
-│             Jira Cloud API v3               │
-│          atlassian.net REST API             │
-└─────────────────────────────────────────────┘
-```
-
-## CI/CD Pipeline
-
-> **Note:** The project targets **Node 22** and **Python 3.13** for development. CI tests against multiple versions (Node 20/22, Python 3.11–3.13) to ensure backward compatibility across supported LTS releases.
-
-```
-  ┌──────────────┐
-  │   git push   │
-  │   to main    │
-  └──────┬───────┘
-         │
-         ▼
-  ┌──────────────────────────────────────────────────────────────┐
-  │                        CI Workflow                           │
-  │                  (.github/workflows/ci.yml)                  │
-  │                                                              │
-  │  ┌─────────────────────┐    ┌──────────────────────────┐    │
-  │  │  Frontend (Node 20) │    │  Backend (Python 3.11)   │    │
-  │  │  Frontend (Node 22) │    │  Backend (Python 3.12)   │    │
-  │  │                     │    │  Backend (Python 3.13)   │    │
-  │  │  • npm ci           │    │                          │    │
-  │  │  • tsc --noEmit     │    │  • pip install           │    │
-  │  │  • vitest (255)     │    │  • pytest (25)           │    │
-  │  │  • vite build       │    │  • import verification   │    │
-  │  └─────────┬───────────┘    └────────────┬─────────────┘    │
-  │            │                              │                  │
-  └────────────┼──────────────────────────────┼──────────────────┘
-               │                              │
-               ▼                              ▼
-        ┌──────────┐                  ┌──────────────┐
-        │  PASS ✅  │                  │   FAIL ❌     │
-        └──────┬───┘                  └──────┬───────┘
-               │                              │
-               │                              ▼
-               │                 ┌────────────────────────┐
-               │                 │  CI Auto-Fix Workflow   │
-               │                 │  (ci-autofix.yml)       │
-               │                 │                         │
-               │                 │  • Extract failed logs  │
-               │                 │  • Categorize error     │
-               │                 │  • Create GitHub issue  │
-               │                 │  • Notify Discord       │
-               │                 └────────────────────────┘
-               │
-        ┌──────┴──────────────────────────┐
-        │         git push --tags         │
-        │           (v1.x.x)              │
-        └──────┬──────────────────────────┘
-               │
-      ┌────────┼────────────────────┐
-      ▼        ▼                    ▼
-┌───────────┐ ┌──────────┐  ┌────────────────────┐
-│  Release  │ │  Docker  │  │  Publish Docker    │
-│ Workflow  │ │ Validate │  │  (GHCR)            │
-│           │ │          │  │                    │
-│ • Create  │ │ • Build  │  │ • Multi-arch       │
-│   GitHub  │ │   check  │  │   amd64 + arm64    │
-│   release │ │ • Compose│  │ • Push to GHCR     │
-│ • Upload  │ │   verify │  │ • Tag: latest,     │
-│   assets  │ │          │  │   1.x.0, 1.x       │
-└───────────┘ └──────────┘  └────────────────────┘
-
-  ┌──────────────────────────────────────────────────────────┐
-  │                    Always Running                        │
-  │                                                          │
-  │  ┌─────────────┐    ┌──────────────┐                    │
-  │  │   CodeQL     │    │  Dependabot  │                    │
-  │  │  (weekly)    │    │  (weekly)    │                    │
-  │  │              │    │              │                    │
-  │  │  • JS/TS     │    │  • npm deps  │                    │
-  │  │    analysis  │    │  • pip deps  │                    │
-  │  │  • Python    │    │  • Actions   │                    │
-  │  │    analysis  │    │    versions  │                    │
-  │  └─────────────┘    └──────────────┘                    │
-  └──────────────────────────────────────────────────────────┘
-```
-
-**Error categories detected by CI Auto-Fix:**
-
-| Category | Trigger Pattern | Example |
-|----------|----------------|---------|
-| `test-runner-conflict` | Playwright specs in Vitest | Vitest importing `@playwright/test` |
-| `missing-module` | Cannot find module | Deleted/moved import |
-| `typescript-error` | TS error codes (TS2xxx) | Type mismatch |
-| `test-failure` | Assertion errors | Failed expect() |
-| `dependency-error` | npm/pip install errors | Version conflict |
-| `lint-error` | ESLint/Prettier issues | Code style |
-| `build-error` | Vite/Rollup failure | Bad import/config |
+| Jira's UI | Taskara |
+|-----------|---------|
+| 3-5s page loads | Instant (SPA + smart caching) |
+| Cluttered sidebars | Clean, focused views |
+| Confusing navigation | Dashboard · List · Board · Sprint views |
+| No useful keyboard shortcuts | `Ctrl+K` search, `j/k` navigation, `c` create |
+| Sprint charts buried in menus | Burndown + velocity charts on one page |
+| No offline support | Works offline with auto-sync |
 
 ## Screenshots
 
-> Auto-generated by Playwright with mock data — see all 17 in [APP_SCREENSHOTS.md](docs/APP_SCREENSHOTS.md)
+> Auto-generated with mock data — see all 17 in [APP_SCREENSHOTS.md](docs/APP_SCREENSHOTS.md)
 
-### Issue List
-![Issue List](docs/screenshots/01-issue-list.png)
+| Dashboard | Kanban Board |
+|-----------|-------------|
+| ![Dashboard](docs/screenshots/04-dashboard.png) | ![Kanban Board](docs/screenshots/05-kanban-board.png) |
 
-### Issue Detail
-![Issue Detail](docs/screenshots/02-issue-detail.png)
+| Sprint Dashboard | Command Palette |
+|-----------------|----------------|
+| ![Sprint Dashboard](docs/screenshots/06-sprint-dashboard.png) | ![Command Palette](docs/screenshots/08-command-palette-results.png) |
 
-### Kanban Board
-![Kanban Board](docs/screenshots/05-kanban-board.png)
+| Issue Detail | Light Mode |
+|-------------|------------|
+| ![Issue Detail](docs/screenshots/02-issue-detail.png) | ![Light Mode](docs/screenshots/11-light-mode-list.png) |
 
-### Sprint Dashboard
-![Sprint Dashboard](docs/screenshots/06-sprint-dashboard.png)
-
-### Dashboard
-![Dashboard](docs/screenshots/04-dashboard.png)
-
-### Create Issue
-![Create Issue](docs/screenshots/09-create-issue.png)
-
-### Light Mode
-![Light Mode](docs/screenshots/11-light-mode-list.png)
-
-### Mobile Views
-| List | Detail | Board |
-|------|--------|-------|
-| ![Mobile List](docs/screenshots/14-mobile-list.png) | ![Mobile Detail](docs/screenshots/15-mobile-detail.png) | ![Mobile Board](docs/screenshots/17-mobile-board.png) |
-
-## What's Better
-
-| Jira's UI | This UI |
-|-----------|---------|
-| 3-5s page loads | Instant (SPA + API caching) |
-| Cluttered sidebars | Clean, focused views |
-| Tiny text, wasted space | Readable, dense when needed |
-| Confusing navigation | Dashboard, Board, List, Sprint views + sidebar |
-| Search is broken | Fast fuzzy search + JQL |
-| Can't see what matters | Priority-sorted, status-colored |
+| Mobile List | Mobile Board |
+|------------|-------------|
+| ![Mobile List](docs/screenshots/14-mobile-list.png) | ![Mobile Board](docs/screenshots/17-mobile-board.png) |
 
 ## Features
 
-### Phase 1 — Core Views (Complete)
-- [x] **List view** — Dense, sortable, filterable table with column sorting, filter dropdowns (type/status/assignee), pagination
-- [x] **Issue detail panel** — Slide-in side panel with ADF rendering, inline editing (summary, description, assignee, priority, status, due date, labels), status transitions
-- [x] **Board view / Kanban** — Columns by status category, issue cards, drag-and-drop transitions, swimlanes (assignee/priority)
-- [x] **Command palette** — `Ctrl+K`/`Cmd+K` overlay, debounced fuzzy search, arrow key navigation, recent searches in localStorage
+### Views
+- **Dashboard** — quick overview: active sprints, recent issues, project cards
+- **List view** — sortable, filterable table with pagination
+- **Kanban board** — drag-and-drop status transitions, swimlanes by assignee/priority
+- **Sprint dashboard** — burndown chart, velocity chart, scope tracking, issue counts
+- **Issue detail** — slide-in panel with ADF rendering, inline editing, status transitions
 
-### Phase 2 — Productivity (Complete)
-- [x] **Keyboard shortcuts** — `j`/`k` list navigation, `Enter` opens issue, `Escape` closes panels, `b`/`l` view switching, `?` help overlay, context-aware (disabled in inputs)
-- [x] **Quick create** — `c` key or `+ Create` button, project/summary/type/priority/assignee/description fields, form validation, optimistic UI update
-- [x] **Bulk actions** — Checkbox selection, select all/deselect all, floating action bar with bulk transition/assign/priority, batch API calls via `Promise.allSettled`
-- [x] **Saved filters** — Save filter combinations as named views, quick-access dropdown, inline rename/delete, localStorage persistence
+### Productivity
+- **⌨️ Keyboard shortcuts** — `j/k` navigate, `Enter` open, `Escape` close, `b/l/s` switch views, `c` create, `?` help
+- **🔍 Command palette** — `Ctrl+K` instant fuzzy search across all issues
+- **⚡ Bulk actions** — select multiple issues, bulk transition/assign/priority
+- **💾 Saved filters** — save filter combinations as named views
+- **⏱️ Time tracking** — built-in timer, log work modal, progress bar
+- **📝 Rich text editor** — TipTap editor for descriptions (bold, italic, headings, lists, links, code)
 
-### Phase 3 — Power Features (In Progress)
-- [x] **Sprint dashboard** — Active sprint overview, burndown chart, velocity chart, scope change tracking
-- [x] **Sprint CRUD** — Create/edit/delete sprints, start/complete with confirmation dialogs, manage sprint scope (add/remove issues)
-- [x] **Time tracking** — Built-in timer per issue, log work modal, progress bar, worklog history
-- [x] **Dark/Light mode** — Toggle in header (sun/moon), CSS variable theme switching, localStorage persistence, system preference detection
-- [x] **Offline mode** — Service worker caching, IndexedDB mutation queue, auto-sync on reconnect, offline indicator
-- [x] **UI navigation** — Segmented view switcher with icons, collapsible sidebar (projects/filters/views), breadcrumbs, dashboard landing page, empty states with CTAs
+### Quality of Life
+- **🌙 Dark/Light mode** — toggle in header, system preference detection
+- **📱 Responsive** — mobile-first, works on phone/tablet/desktop
+- **📴 Offline mode** — works without internet, auto-syncs when reconnected
+- **🔔 Sprint state filter** — view Active, Future, Closed, or All sprints
+- **📋 Create submenu** — quick-create issues and projects from anywhere
 
-### Additional Features
-- **Searchable dropdowns** — Type-to-filter autocomplete on all dropdowns (project, filters, assignee, priority)
-- **Create submenu** — `+ Create` dropdown with Issue and Project creation
-- **Create project** — Name, auto-generated key, type (Software/Service Desk/Business), lead, description
-- **Responsive design** — Mobile-first layout, stacked filters, adaptive pagination, works on phone/tablet/desktop
-- **Rich text editor** — TipTap-based ADF editor with toolbar (bold, italic, headings, lists, links, code blocks)
-- **Smart dropdowns** — Assignee from Jira project members, priority from Jira API, status transitions
-- **Date picker** — Native date widget for due date (add/clear)
-- **Editable labels** — Add/remove with autocomplete from Jira labels
-- **Mobile Kanban arrows** — Arrow buttons on cards for status transitions (mobile only)
-- **PWA** — Web app manifest, service worker, installable on mobile
-- **Sprint state filter** — Filter sprints by Active & Future / Active / Future / Closed / All
-- **Environment ribbon** — STG/DEV indicator on login page and main app (top-right corner)
+### Security & Privacy
+- **🔐 OAuth 2.0** — "Login with Atlassian", no passwords stored
+- **🚫 No data stored** — your Jira content stays in your browser, never on our servers
+- **🔒 Encrypted tokens** — OAuth tokens encrypted at rest (Fernet/AES-128-CBC)
+- **🛡️ Session protection** — fingerprinting prevents stolen cookie reuse
+- **📊 Rate limiting** — per-IP limits protect your Jira API quota
+- **🇪🇺 GDPR compliant** — Privacy Policy, Terms of Service, cookie consent
 
-### Authentication & Security
-- **OAuth 2.0 (3LO)** — "Login with Atlassian" per-user authentication
-- **Per-user Jira site selection** — Site picker after login for users with multiple Jira sites
-- **Multi-tenant isolation** — Encrypted tokens at rest (Fernet), session fingerprinting (IP + User-Agent), cloud ID scoping
-- **Rate limiting** — Tiered per-IP limits: API 60/min, auth 10/min, search 30/min, mutations 30/min
-- **Production mode** — API Token auth disabled, settings locked, OAuth only
-- **302 tests** — 255 Vitest BDD + 25 pytest backend + 22 Playwright E2E
+## Try It
 
-## Tech Stack
+### Option 1: Hosted (SaaS)
 
-### Backend (Python)
-- **FastAPI** — async, fast, auto-documented
-- **httpx** — async HTTP client for Jira API
-- **Pydantic** — request/response validation
-- **python-jose** — JWT session handling
-- **uvicorn** — ASGI server
+Visit **[taskara.alt-f1.be](https://taskara.alt-f1.be)** → Login with Atlassian → Done.
 
-### Frontend (React)
-- **React 19** — latest, with server components ready
-- **Vite 6** — instant HMR, fast builds
-- **TypeScript 5.7** (strict) — type safety
-- **Tailwind CSS 4** — utility-first, clean
-- **TanStack Query** — data fetching + caching
-- **TipTap** — rich text editor for ADF descriptions
-- **dnd-kit** — drag & drop for board
-- **cmdk** — command palette
-- **Vitest** — fast unit testing
-- **Testing Library** — BDD-style component tests (248 scenarios)
-
-## Deployment
-
-### Option A: Public SaaS (VPS + Let's Encrypt) — Recommended
-
-Deploy **Taskara** to any VPS with automatic TLS via Let's Encrypt. See [`deploy/public/README.md`](deploy/public/README.md) for full guide.
+### Option 2: Docker (self-hosted, 3 steps)
 
 ```bash
-git clone https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui.git
-cd atlassian-jira-ui/deploy/public
-cp .env.example .env && nano .env    # Set domain, OAuth credentials, app secret
-docker compose up -d                  # 5 containers: Traefik + Redis + Backend + Frontend + Watchtower
-```
-
-**5 containers**: Traefik (Let's Encrypt TLS on :80/:443), Redis (session store), Backend (FastAPI), Frontend (Nginx + React), Watchtower (auto-update).
-
-### Option B: Private (Raspberry Pi + Tailscale)
-
-For private/internal use behind Tailscale. See [`deploy/README.md`](deploy/README.md).
-
-**6 containers**: Traefik (Tailscale TLS on :4443/:9443), Watchtower, prod-backend, prod-frontend, dev-backend, dev-frontend.
-
-| Environment | URL | Update |
-|---|---|---|
-| **Prod** | `https://atlf1be-raspberry-pi-4.tail981e59.ts.net:4443` | Manual: `./deploy-prod.sh vX.Y.Z` |
-| **Dev** | `https://atlf1be-raspberry-pi-4.tail981e59.ts.net:9443` | Auto (Watchtower, 5 min) |
-
-### Updating Docker Images
-
-```bash
-# ── Auto-update (Watchtower) ──
-# Watchtower polls GHCR every 5 min and pulls new :latest images automatically.
-# No action needed for dev/staging.
-
-# ── Manual update (any environment) ──
-cd deploy/public   # or deploy/ for Pi
-docker compose pull                    # Pull latest images from GHCR
-docker compose up -d                   # Recreate containers with new images
-
-# ── Pin to a specific version ──
-# In .env:
-APP_VERSION=v1.62.0                    # Or PROD_VERSION for Pi deploy
-# Then:
-docker compose up -d
-
-# ── Check running versions ──
-docker compose ps                      # Show container status
-docker inspect taskara-backend | grep -i image   # Check exact image tag
-
-# ── Rollback ──
-APP_VERSION=v1.61.0 docker compose up -d   # Pin to previous version
-```
-
-📖 **[User Guide](docs/USER_GUIDE.md)** — full feature documentation
-🚀 **[Public Deployment Guide](deploy/public/README.md)** — VPS + Let's Encrypt
-🏠 **[Pi Deployment Guide](deploy/README.md)** — Raspberry Pi + Tailscale
-
-## Getting Started
-
-### Prerequisites
-
-- A [Jira Cloud](https://www.atlassian.com/software/jira) account
-- An [API token](https://id.atlassian.com/manage-profile/security/api-tokens) for your Jira account
-- [Docker](https://docs.docker.com/get-docker/) and [Docker Compose](https://docs.docker.com/compose/install/) installed
-
-### 🚀 Quick Start (Docker — recommended)
-
-Run in **3 steps**, no build required. Pre-built multi-arch images (amd64 + arm64) from GitHub Container Registry:
-
-```bash
-# 1. Download the compose file
+# 1. Download
 curl -O https://raw.githubusercontent.com/ALT-F1-OpenClaw/atlassian-jira-ui/main/docker-compose.ghcr.yml
 
-# 2. Create your credentials file
-mkdir -p backend
-cat > backend/.env << EOF
+# 2. Configure
+mkdir -p backend && cat > backend/.env << EOF
 JIRA_HOST=https://yourcompany.atlassian.net
 JIRA_EMAIL=you@company.com
 JIRA_API_TOKEN=your-api-token-here
 APP_SECRET_KEY=$(openssl rand -base64 32)
 EOF
 
-# 3. Start
+# 3. Run
 docker compose -f docker-compose.ghcr.yml up -d
 ```
 
-Open **http://localhost:5173** — done! 🎉
+Open **http://localhost:5173** 🎉
 
-Images:
-- `ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend:latest`
-- `ghcr.io/alt-f1-openclaw/atlassian-jira-ui-frontend:latest`
+Pre-built images (amd64 + arm64): `ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend:latest` + `-frontend:latest`
 
-Pinned versions also available (e.g. `:1.40.0`, `:1.40`).
-
-### Alternative: Build from source (Docker)
+### Updating
 
 ```bash
-git clone https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui.git
-cd atlassian-jira-ui
-cp backend/.env.example backend/.env
-# Edit backend/.env with your Jira credentials
-docker compose up --build -d
+docker compose pull && docker compose up -d     # Pull latest
+APP_VERSION=v1.62.5 docker compose up -d         # Pin version
 ```
 
-### Alternative: Local development (no Docker)
+## Documentation
+
+| Guide | For |
+|-------|-----|
+| 📖 [User Guide](docs/USER_GUIDE.md) | Feature walkthrough |
+| 📸 [Screenshots](docs/APP_SCREENSHOTS.md) | All 17 views |
+| ⚖️ [Terms of Service](docs/TROUBLESHOOTING.md) | Usage terms |
+| 🔒 [Privacy Policy](docs/BUSINESS_OBSERVABILITY.md) | GDPR compliance |
+| ❓ [Troubleshooting](docs/TROUBLESHOOTING.md) | Common issues + fixes |
+
+---
+
+# For Developers
+
+## Architecture
+
+```
+Browser → Frontend (React 19 + Vite + Tailwind CSS 4)
+              │
+         nginx (SPA + /api/ + /auth/ proxy)
+              │
+          Backend (FastAPI + async httpx)
+              │
+          Redis (sessions, encrypted tokens)
+              │
+          Jira Cloud REST API v3
+```
+
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Frontend** | React 19, Vite 6, TypeScript 5.7 (strict), Tailwind CSS 4, TanStack Query, TipTap, dnd-kit, cmdk |
+| **Backend** | Python 3.13, FastAPI, httpx (async), Pydantic, slowapi (rate limiting) |
+| **Sessions** | Redis 7 (preferred) or file-based JSON fallback |
+| **Auth** | OAuth 2.0 (3LO) + API Token (dev only), Fernet encryption |
+| **Testing** | Vitest (255), pytest (25), Playwright (22) = **302 tests** |
+| **CI/CD** | 6 GitHub Actions workflows, Docker multi-arch (amd64 + arm64), GHCR |
+| **Infra** | Traefik / Cloudflare Tunnel, Let's Encrypt / Tailscale TLS |
+
+## Local Development
 
 ```bash
-git clone https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui.git
-cd atlassian-jira-ui
-
 # Backend
 cd backend
-python -m venv .venv && source .venv/bin/activate
+python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # Edit with your Jira credentials
-uvicorn app.main:app --reload --port 35400
+cp .env.example .env   # Fill in Jira credentials
+bash start.sh          # → http://localhost:35400
 
-# Frontend (new terminal)
+# Frontend
 cd frontend
 npm install
-npm run dev
+npm run dev            # → http://localhost:5173
 ```
-
-Open http://localhost:5173
-
-### Access
-
-- **Frontend** — <http://localhost:5173>
-- **Backend API** — <http://localhost:35400>
-- **API docs** — <http://localhost:35400/docs> (FastAPI auto-generated)
-
-### Manage containers
-
-```bash
-docker compose down           # Stop
-docker compose logs -f        # Logs
-docker compose up --build     # Rebuild after code changes
-```
-
-### Jira Credentials
-
-| Variable | Description | Example |
-|----------|-------------|---------|
-| `JIRA_HOST` | Your Jira Cloud URL | `https://yourcompany.atlassian.net` |
-| `JIRA_EMAIL` | Your Jira account email | `you@company.com` |
-| `JIRA_API_TOKEN` | [API token](https://id.atlassian.com/manage-profile/security/api-tokens) | `ABCdef123...` |
-| `APP_SECRET_KEY` | Random secret for sessions | `openssl rand -base64 32` |
-
-## Project Structure
-
-```
-atlassian-jira-ui/
-├── backend/
-│   ├── app/
-│   │   ├── main.py              # FastAPI app + CORS
-│   │   ├── config.py            # Settings via Pydantic
-│   │   ├── jira_client.py       # Async Jira API wrapper
-│   │   ├── version.py           # Single version source
-│   │   └── routers/
-│   │       ├── issues.py        # Issue CRUD + transitions
-│   │       ├── boards.py        # Board/sprint endpoints
-│   │       ├── projects.py      # Projects + members
-│   │       ├── search.py        # Search + JQL
-│   │       ├── priorities.py    # Jira priorities
-│   │       ├── labels.py        # Jira labels
-│   │       └── sprints.py       # Sprint data + burndown
-│   ├── requirements.txt
-│   ├── .env.example
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── App.tsx              # Single-file UI (all views)
-│   │   └── App.test.tsx         # 248 BDD test scenarios
-│   ├── package.json
-│   ├── vite.config.ts
-│   ├── .env.example
-│   └── Dockerfile
-├── frontend/
-│   ├── e2e/
-│   │   ├── app.spec.ts          # 22 E2E test scenarios
-│   │   ├── screenshots.spec.ts  # 17 auto-generated screenshots
-│   │   └── fixtures.ts          # Mock data + mockAllApiRoutes()
-│   └── playwright.config.ts     # Playwright config (Chromium, port 4173)
-├── scripts/
-│   └── bump-version.mjs         # Version sync + changelog
-├── deploy/
-│   ├── README.md                # Production deployment guide
-│   ├── docker-compose.yml       # 6-container setup (Traefik + dev + prod)
-│   ├── deploy-prod.sh           # Pin prod to specific version tag
-│   ├── traefik/                 # Traefik static + dynamic config
-│   └── nginx.conf.template      # Per-environment nginx template
-├── .github/
-│   └── workflows/
-│       ├── ci.yml               # Unit + backend tests (Node 20/22, Python 3.11-3.13)
-│       ├── ci-autofix.yml       # Auto-diagnose CI failures → create issue
-│       ├── codeql.yml           # Weekly security scanning
-│       ├── docker.yml           # Docker compose validation
-│       ├── publish-docker.yml   # Multi-arch GHCR publish on tag
-│       └── release.yml          # GitHub release on tag
-├── docker-compose.yml
-├── docker-compose.ghcr.yml      # Pull pre-built images from GHCR
-├── LICENSE
-└── README.md
-```
-
-## API Endpoints (Backend)
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/projects` | List projects |
-| POST | `/api/projects` | Create project (name, key, type, lead, description) |
-| GET | `/api/projects/{key}` | Project details |
-| GET | `/api/projects/{key}/members` | Project members (assignable users) |
-| GET | `/api/issues` | List/filter issues |
-| GET | `/api/issues/{key}` | Issue detail |
-| POST | `/api/issues` | Create issue |
-| PATCH | `/api/issues/{key}` | Update issue |
-| POST | `/api/issues/{key}/transition` | Transition issue |
-| GET | `/api/boards` | List boards |
-| GET | `/api/boards/{id}` | Board with columns |
-| GET | `/api/boards/{id}/sprint` | Active sprint |
-| GET | `/api/priorities` | List Jira priorities |
-| GET | `/api/labels` | List Jira labels |
-| GET | `/api/sprints` | List boards with sprints (supports `state` param) |
-| POST | `/api/sprints` | Create a new sprint |
-| PATCH | `/api/sprints/{id}` | Update sprint name, goal, dates |
-| DELETE | `/api/sprints/{id}` | Delete a sprint |
-| POST | `/api/sprints/{id}/start` | Start a sprint |
-| POST | `/api/sprints/{id}/complete` | Complete a sprint |
-| GET | `/api/sprints/{id}/issues` | Sprint issues with status counts |
-| POST | `/api/sprints/{id}/issues` | Add issues to a sprint |
-| DELETE | `/api/sprints/{id}/issues/{key}` | Remove issue from sprint |
-| GET | `/api/sprints/{id}/burndown` | Sprint burndown data |
-| GET | `/api/sprints/{id}/velocity` | Velocity (points per sprint) |
-| GET | `/api/search` | JQL search |
-| GET | `/api/search/quick` | Fuzzy text search |
 
 ## Testing
 
 ```bash
-cd frontend
-
-# Run all tests once
-npm test
-
-# Run tests in watch mode (re-runs on file changes)
-npm run test:watch
-```
-
-**302 total tests** across 3 test suites:
-
-| Suite | Count | Framework | Location |
-|-------|-------|-----------|----------|
-| Frontend unit | 255 | Vitest + Testing Library | `frontend/src/App.test.tsx` |
-| Backend API | 25 | pytest + pytest-asyncio | `backend/tests/` |
-| E2E integration | 22 | Playwright (Chromium) | `frontend/e2e/app.spec.ts` |
-
-All tests use BDD naming (`Given ... when ... then ...`). E2E tests mock all API routes — no real Jira calls.
-
-```bash
-# Run all tests
-cd frontend && npm test          # 255 unit tests (vitest)
-cd backend && python -m pytest tests/ -v   # 25 backend tests
+cd frontend && npm test                           # 255 unit tests
+cd backend && python -m pytest tests/ -v          # 25 backend tests
 cd frontend && npm run build && npx playwright test  # 22 E2E tests
 ```
 
-### Auto-generated screenshots
+BDD naming: `"Given [context], when [action], then [expected result]"`
 
-17 screenshots captured by `frontend/e2e/screenshots.spec.ts` using mock data.
-See [APP_SCREENSHOTS.md](docs/APP_SCREENSHOTS.md) for the full gallery.
+## API Reference
 
-## Releasing a New Version
+See [docs/API_REFERENCE.md](docs/API_REFERENCE.md) for all endpoints, parameters, and examples.
 
-```bash
-# Install dependencies (first time only)
-npm install
+Key endpoints: `/api/issues`, `/api/projects`, `/api/sprints`, `/api/search`, `/auth/login`, `/auth/me`
 
-# Bump version (updates all sources + generates CHANGELOG + commits + tags)
-node scripts/bump-version.mjs patch   # 1.0.0 → 1.0.1
-node scripts/bump-version.mjs minor   # 1.0.0 → 1.1.0
-node scripts/bump-version.mjs major   # 1.0.0 → 2.0.0
-node scripts/bump-version.mjs 2.5.0   # explicit version
+## Deployment Options
 
-# Push to remote
-git push && git push --tags
+| Option | Guide | Use Case |
+|--------|-------|----------|
+| 🌐 **Public SaaS** | [deploy/public/README.md](deploy/public/README.md) | VPS + Let's Encrypt |
+| 🏠 **Private** | [deploy/README.md](deploy/README.md) | Raspberry Pi + Tailscale |
+| 🔒 **Hardened VPS** | [docs/SECURE_VPS_DEPLOYMENT.md](docs/SECURE_VPS_DEPLOYMENT.md) | Cloudflare + OpenAppSec |
+| ✅ **Checklist** | [docs/VPS_DEPLOYMENT_CHECKLIST.md](docs/VPS_DEPLOYMENT_CHECKLIST.md) | 46-step checklist |
+
+## Project Structure
+
+```
+├── backend/app/          # FastAPI (routers, auth, jira_client, session_store)
+├── frontend/src/         # React SPA (App.tsx — single file)
+├── frontend/e2e/         # Playwright E2E tests + screenshots
+├── deploy/               # Pi deployment (Traefik + Tailscale)
+├── deploy/public/        # Public deployment (Let's Encrypt + Redis)
+├── docs/                 # Guides, ADRs, meeting minutes
+├── docs/adr/             # 23 Architecture Decision Records
+├── scripts/              # Version bump, API comparison test
+└── .github/workflows/    # 6 CI/CD workflows
 ```
 
-The bump script updates the version in:
+## CI/CD Pipeline
 
-- `package.json` (root)
-- `frontend/package.json`
-- `backend/app/version.py`
-- `CHANGELOG.md` (auto-generated from conventional commits)
+6 workflows: CI (test matrix), Release, Docker Validate, Docker Publish (GHCR multi-arch), CodeQL (weekly), CI Auto-Fix (create issue + Discord notification on failure).
+
+See [docs/CHANGELOG_HIGHLIGHTS.md](docs/CHANGELOG_HIGHLIGHTS.md) for version history.
+
+## Versioning
+
+```bash
+node scripts/bump-version.mjs patch   # 1.0.0 → 1.0.1
+node scripts/bump-version.mjs minor   # 1.0.0 → 1.1.0
+git push && git push --tags           # Triggers Release + Docker workflows
+```
+
+## Architecture Decisions
+
+23 ADRs in [docs/adr/](docs/adr/README.md) covering: React single-file, FastAPI proxy, TipTap, dnd-kit, CSS variables, Workbox, BDD testing, Docker/GHCR, code splitting, CI auto-fix, SearchableSelect, Traefik, port-based envs, Tailscale TLS, no server storage, Platform API fallback, dual auth strategy, Jira URL construction, site selection, rate limiting, multi-tenant isolation, Redis sessions, Let's Encrypt deployment.
+
+## Contributing
+
+See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md). Use conventional commits (`feat:`, `fix:`, `docs:`, `chore:`). All features need tests.
+
+---
 
 ## Security
 
-- **API token never sent to frontend** — backend acts as proxy
-- **CORS restricted** to frontend origin only
-- **No Jira data stored server-side** — only OAuth tokens (encrypted) + session metadata (ADR-015)
-- **Token encryption at rest** — Fernet (AES-128-CBC) for OAuth access + refresh tokens (ADR-021)
-- **Session fingerprinting** — sessions bound to IP + User-Agent, rejected on mismatch (ADR-021)
-- **Tiered rate limiting** — per-IP limits on API (60/min), auth (10/min), search (30/min), mutations (30/min) (ADR-020)
-- **Production lockdown** — API Token auth disabled, settings endpoint blocked (ADR-017)
-- **CSRF state tokens** — OAuth flow protected against CSRF attacks
-- **Secure cookies** — HttpOnly, SameSite=Lax, session-scoped
-- **Branch protection** — CI required, no force-push, CodeQL + Dependabot scanning
-
-> **Disclaimer**: This project is developed by [ALT-F1 SRL](https://www.alt-f1.be) and is **not affiliated with, endorsed by, or connected to Atlassian** in any way. "Jira" is a registered trademark of Atlassian.
-
-## References
-
-- [Jira REST API v3 Documentation](https://developer.atlassian.com/cloud/jira/platform/rest/v3/intro/)
-- [Jira Agile REST API](https://developer.atlassian.com/cloud/jira/software/rest/intro/)
-- [Atlassian API Tokens](https://id.atlassian.com/manage-profile/security/api-tokens)
+See [SECURITY.md](SECURITY.md) for vulnerability reporting.
 
 ## License
 
@@ -553,11 +242,8 @@ MIT — see [LICENSE](./LICENSE)
 
 ## Author
 
-Abdelkrim BOUJRAF — [ALT-F1 SRL](https://www.alt-f1.be), Brussels 🇧🇪 🇲🇦
+**Abdelkrim BOUJRAF** — [ALT-F1 SRL](https://www.alt-f1.be), Brussels 🇧🇪 🇲🇦
+
 - GitHub: [@Abdelkrim](https://github.com/Abdelkrim)
 - LinkedIn: [Abdelkrim BOUJRAF](https://be.linkedin.com/in/abdelkrimboujraf)
 - X: [@altf1be](https://x.com/altf1be)
-
-## Contributing
-
-Contributions welcome! This is an opinionated project — if you also think Jira's UI could be faster and cleaner, you're in the right place.
