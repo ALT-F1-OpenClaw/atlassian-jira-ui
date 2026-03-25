@@ -195,8 +195,12 @@ Remaining: #52a-c (tooling), #53 (OpenTelemetry), #56-58 (deployment), #60-61 (J
 - **Discord Notifications**: Docker publish workflow sends ✅/❌ embed to Discord
 - **Stripe Phase 7**: roadmap tasks #77-85 for Taskara Pro (€3.99/mo), cashflow-lite repo created
 - **deploy/update-config.sh**: clean config update script from git
+- **Sprint listing fix** (#76): full pagination (boards + sprints), Agile API + Platform API merge, deduplicate by ID — 2 → 77 sprints
+- **Sprint issues JQL fallback** (#91): `_get_sprint_issues_with_fallback()` for burndown/velocity/issues
+- **API comparison test**: `scripts/api-comparison-test.py` — automated Taskara vs Jira API comparison
+- **Full rebrand**: "Jira UI" → "Taskara" across codebase (title, PWA, header, about, tests)
 
-**Current version**: v1.62.3 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
+**Current version**: v1.62.5 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
 
 CI/CD: 6 GitHub Actions workflows (CI, release, Docker validate, Docker publish, CodeQL, CI auto-fix).
 Docker images on GHCR (multi-arch amd64+arm64). Bundle code-split into 5 chunks (app 300KB + vendors).

@@ -295,10 +295,12 @@ Before going production-grade, re-enable these:
 | 101 | feat: deploy/update-config.sh — clean config update from git | Complete |
 | 102 | fix: Baked nginx.conf into Docker image — /auth/ routing + BACKEND_HOST envsubst | Complete |
 | 103 | fix: await async get_session() in all auth endpoints (v1.62.2) | Complete |
-| 91 | fix: Sprint Dashboard shows 0 issues for sprints that have work items in Jira — likely Agile API `/sprint/{id}/issue` returns empty for certain project types (company-managed vs team-managed) or board configurations | Planned |
+| 104 | feat: API comparison test script (`scripts/api-comparison-test.py`) — automated Taskara vs Jira API verification | Complete |
+| 105 | chore: Full rebrand "Jira UI" → "Taskara" across codebase (title, PWA, header, about, tests) | Complete |
+| 91 | fix: Sprint issues JQL fallback when Agile API returns empty — burndown/velocity/issues | Complete |
 | 92 | feat: Backlog view — show issues grouped by sprint (with issue counts) + unassigned backlog section, drag issues between sprints and backlog, matches Jira's Backlog tab | Planned |
 | 89 | feat: URL-based routing — reflect current view + context in the browser URL bar (e.g. `/board`, `/sprint/123`, `/issue/PROJ-45`, `/settings`) so browser refresh preserves state instead of going to homepage. Use React Router or `history.pushState` | Planned |
-| 76 | fix: Sprint Dashboard shows only 2 sprints with "All" filter — investigate Agile API pagination + closed sprint fetching ([#39](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/39)) | Planned |
+| 76 | fix: Sprint listing — full pagination + Agile/Platform merge — 2→77 sprints (fixes #39) | Complete |
 
 ### Phase 4b — CI Intelligence
 | # | Feature | Status |
