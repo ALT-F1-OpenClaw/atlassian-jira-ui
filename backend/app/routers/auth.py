@@ -230,7 +230,7 @@ async def callback(request: Request, code: str = "", state: str = "", error: str
 @router.get("/me")
 async def get_current_user(request: Request):
     """Get the current authenticated user (if any)."""
-    session = get_session(request)  # Fingerprint-validated + decrypted
+    session = await get_session(request)  # Fingerprint-validated + decrypted
     session_id = request.cookies.get(SESSION_COOKIE) or ""
     if not session:
         return {"authenticated": False}
@@ -268,7 +268,7 @@ async def logout(request: Request, response: Response):
 @router.get("/sites")
 async def list_sites(request: Request):
     """List Jira sites the user has access to."""
-    session = get_session(request)
+    session = await get_session(request)
     if not session:
         return {"sites": [], "current_cloud_id": ""}
     resources = session.get("resources", [])
@@ -291,7 +291,7 @@ async def list_sites(request: Request):
 @limiter.limit(get_settings().rate_limit_auth)
 async def select_site(request: Request):
     """Switch to a different Jira site."""
-    session = get_session(request)  # Decrypted copy
+    session = await get_session(request)  # Decrypted copy
     session_id = request.cookies.get(SESSION_COOKIE) or ""
     if not session or session_id not in _sessions:
         raise HTTPException(status_code=401, detail="Not authenticated")
