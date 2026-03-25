@@ -1,3 +1,8 @@
+## [1.62.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.62.1...v1.62.2) (2026-03-25)
+
+### Bug Fixes
+
+* await async get_session() in all auth endpoints ([abede72](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/abede7287c457c5b9a543b9ed57fe020ee1010bf)), closes [#59](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/59)
 ## 1.62.1 (2026-03-24)
 
 ### Features
