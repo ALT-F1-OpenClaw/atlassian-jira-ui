@@ -6269,7 +6269,7 @@ export default function App() {
   });
 
   // If auth check is done and no working method, show login screen
-  if (needsLogin && view !== "settings") {
+  if (needsLogin && !["settings", "terms", "privacy"].includes(view)) {
     return (
       <JiraHostContext.Provider value={jiraHost}>
       <div className="flex h-screen flex-col items-center justify-center bg-zinc-950 text-center px-4">
@@ -6419,7 +6419,7 @@ export default function App() {
           ))}
         </div>
         <footer className="absolute bottom-4 text-xs text-zinc-600">
-          Built by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">ALT-F1</a> · v{APP_VERSION}
+          Built by <a href="https://www.alt-f1.be" target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">ALT-F1</a> · v{APP_VERSION} · <button onClick={() => { setSiteConfirmed(true); setView("terms"); }} className="text-blue-500 hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">Terms</button> · <button onClick={() => { setSiteConfirmed(true); setView("privacy"); }} className="text-blue-500 hover:underline cursor-pointer bg-transparent border-none p-0 text-xs">Privacy</button>
         </footer>
       </div>
       </JiraHostContext.Provider>
@@ -6427,16 +6427,19 @@ export default function App() {
   }
 
   // Settings page is always accessible (even without auth)
-  if (view === "settings" && needsLogin) {
+  if (needsLogin && ["settings", "terms", "privacy"].includes(view)) {
+    const pageTitle = view === "settings" ? "Settings" : view === "terms" ? "Terms of Service" : "Privacy Policy";
     return (
       <JiraHostContext.Provider value={jiraHost}>
       <div className="flex h-screen flex-col bg-zinc-950">
         <header className="border-b border-zinc-800 px-4 py-3 flex items-center justify-between">
-          <h1 className="text-lg font-bold text-zinc-100">Jira UI — Settings</h1>
+          <h1 className="text-lg font-bold text-zinc-100">Taskara — {pageTitle}</h1>
           <button onClick={() => setView("list")} className="text-sm text-zinc-400 hover:text-zinc-200 cursor-pointer">← Back</button>
         </header>
         <main className="flex-1 overflow-auto">
-          <SettingsPage />
+          {view === "settings" && <SettingsPage />}
+          {view === "terms" && <TermsPage />}
+          {view === "privacy" && <PrivacyPage />}
         </main>
       </div>
       </JiraHostContext.Provider>
@@ -6691,6 +6694,10 @@ export default function App() {
           GitHub
         </a>
         {" "}· v{APP_VERSION}
+        {" "}·{" "}
+        <button onClick={() => setView("terms")} className="text-zinc-400 hover:text-zinc-300 cursor-pointer bg-transparent border-none p-0 text-xs">Terms</button>
+        {" "}·{" "}
+        <button onClick={() => setView("privacy")} className="text-zinc-400 hover:text-zinc-300 cursor-pointer bg-transparent border-none p-0 text-xs">Privacy</button>
       </footer>
 
       {/* Issue Detail Panel */}
