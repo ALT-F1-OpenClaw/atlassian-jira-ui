@@ -2687,6 +2687,10 @@ function BoardView({
   if (error) return <ErrorDisplay error={error as Error} />;
 
   const issues = data?.issues || [];
+  const totalIssues = data?.total || 0;
+
+  // Warning: Jira API returns max ~200 issues; board may not show everything
+  const showLargeProjectWarning = totalIssues > 100;
 
   if (issues.length === 0) {
     return (
@@ -2713,6 +2717,13 @@ function BoardView({
       onDragEnd={handleDragEnd}
     >
       <div className="p-3">
+        {/* Warning banner for large projects */}
+        {showLargeProjectWarning && (
+          <div className="mb-3 rounded-lg border border-amber-800 bg-amber-950/40 px-4 py-2.5 text-sm text-amber-300 flex items-center gap-2" data-testid="board-large-warning">
+            <span>⚠️</span>
+            <span>This project has <strong>{totalIssues} issues</strong> but the board shows up to 200. Use filters to narrow down, or view all issues in the <button onClick={() => window.dispatchEvent(new CustomEvent("navigate-view", { detail: "list" }))} className="text-amber-200 underline hover:text-amber-100 cursor-pointer bg-transparent border-none p-0 text-sm font-medium">List view</button>.</span>
+          </div>
+        )}
         {/* Board header with swimlane toggle + issue count */}
         <div className="mb-3 flex items-center gap-2 flex-wrap">
           <label className="text-xs text-zinc-500">Swimlanes:</label>
