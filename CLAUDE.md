@@ -186,8 +186,17 @@ Remaining: #52a-c (tooling), #53 (OpenTelemetry), #56-58 (deployment), #60-61 (J
 - **Cookie Consent Banner** (#39): opt-in GDPR compliant, Accept / Necessary only, localStorage persistence
 - **Redis Session Store** (#59): abstract SessionStore with Redis + file fallback, async get_session/resolve_auth (ADR-022)
 - **GitHub Issue Templates** (#75): bug report, feature request, question with YAML forms
+- **App Name** (#65): Taskara — domain: taskara.alt-f1.be
+- **Public Deployment** (#57): deploy/public/ with Traefik + Let's Encrypt + Redis (ADR-023)
+- **Baked nginx.conf**: `/auth/` routing + BACKEND_HOST envsubst, no more volume mounts
+- **Login Page Redesign**: Taskara branding, trust signals (no data stored, encrypted, fast), privacy messaging
+- **OAuth Error Feedback**: detects failed callback (missing /auth/ proxy), shows error on login page
+- **Escape Key**: useEscapeKey hook closes all 7 modals
+- **Discord Notifications**: Docker publish workflow sends ✅/❌ embed to Discord
+- **Stripe Phase 7**: roadmap tasks #77-85 for Taskara Pro (€3.99/mo), cashflow-lite repo created
+- **deploy/update-config.sh**: clean config update script from git
 
-**Current version**: v1.62.0 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
+**Current version**: v1.62.3 | **Total tests**: 302 (255 unit + 25 backend + 22 E2E)
 
 CI/CD: 6 GitHub Actions workflows (CI, release, Docker validate, Docker publish, CodeQL, CI auto-fix).
 Docker images on GHCR (multi-arch amd64+arm64). Bundle code-split into 5 chunks (app 300KB + vendors).

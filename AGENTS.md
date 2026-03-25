@@ -37,7 +37,8 @@ Tasks are tracked in `ROADMAP.md` with numbered IDs (e.g., `2.1`, `3.3`). When a
 - Reset pagination to page 0 when filters, sort, or project change
 - Board view uses `@dnd-kit/core` for drag-and-drop; mobile fallback uses ← → arrow buttons (`sm:hidden`)
 - Mobile-only UI patterns: use `sm:hidden` to show on mobile, `hidden sm:block` to show on desktop
-- Keyboard shortcuts: global `useEffect` keydown listener in `App()`, `isInputFocused()` helper to skip shortcuts when typing in inputs/textareas/selects/contenteditable. Shortcuts: j/k (list nav), Enter (open issue), Escape (close panel), b/l/s (view switch: board/list/sprint), c (create issue), ? (help overlay)
+- Keyboard shortcuts: global `useEffect` keydown listener in `App()`, `isInputFocused()` helper to skip shortcuts when typing in inputs/textareas/selects/contenteditable. Shortcuts: j/k (list nav), Enter (open issue), Escape (close panel + all modals), b/l/s (view switch: board/list/sprint), c (create issue), ? (help overlay)
+- `useEscapeKey(onClose)` hook: added to all 7 modals (LogWork, CreateIssue, CreateProject, CreateSprint, EditSprint, ManageSprintScope, ConfirmDialog). Registers/unregisters keydown listener
 - SearchableSelect: custom autocomplete dropdown with search-as-you-type, keyboard navigation, `autoOpen` prop. Used for 7 dropdowns: project filter, type/status/assignee filters, create modal project + assignee, bulk assign, inline edit priority + assignee. Tests use `selectSearchableOption()` helper
 - Create submenu: `+ Create` button shows dropdown with Issue + Project options. `c` shortcut opens Issue modal directly
 - Create issue modal: `CreateIssueModal` — project/summary/type/priority/assignee/description, form validation, optimistic cache update
@@ -176,6 +177,9 @@ Dual auth via Strategy Pattern (ADR-017):
 - `ApiTokenStrategy`: shared Basic Auth from `.env` (disabled in production)
 - `APP_ENV=production` → API Token completely disabled, OAuth only
 - Environment ribbon (STG/DEV) shown on both login page and main app (top-right corner, `z-[100]`). Uses `jiraSettings.app_env` from `/api/config`
+- Login page: Taskara branding, 3 trust signal cards (no data stored, encrypted & private, your Jira faster), Terms/Privacy footer links
+- OAuth error detection: if `code` + `state` params appear on `/` (frontend), shows error "OAuth callback failed — /auth/ routes not configured". Also handles `auth_error` URL param from backend
+- Terms/Privacy pages accessible without login (`needsLogin` allows `["settings", "terms", "privacy"]` views)
 - Auto token refresh before API calls (`authed_jira_request()`)
 - Sessions stored via abstract `SessionStore` (ADR-022): Redis if `REDIS_URL` is set, file-based fallback otherwise
 - Redis keys: `jira_ui:session:{id}` (7d TTL), `jira_ui:oauth_state:{state}` (10min TTL)
@@ -211,7 +215,9 @@ Domain: taskara.alt-f1.be
 - `docker compose pull && docker compose up -d` to update
 - Pin version: `APP_VERSION=vX.Y.Z` in `.env`
 - Redis 7 Alpine for sessions (128MB, appendonly)
-- Nginx routes `/api/` AND `/auth/` to backend, `/*` to SPA
+- Nginx config **baked into Docker image** (`frontend/nginx.conf` → `/etc/nginx/templates/default.conf.template`), uses envsubst with `BACKEND_HOST` env var (default: `backend`). No volume mounts needed
+- Nginx routes `/api/` AND `/auth/` to `${BACKEND_HOST}:35400`, `/*` to SPA
+- Security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy
 - Security headers: X-Frame-Options, X-Content-Type-Options, Referrer-Policy, X-XSS-Protection
 
 **Private Pi** — `deploy/` (ADR-012/013/014):
