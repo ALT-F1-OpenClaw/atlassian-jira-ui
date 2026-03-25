@@ -1,0 +1,23 @@
+---
+# Install Portainer CE (localhost only, SSH tunnel access)
+
+- name: Create Portainer data volume
+  shell: docker volume create portainer_data
+  become_user: "{{ deploy_user }}"
+  ignore_errors: true
+
+- name: Run Portainer CE
+  shell: |
+    docker rm -f portainer 2>/dev/null || true
+    docker run -d \
+      --name portainer \
+      --restart unless-stopped \
+      -p 127.0.0.1:9443:9443 \
+      -v /var/run/docker.sock:/var/run/docker.sock:ro \
+      -v portainer_data:/data \
+      portainer/portainer-ce:lts
+  become_user: "{{ deploy_user }}"
+
+- name: Print Portainer access info
+  debug:
+    msg: "Portainer running on localhost:9443. Access via SSH tunnel: ssh -L 9443:localhost:9443 {{ deploy_user }}@{{ ansible_host }}"

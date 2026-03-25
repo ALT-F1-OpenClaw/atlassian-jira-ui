@@ -1,0 +1,32 @@
+---
+# Taskara Ansible Variables
+# Copy to all.yml and fill in your values
+
+# ── Deploy User ──
+deploy_user: deploy
+deploy_ssh_key: "ssh-ed25519 AAAA... your-public-key"
+
+# ── Domain ──
+domain: taskara.alt-f1.be
+acme_email: abdelkrim@alt-f1.be
+
+# ── Cloudflare Tunnel ──
+cloudflare_tunnel_id: "your-tunnel-id"
+cloudflare_tunnel_credentials: |
+  {
+    "AccountTag": "your-account-tag",
+    "TunnelSecret": "your-tunnel-secret",
+    "TunnelID": "your-tunnel-id"
+  }
+
+# ── Atlassian OAuth 2.0 ──
+atlassian_client_id: "your-client-id"
+atlassian_client_secret: "your-client-secret"
+
+# ── App ──
+app_version: "latest"
+app_secret_key: "generate-with-openssl-rand-base64-48"
+app_env: "production"
+
+# ── Portainer (optional) ──
+install_portainer: true

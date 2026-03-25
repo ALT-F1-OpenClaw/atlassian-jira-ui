@@ -1,0 +1,87 @@
+---
+# Server hardening: deploy user, SSH, firewall, Fail2Ban, auto-updates
+
+- name: Create deploy user
+  user:
+    name: "{{ deploy_user }}"
+    shell: /bin/bash
+    groups: sudo
+    append: true
+    create_home: true
+
+- name: Set up SSH key for deploy user
+  authorized_key:
+    user: "{{ deploy_user }}"
+    key: "{{ deploy_ssh_key }}"
+
+- name: Harden SSH configuration
+  copy:
+    dest: /etc/ssh/sshd_config.d/hardened.conf
+    content: |
+      PermitRootLogin no
+      PasswordAuthentication no
+      PubkeyAuthentication yes
+      MaxAuthTries 3
+      ClientAliveInterval 300
+      ClientAliveCountMax 2
+      X11Forwarding no
+      AllowUsers {{ deploy_user }}
+    mode: "0644"
+  notify: restart sshd
+
+- name: Install UFW
+  apt:
+    name: ufw
+    state: present
+    update_cache: true
+
+- name: UFW — deny all incoming
+  ufw:
+    direction: incoming
+    policy: deny
+
+- name: UFW — allow outgoing
+  ufw:
+    direction: outgoing
+    policy: allow
+
+- name: UFW — allow SSH
+  ufw:
+    rule: allow
+    port: "22"
+    proto: tcp
+
+- name: UFW — enable
+  ufw:
+    state: enabled
+
+- name: Install Fail2Ban
+  apt:
+    name: fail2ban
+    state: present
+
+- name: Configure Fail2Ban for SSH
+  copy:
+    dest: /etc/fail2ban/jail.local
+    content: |
+      [sshd]
+      enabled = true
+      port = ssh
+      maxretry = 3
+      bantime = 3600
+      findtime = 600
+    mode: "0644"
+  notify: restart fail2ban
+
+- name: Install unattended-upgrades
+  apt:
+    name: unattended-upgrades
+    state: present
+
+- name: Enable automatic security updates
+  copy:
+    dest: /etc/apt/apt.conf.d/20auto-upgrades
+    content: |
+      APT::Periodic::Update-Package-Lists "1";
+      APT::Periodic::Unattended-Upgrade "1";
+    mode: "0644"

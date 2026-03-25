@@ -1,0 +1,45 @@
+# Taskara — Production (Cloudflare Tunnel, no Traefik)
+# Managed by Ansible — do not edit manually
+
+services:
+  redis:
+    image: redis:7-alpine
+    container_name: taskara-redis
+    restart: unless-stopped
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+
+  backend:
+    image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-backend:{{ app_version }}
+    container_name: taskara-backend
+    restart: unless-stopped
+    dns: [1.1.1.1, 8.8.8.8]
+    env_file: .env
+    environment:
+      - CORS_ORIGINS=https://{{ domain }}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      - redis
+
+  frontend:
+    image: ghcr.io/alt-f1-openclaw/atlassian-jira-ui-frontend:{{ app_version }}
+    container_name: taskara-frontend
+    restart: unless-stopped
+    environment:
+      - BACKEND_HOST=backend
+    depends_on:
+      - backend
+
+  watchtower:
+    image: containrrr/watchtower:latest
+    container_name: taskara-watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      - WATCHTOWER_POLL_INTERVAL=300
+      - WATCHTOWER_CLEANUP=true
+
+volumes:
+  redis-data:

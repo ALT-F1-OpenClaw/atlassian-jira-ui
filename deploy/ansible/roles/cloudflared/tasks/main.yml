@@ -1,0 +1,56 @@
+---
+# Install and configure Cloudflare Tunnel
+
+- name: Add Cloudflare GPG key
+  shell: |
+    curl -fsSL https://pkg.cloudflare.com/cloudflare-main.gpg | tee /usr/share/keyrings/cloudflare-main.gpg > /dev/null
+  args:
+    creates: /usr/share/keyrings/cloudflare-main.gpg
+
+- name: Add Cloudflare repository
+  copy:
+    dest: /etc/apt/sources.list.d/cloudflared.list
+    content: "deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/cloudflared any main\n"
+    mode: "0644"
+
+- name: Install cloudflared
+  apt:
+    name: cloudflared
+    state: present
+    update_cache: true
+
+- name: Create cloudflared config directory
+  file:
+    path: "/home/{{ deploy_user }}/.cloudflared"
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0700"
+
+- name: Write tunnel credentials
+  copy:
+    dest: "/home/{{ deploy_user }}/.cloudflared/{{ cloudflare_tunnel_id }}.json"
+    content: "{{ cloudflare_tunnel_credentials }}"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+
+- name: Write cloudflared config
+  template:
+    src: config.yml.j2
+    dest: "/home/{{ deploy_user }}/.cloudflared/config.yml"
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+  notify: restart cloudflared
+
+- name: Install cloudflared as systemd service
+  shell: cloudflared service install
+  args:
+    creates: /etc/systemd/system/cloudflared.service
+
+- name: Enable and start cloudflared
+  service:
+    name: cloudflared
+    state: started
+    enabled: true

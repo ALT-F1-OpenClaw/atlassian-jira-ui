@@ -1,0 +1,36 @@
+---
+# Add OpenAppSec WAF in front of the frontend
+
+- name: Add OpenAppSec to docker-compose
+  blockinfile:
+    path: /srv/taskara/docker-compose.yml
+    marker: "# {mark} OPENAPPSEC WAF"
+    insertbefore: "^volumes:"
+    block: |
+      openappsec:
+        image: ghcr.io/openappsec/open-appsec-gateway:latest
+        container_name: taskara-waf
+        restart: unless-stopped
+        ports:
+          - "127.0.0.1:8080:80"
+        environment:
+          - BACKEND=http://frontend:80
+          - LEARNING_MODE=false
+          - LOG_LEVEL=info
+        depends_on:
+          - frontend
+
+- name: Restart containers with WAF
+  shell: docker compose up -d --remove-orphans
+  args:
+    chdir: /srv/taskara
+  become_user: "{{ deploy_user }}"
+
+- name: Verify WAF is running
+  shell: docker logs taskara-waf --tail 5 2>&1
+  register: waf_logs
+  become_user: "{{ deploy_user }}"
+
+- name: Print WAF status
+  debug:
+    msg: "{{ waf_logs.stdout_lines }}"

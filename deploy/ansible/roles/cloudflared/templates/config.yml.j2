@@ -1,0 +1,9 @@
+tunnel: {{ cloudflare_tunnel_id }}
+credentials-file: /home/{{ deploy_user }}/.cloudflared/{{ cloudflare_tunnel_id }}.json
+
+ingress:
+  - hostname: {{ domain }}
+    service: http://localhost:8080
+    originRequest:
+      noTLSVerify: true
+  - service: http_status:404

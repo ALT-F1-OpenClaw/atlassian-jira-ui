@@ -1,0 +1,26 @@
+---
+# Taskara — Full VPS Deployment Playbook
+#
+# Usage:
+#   ansible-playbook -i hosts site.yml
+#   ansible-playbook -i hosts site.yml --tags app     # App only
+#   ansible-playbook -i hosts site.yml --tags update   # Pull + restart
+
+- name: Deploy Taskara
+  hosts: taskara
+  become: true
+
+  roles:
+    - role: common
+      tags: [common]
+    - role: docker
+      tags: [docker]
+    - role: cloudflared
+      tags: [cloudflared]
+    - role: app
+      tags: [app, config]
+    - role: openappsec
+      tags: [openappsec]
+    - role: portainer
+      tags: [portainer]
+      when: install_portainer | default(false)

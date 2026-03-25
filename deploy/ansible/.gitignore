@@ -1,0 +1,5 @@
+# Never commit secrets
+hosts
+group_vars/all.yml
+host_vars/*.yml
+*.retry

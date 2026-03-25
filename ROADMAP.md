@@ -187,7 +187,7 @@
 | # | Task | Category | Status |
 |---|------|----------|--------|
 | 38b | Privacy Policy — CCPA (California) | Legal | Planned |
-| 56 | Ansible playbook (automated VPS deployment) | Infra | Planned |
+| 56 | Ansible playbook — 6 roles: common, docker, cloudflared, app, openappsec, portainer | Complete |
 | 58 | Deploy user + SSH key auth (no root) | Infra | Planned |
 | 65b | Design a logo (icon, wordmark, favicon, PWA icon) | Branding | Planned |
 | 66 | Register DNS `<app-name>.alt-f1.be` | Branding | Planned |
@@ -269,7 +269,7 @@ Before going production-grade, re-enable these:
 | 52c | Upgrade @tiptap/* 3.20.1→latest (when dist/ fixed) | Planned |
 | 53 | OpenTelemetry — distributed tracing, metrics, and logging across backend + Traefik | Planned |
 | 55 | Refactor sprints/boards to Platform API — replace Agile API for OAuth compatibility | Complete |
-| 56 | Ansible playbook — automated VPS deployment (Contabo/any Linux) | Planned |
+| 56 | Ansible playbook — 6 roles: common, docker, cloudflared, app, openappsec, portainer | Complete |
 | 57 | Production docker-compose + Let's Encrypt + taskara.alt-f1.be — deploy/public/ | Complete |
 | 58 | Deploy user + SSH key auth (no root deployment) | Planned |
 | 86 | Cloudflare Tunnel (cloudflared) — expose Taskara via Cloudflare without opening ports 80/443, DDoS protection, WAF, caching ([docs](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/)) | Planned |

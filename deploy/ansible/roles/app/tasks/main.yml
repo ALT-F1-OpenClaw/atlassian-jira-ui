@@ -1,0 +1,57 @@
+---
+# Deploy Taskara application
+
+- name: Create app directory
+  file:
+    path: /srv/taskara
+    state: directory
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0755"
+
+- name: Deploy docker-compose.yml
+  template:
+    src: docker-compose.yml.j2
+    dest: /srv/taskara/docker-compose.yml
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0644"
+  tags: [config]
+
+- name: Deploy .env file
+  template:
+    src: env.j2
+    dest: /srv/taskara/.env
+    owner: "{{ deploy_user }}"
+    group: "{{ deploy_user }}"
+    mode: "0600"
+  tags: [config]
+
+- name: Pull latest Docker images
+  shell: docker compose pull
+  args:
+    chdir: /srv/taskara
+  become_user: "{{ deploy_user }}"
+  tags: [update]
+
+- name: Start containers
+  shell: docker compose up -d --remove-orphans
+  args:
+    chdir: /srv/taskara
+  become_user: "{{ deploy_user }}"
+  tags: [update]
+
+- name: Wait for health check
+  uri:
+    url: "http://localhost:8080/api/health"
+    status_code: 200
+  register: health
+  retries: 10
+  delay: 3
+  until: health.status == 200
+  tags: [update]
+
+- name: Print health status
+  debug:
+    msg: "Taskara is running: {{ health.json }}"
+  tags: [update]
