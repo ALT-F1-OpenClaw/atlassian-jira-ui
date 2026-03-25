@@ -16,6 +16,37 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/sprints", tags=["sprints"])
 
 
+async def _get_sprint_issues_with_fallback(request, sprint_id: int, fields: str = "summary,status,priority,assignee,issuetype,created,story_points,customfield_10016") -> list:
+    """Fetch sprint issues via Agile API, falling back to JQL if it fails."""
+    try:
+        data = await authed_jira_request(request,
+            "GET", f"/sprint/{sprint_id}/issue", base="agile",
+            params={"maxResults": 200, "fields": fields},
+        )
+        issues = (data or {}).get("issues", [])
+        if issues:
+            return issues
+    except Exception as e:
+        logger.warning("Agile API sprint/%d/issue failed (%s) — trying JQL", sprint_id, e)
+
+    # Fallback: JQL
+    try:
+        data = await authed_jira_request(request,
+            "GET", "/search/jql",
+            params={
+                "jql": f"sprint = {sprint_id} ORDER BY status ASC, priority DESC",
+                "maxResults": 200,
+                "fields": fields,
+            },
+        )
+        issues = (data or {}).get("issues", [])
+        logger.info("JQL fallback: %d issues for sprint %d", len(issues), sprint_id)
+        return issues
+    except Exception as e2:
+        logger.warning("JQL fallback also failed for sprint %d: %s", sprint_id, e2)
+        return []
+
+
 async def _list_sprints_platform(request, project: str | None, state: str | None):
     """Fallback: fetch sprints via Platform API (JQL search on customfield_10020).
 
@@ -171,14 +202,13 @@ async def list_sprints(request: Request,
 
 @router.get("/{sprint_id}/issues")
 async def get_sprint_issues(request: Request, sprint_id: int):
-    """Get sprint issues with status counts."""
-    issues_data = await authed_jira_request(request,
-        "GET",
-        f"/sprint/{sprint_id}/issue",
-        base="agile",
-        params={"maxResults": 200},
-    )
-    issues = (issues_data or {}).get("issues", [])
+    """Get sprint issues with status counts.
+
+    Tries Agile API first, falls back to Platform API (JQL) if it fails.
+    This handles OAuth users without Jira Software scopes and
+    company-managed projects where the Agile API may not work.
+    """
+    issues = await _get_sprint_issues_with_fallback(request, sprint_id)
 
     status_counts: dict[str, int] = {}
     status_category_counts: dict[str, int] = {}
@@ -242,14 +272,11 @@ async def get_sprint_burndown(request: Request,
     start_date = sprint_data.get("startDate", "")
     end_date = sprint_data.get("endDate", "")
 
-    # Get sprint issues
-    issues_data = await authed_jira_request(request,
-        "GET",
-        f"/sprint/{sprint_id}/issue",
-        base="agile",
-        params={"maxResults": 200, "fields": "status,resolutiondate,created,story_points,customfield_10016"},
+    # Get sprint issues (with JQL fallback)
+    issues = await _get_sprint_issues_with_fallback(
+        request, sprint_id,
+        fields="status,resolutiondate,created,story_points,customfield_10016",
     )
-    issues = (issues_data or {}).get("issues", [])
 
     total_issues = len(issues)
 
@@ -331,13 +358,10 @@ async def get_sprint_velocity(request: Request,
     velocity = []
     for s in recent:
         sid = s["id"]
-        issues_data = await authed_jira_request(request,
-            "GET",
-            f"/sprint/{sid}/issue",
-            base="agile",
-            params={"maxResults": 200, "fields": "status,story_points,customfield_10016"},
+        issues = await _get_sprint_issues_with_fallback(
+            request, sid,
+            fields="status,story_points,customfield_10016",
         )
-        issues = (issues_data or {}).get("issues", [])
 
         committed_points = 0.0
         completed_points = 0.0
