@@ -7,10 +7,10 @@ from functools import lru_cache
 class Settings(BaseSettings):
     """App settings loaded from environment / .env file."""
 
-    # Jira
-    jira_host: str
-    jira_email: str
-    jira_api_token: str
+    # Jira (optional in production — OAuth uses per-user tokens via api.atlassian.com)
+    jira_host: str = ""
+    jira_email: str = ""
+    jira_api_token: str = ""
 
     # OAuth 2.0 (3LO)
     atlassian_client_id: str = ""
