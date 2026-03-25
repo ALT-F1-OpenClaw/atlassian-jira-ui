@@ -521,6 +521,16 @@ async function offlineFetch(
   return fetch(url, init);
 }
 
+/* ── useEscapeKey hook — close modals on Escape ──────────────────── */
+function useEscapeKey(onClose: (() => void) | undefined) {
+  useEffect(() => {
+    if (!onClose) return;
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    document.addEventListener("keydown", handler);
+    return () => document.removeEventListener("keydown", handler);
+  }, [onClose]);
+}
+
 const FILTER_SELECT_CLASS =
   "w-full lg:w-auto rounded-md border border-zinc-700 bg-zinc-900 px-2.5 py-1.5 text-sm text-zinc-200 focus:border-blue-500 focus:outline-none";
 
@@ -1755,6 +1765,7 @@ function LogWorkModal({
   onClose: () => void;
   onSuccess: () => void;
 }) {
+  useEscapeKey(onClose);
   const [timeSpent, setTimeSpent] = useState(prefill || "");
   const [comment, setComment] = useState("");
   const [error, setError] = useState("");
@@ -3244,6 +3255,7 @@ function CreateIssueModal({
   const queryClient = useQueryClient();
   const backdropRef = useRef<HTMLDivElement>(null);
 
+  useEscapeKey(onClose);
   const [formProject, setFormProject] = useState(defaultProject);
   const [summary, setSummary] = useState("");
   const [issueType, setIssueType] = useState("Task");
@@ -3938,6 +3950,7 @@ function CreateProjectModal({
   onClose: () => void;
   members?: ProjectMember[];
 }) {
+  useEscapeKey(onClose);
   const [name, setName] = useState("");
   const [key, setKey] = useState("");
   const [description, setDescription] = useState("");
@@ -4356,6 +4369,7 @@ interface VelocityEntry {
 const SPRINT_CHART_COLORS = ["#3b82f6", "#22c55e", "#eab308", "#ef4444", "#a855f7", "#06b6d4", "#f97316", "#ec4899"];
 
 function CreateSprintModal({ boardId, onClose }: { boardId: number; onClose: () => void }) {
+  useEscapeKey(onClose);
   const queryClient = useQueryClient();
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
@@ -4417,6 +4431,7 @@ function CreateSprintModal({ boardId, onClose }: { boardId: number; onClose: () 
 }
 
 function EditSprintModal({ sprint, onClose }: { sprint: SprintInfo; onClose: () => void }) {
+  useEscapeKey(onClose);
   const queryClient = useQueryClient();
   const [name, setName] = useState(sprint.name);
   const [goal, setGoal] = useState(sprint.goal);
@@ -4479,6 +4494,7 @@ function EditSprintModal({ sprint, onClose }: { sprint: SprintInfo; onClose: () 
 }
 
 function ConfirmDialog({ title, message, confirmLabel, confirmColor, onConfirm, onCancel, isPending }: { title: string; message: string; confirmLabel: string; confirmColor?: string; onConfirm: () => void; onCancel: () => void; isPending?: boolean }) {
+  useEscapeKey(onCancel);
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60" data-testid="confirm-dialog">
       <div className="w-full max-w-sm rounded-lg border border-zinc-700 bg-zinc-900 p-6 shadow-xl mx-4" role="dialog" aria-label={title}>
@@ -4496,6 +4512,7 @@ function ConfirmDialog({ title, message, confirmLabel, confirmColor, onConfirm, 
 }
 
 function ManageSprintScopeModal({ sprintId, currentIssues, onClose, onSelectIssue }: { sprintId: number; currentIssues: SprintIssue[]; onClose: () => void; onSelectIssue?: (key: string) => void }) {
+  useEscapeKey(onClose);
   const queryClient = useQueryClient();
   const [issueKey, setIssueKey] = useState("");
   const [error, setError] = useState("");
