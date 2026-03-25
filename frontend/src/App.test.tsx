@@ -480,6 +480,8 @@ Object.defineProperty(window, "localStorage", { value: localStorageMock, writabl
 beforeEach(() => {
   vi.restoreAllMocks();
   localStorageMock.clear();
+  // Dismiss cookie consent banner so it doesn't cover UI elements
+  localStorageMock.setItem("jira-ui-cookie-consent", "accepted");
   setupFetchMock();
 });
 
@@ -4228,7 +4230,7 @@ describe("Feature: Offline mode", () => {
       Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
       render(<App />, { wrapper: createWrapper() });
       // When offline, TanStack Query pauses fetches, so wait for header instead of data
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       expect(screen.getByLabelText("Offline status indicator")).toBeInTheDocument();
     });
@@ -4238,7 +4240,7 @@ describe("Feature: Offline mode", () => {
     it("Given the offline banner is visible, when the user clicks dismiss, then the banner is hidden", async () => {
       Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       expect(screen.getByRole("alert", { name: "Offline mode" })).toBeInTheDocument();
 
@@ -4253,7 +4255,7 @@ describe("Feature: Offline mode", () => {
     it("Given the banner was dismissed, when going online then offline again, then the banner reappears", async () => {
       Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByLabelText("Dismiss offline banner"));
@@ -4278,7 +4280,7 @@ describe("Feature: Offline mode", () => {
     it("Given the browser is online, then no offline banner or dot is shown", async () => {
       Object.defineProperty(navigator, "onLine", { value: true, writable: true, configurable: true });
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       expect(screen.queryByRole("alert", { name: "Offline mode" })).not.toBeInTheDocument();
       expect(screen.queryByLabelText("Offline status indicator")).not.toBeInTheDocument();
@@ -4289,7 +4291,7 @@ describe("Feature: Offline mode", () => {
     it("Given the browser was offline, when going back online, then the offline banner disappears", async () => {
       Object.defineProperty(navigator, "onLine", { value: false, writable: true, configurable: true });
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       expect(screen.getByRole("alert", { name: "Offline mode" })).toBeInTheDocument();
 
@@ -4310,7 +4312,7 @@ describe("Feature: View switcher with segmented control (13.1)", () => {
   describe("Scenario: View switcher displays as segmented control with icons", () => {
     it("Given the app loads, then a tablist with Home, List, Board, Sprint tabs is visible", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const tablist = screen.getByRole("tablist", { name: "View switcher" });
       expect(tablist).toBeInTheDocument();
@@ -4327,7 +4329,7 @@ describe("Feature: View switcher with segmented control (13.1)", () => {
   describe("Scenario: Active view tab is highlighted", () => {
     it("Given the list view is active, then the List tab has aria-selected true", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const listTab = screen.getByRole("tab", { name: /List/ });
       expect(listTab).toHaveAttribute("aria-selected", "true");
@@ -4337,7 +4339,7 @@ describe("Feature: View switcher with segmented control (13.1)", () => {
   describe("Scenario: Clicking a tab switches the view", () => {
     it("Given the list view is shown, when clicking Home tab, then the dashboard is displayed", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("tab", { name: /Home/ }));
@@ -4351,7 +4353,7 @@ describe("Feature: Sidebar navigation (13.2)", () => {
   describe("Scenario: Sidebar can be opened with hamburger button", () => {
     it("Given the app loads, when clicking the sidebar toggle, then the sidebar with navigation is visible", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByLabelText("Toggle sidebar"));
@@ -4369,7 +4371,7 @@ describe("Feature: Sidebar navigation (13.2)", () => {
   describe("Scenario: Sidebar shows projects", () => {
     it("Given the sidebar is open, then the project list from the API is displayed", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByLabelText("Toggle sidebar"));
@@ -4386,7 +4388,7 @@ describe("Feature: Sidebar navigation (13.2)", () => {
       ]));
 
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByLabelText("Toggle sidebar"));
@@ -4400,7 +4402,7 @@ describe("Feature: Sidebar navigation (13.2)", () => {
   describe("Scenario: Sidebar navigation switches view", () => {
     it("Given the sidebar is open, when clicking List View, then the list view is shown and sidebar closes", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByLabelText("Toggle sidebar"));
@@ -4416,7 +4418,7 @@ describe("Feature: Sidebar navigation (13.2)", () => {
   describe("Scenario: Sidebar can be closed", () => {
     it("Given the sidebar is open, when clicking close, then the sidebar content is hidden", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByLabelText("Toggle sidebar"));
@@ -4446,7 +4448,7 @@ describe("Feature: Breadcrumbs (13.3)", () => {
   describe("Scenario: Breadcrumbs update when switching views", () => {
     it("Given the user switches to board view, then breadcrumbs show Home > Board View", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("tab", { name: /Board/ }));
@@ -4488,20 +4490,20 @@ describe("Feature: Dashboard landing page (13.4)", () => {
   describe("Scenario: Dashboard is accessible via Home tab", () => {
     it("Given the app loads, when clicking the Home tab, then the dashboard landing page is displayed", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("tab", { name: /Home/ }));
 
       expect(await screen.findByTestId("dashboard-page")).toBeInTheDocument();
-      expect(screen.getByText("Welcome to Jira UI")).toBeInTheDocument();
+      expect(screen.getByText("Welcome to Taskara")).toBeInTheDocument();
     });
   });
 
   describe("Scenario: Dashboard shows quick action buttons", () => {
     it("Given the dashboard is loaded, then quick action buttons for Create Issue, Search, Board, and Sprints are shown", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("tab", { name: /Home/ }));
@@ -4517,7 +4519,7 @@ describe("Feature: Dashboard landing page (13.4)", () => {
   describe("Scenario: Dashboard shows recent issues", () => {
     it("Given the API returns issues, then the dashboard displays recent issues", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("tab", { name: /Home/ }));
@@ -4530,7 +4532,7 @@ describe("Feature: Dashboard landing page (13.4)", () => {
   describe("Scenario: Dashboard shows projects", () => {
     it("Given projects exist, then the dashboard displays project cards", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("tab", { name: /Home/ }));
@@ -4545,7 +4547,7 @@ describe("Feature: Dashboard landing page (13.4)", () => {
   describe("Scenario: Dashboard quick action navigates to board view", () => {
     it("Given the dashboard is shown, when clicking Board View quick action, then board view is displayed", async () => {
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("tab", { name: /Home/ }));
@@ -4582,7 +4584,7 @@ describe("Feature: Empty states (13.5)", () => {
       });
 
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("tab", { name: /Sprint/ }));
@@ -4615,7 +4617,7 @@ describe("Feature: Empty states (13.5)", () => {
       });
 
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("tab", { name: /Home/ }));
@@ -4648,7 +4650,7 @@ describe("Feature: Empty states (13.5)", () => {
       });
 
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("tab", { name: /Home/ }));
@@ -4679,7 +4681,7 @@ describe("Feature: Empty states (13.5)", () => {
       });
 
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       // Open sidebar
@@ -4710,7 +4712,7 @@ describe("Feature: Empty states (13.5)", () => {
       });
 
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("button", { name: /Toggle sidebar/ }));
@@ -4753,7 +4755,7 @@ describe("Feature: Empty states (13.5)", () => {
       });
 
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("button", { name: /Toggle sidebar/ }));
@@ -4801,7 +4803,7 @@ describe("Feature: Empty states (13.5)", () => {
       });
 
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("button", { name: /Toggle sidebar/ }));
@@ -4843,7 +4845,7 @@ describe("Feature: Empty states (13.5)", () => {
       });
 
       render(<App />, { wrapper: createWrapper() });
-      await screen.findByText("Jira UI");
+      await screen.findByText("Taskara");
 
       const user = userEvent.setup();
       await user.click(screen.getByRole("button", { name: /Toggle sidebar/ }));

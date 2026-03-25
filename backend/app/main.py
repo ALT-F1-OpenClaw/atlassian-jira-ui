@@ -31,8 +31,8 @@ async def lifespan(app: FastAPI):
 settings = get_settings()
 
 app = FastAPI(
-    title="Atlassian Jira UI",
-    description="Modern alternative frontend for Jira Cloud",
+    title="Taskara",
+    description="A faster, modern UI for Jira Cloud",
     version=__version__,
     lifespan=lifespan,
 )

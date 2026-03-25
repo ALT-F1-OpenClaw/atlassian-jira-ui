@@ -5266,7 +5266,7 @@ function DashboardPage({
   return (
     <div className="mx-auto max-w-5xl px-4 sm:px-6 py-6 space-y-6" data-testid="dashboard-page">
       <div>
-        <h2 className="text-xl font-bold text-zinc-100">Welcome to Jira UI</h2>
+        <h2 className="text-xl font-bold text-zinc-100">Welcome to Taskara</h2>
         <p className="mt-1 text-sm text-zinc-400">Quick overview of your work</p>
       </div>
 
@@ -5551,7 +5551,7 @@ function UserMenu({
               onClick={() => { setOpen(false); onSettings(); }}
               className="w-full flex items-center gap-3 px-4 py-2 text-sm text-zinc-300 hover:bg-zinc-800 cursor-pointer text-left"
             >
-              <span className="w-5 text-center">⚙</span> Jira UI Settings
+              <span className="w-5 text-center">⚙</span> Taskara Settings
             </button>
             <button
               onClick={() => { onToggleTheme(); }}
@@ -5689,8 +5689,8 @@ function AboutPage() {
         <div className="flex items-center gap-3 mb-4">
           <span className="text-3xl">⚡</span>
           <div>
-            <h2 className="text-xl font-bold text-zinc-100">Jira UI</h2>
-            <p className="text-sm text-zinc-400">Modern alternative frontend for Atlassian Jira Cloud</p>
+            <h2 className="text-xl font-bold text-zinc-100">Taskara</h2>
+            <p className="text-sm text-zinc-400">A faster, modern UI for Jira Cloud</p>
           </div>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
@@ -6509,7 +6509,7 @@ export default function App() {
             </button>
             <h1 className="text-lg font-bold">
               <button onClick={() => setView("dashboard")} className="hover:opacity-80 transition-opacity cursor-pointer" title="Go to Dashboard">
-                ⚡ <span className="text-zinc-300">Jira UI</span>
+                ⚡ <span className="text-zinc-300">Taskara</span>
               </button>
               <span className="ml-2 text-xs font-normal text-zinc-600">v{APP_VERSION}</span>
               {!isOnline && (

@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Instructions for AI agents working on this codebase.
+Instructions for AI agents working on **Taskara** (`atlassian-jira-ui`) — a faster, modern UI for Jira Cloud.
 
 ## Task Reference
 

@@ -2,7 +2,7 @@
 
 ## Project
 
-Modern alternative frontend for Atlassian Jira Cloud. Full-stack: FastAPI backend + React frontend.
+**Taskara** — a faster, modern UI for Jira Cloud. Full-stack: FastAPI backend + React frontend. Domain: `taskara.alt-f1.be`.
 
 ## Tech Stack
 
@@ -232,7 +232,7 @@ Dual auth via Strategy Pattern (ADR-017):
 - **OAuth 2.0 (3LO)**: per-user Atlassian login, auto token refresh
 - `APP_ENV`: `development` | `staging` | `production` (controls auth availability)
 - Sessions stored in Redis (`REDIS_URL`) or file fallback (`sessions.json` + `oauth_states.json`)
-- User avatar dropdown menu: Profile, Account settings, Jira UI Settings, Theme, Sign out
+- User avatar dropdown menu: Profile, Account settings, Taskara Settings, Theme, Sign out
 
 ### Jira URL Construction (ADR-018)
 

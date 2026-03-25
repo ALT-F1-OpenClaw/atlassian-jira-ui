@@ -17,8 +17,8 @@ export default defineConfig({
     VitePWA({
       registerType: "autoUpdate",
       manifest: {
-        name: "Jira UI",
-        short_name: "Jira UI",
+        name: "Taskara — A Faster UI for Jira Cloud",
+        short_name: "Taskara",
         theme_color: "#09090b",
         background_color: "#09090b",
         display: "standalone",

@@ -1,4 +1,4 @@
-# atlassian-jira-ui
+# Taskara — atlassian-jira-ui
 
 [![CI](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/ci.yml/badge.svg)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/ci.yml)
 [![Release](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/release.yml/badge.svg)](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/actions/workflows/release.yml)
