@@ -118,6 +118,24 @@ export async function mockAllApiRoutes(page: Page) {
   await page.route("**/registerSW.js", (route) => route.fulfill({ body: "", contentType: "application/javascript" }));
   await page.route("**/workbox-*.js", (route) => route.fulfill({ body: "", contentType: "application/javascript" }));
 
+  // Settings + Auth — must return valid responses so the app doesn't show login page
+  await page.route("**/api/settings", (route) =>
+    route.fulfill({ json: {
+      jira_host: "https://demo.atlassian.net",
+      jira_email: "demo@example.com",
+      jira_api_token_masked: "••••abcd",
+      atlassian_client_id: "",
+      atlassian_client_secret_masked: "",
+      oauth_configured: false,
+      auth_api_token_enabled: true,
+      auth_oauth_enabled: false,
+      app_env: "development",
+    }})
+  );
+  await page.route("**/auth/me", (route) =>
+    route.fulfill({ json: { authenticated: false } })
+  );
+
   // Order matters — more specific patterns first
   await page.route("**/api/projects/*/members", (route) =>
     route.fulfill({ json: MOCK_MEMBERS })

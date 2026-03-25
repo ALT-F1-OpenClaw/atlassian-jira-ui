@@ -58,8 +58,8 @@ test("capture desktop screenshots", async ({ page }) => {
   await page.screenshot({ path: `${S}/08-command-palette-results.png` });
   await page.keyboard.press("Escape");
 
-  // 9. Create Issue Modal
-  await page.getByLabel("Create issue").click();
+  // 9. Create Issue Modal (use 'c' shortcut to open directly)
+  await page.keyboard.press("c");
   await page.waitForTimeout(500);
   await page.screenshot({ path: `${S}/09-create-issue.png` });
   await page.keyboard.press("Escape");
