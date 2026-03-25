@@ -139,50 +139,92 @@ async def list_sprints(request: Request,
 ):
     """List boards and their sprints.
 
+    Uses Agile API with full pagination (boards + sprints per board).
+    Falls back to Platform API (JQL) if Agile API fails entirely.
+    Merges results from both sources and deduplicates by sprint ID.
+
     Args:
         project: Filter by project key.
         state: Comma-separated sprint states (active, future, closed). Defaults to active.
     """
-    params = {}
-    if project:
-        params["projectKeyOrId"] = project
-    try:
-        boards_data = await authed_jira_request(request, "GET", "/board", base="agile", params=params)
-        boards = (boards_data or {}).get("values", [])
-    except Exception as e:
-        logger.warning("Agile API failed (%s) — falling back to Platform API for sprints", e)
-        return await _list_sprints_platform(request, project, state)
-
     sprint_state = state or "active"
 
-    sprints = []
-    for board in boards:
-        board_id = board["id"]
-        try:
-            sprint_data = await authed_jira_request(request,
-                "GET",
-                f"/board/{board_id}/sprint",
-                base="agile",
-                params={"state": sprint_state},
-            )
-        except Exception:
-            # Kanban boards don't support sprints — skip
-            continue
-        for s in (sprint_data or {}).get("values", []):
-            location = board.get("location", {})
-            pk = location.get("projectKey", "")
-            sprints.append({
-                "id": s["id"],
-                "name": s["name"],
-                "state": s.get("state"),
-                "startDate": s.get("startDate"),
-                "endDate": s.get("endDate"),
-                "goal": s.get("goal", ""),
-                "boardId": board_id,
-                "boardName": board.get("name", ""),
-                "projectKey": pk,
-                "projectTypeKey": location.get("projectTypeKey", ""),
-            })
+    # ── Step 1: Try Agile API with pagination ──
+    agile_sprints: list[dict] = []
+    try:
+        # Paginate boards (default maxResults is only 50)
+        all_boards: list[dict] = []
+        start_at = 0
+        while True:
+            params: dict = {"startAt": start_at, "maxResults": 100}
+            if project:
+                params["projectKeyOrId"] = project
+            boards_data = await authed_jira_request(request, "GET", "/board", base="agile", params=params)
+            boards = (boards_data or {}).get("values", [])
+            all_boards.extend(boards)
+            if (boards_data or {}).get("isLast", True) or len(boards) == 0:
+                break
+            start_at += len(boards)
+
+        logger.info("Agile API: found %d boards", len(all_boards))
+
+        # Paginate sprints per board
+        seen_ids: set[int] = set()
+        for board in all_boards:
+            board_id = board["id"]
+            try:
+                sp_start = 0
+                while True:
+                    sprint_data = await authed_jira_request(request,
+                        "GET",
+                        f"/board/{board_id}/sprint",
+                        base="agile",
+                        params={"state": sprint_state, "startAt": sp_start, "maxResults": 100},
+                    )
+                    values = (sprint_data or {}).get("values", [])
+                    for s in values:
+                        sid = s["id"]
+                        if sid not in seen_ids:
+                            seen_ids.add(sid)
+                            location = board.get("location", {})
+                            agile_sprints.append({
+                                "id": sid,
+                                "name": s["name"],
+                                "state": s.get("state"),
+                                "startDate": s.get("startDate"),
+                                "endDate": s.get("endDate"),
+                                "goal": s.get("goal", ""),
+                                "boardId": board_id,
+                                "boardName": board.get("name", ""),
+                                "projectKey": location.get("projectKey", ""),
+                                "projectTypeKey": location.get("projectTypeKey", ""),
+                            })
+                    if (sprint_data or {}).get("isLast", True) or len(values) == 0:
+                        break
+                    sp_start += len(values)
+            except Exception:
+                # Kanban boards don't support sprints — skip
+                continue
+
+        logger.info("Agile API: found %d sprints across %d boards", len(agile_sprints), len(all_boards))
+    except Exception as e:
+        logger.warning("Agile API failed (%s) — will use Platform API only", e)
+
+    # ── Step 2: Also try Platform API (JQL) for sprints not found via Agile ──
+    platform_result = await _list_sprints_platform(request, project, sprint_state)
+    platform_sprints = platform_result.get("sprints", [])
+
+    # ── Step 3: Merge and deduplicate by sprint ID ──
+    merged: dict[int, dict] = {}
+    for s in agile_sprints:
+        merged[s["id"]] = s
+    for s in platform_sprints:
+        if s["id"] not in merged:
+            merged[s["id"]] = s
+
+    sprints = list(merged.values())
+    logger.info("Total sprints after merge: %d (Agile: %d, Platform: %d, unique: %d)",
+                len(sprints), len(agile_sprints), len(platform_sprints), len(merged))
 
     # Resolve project styles for URL construction (classic needs /c/)
     if sprints:
@@ -196,6 +238,10 @@ async def list_sprints(request: Request,
                     pass  # Keep as-is
         except Exception:
             pass
+
+    # Sort: active first, then future, then closed; within each group by name
+    state_order = {"active": 0, "future": 1, "closed": 2}
+    sprints.sort(key=lambda s: (state_order.get(s.get("state", ""), 9), s.get("name", "")))
 
     return {"sprints": sprints}
 
