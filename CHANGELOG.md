@@ -1,3 +1,9 @@
+## [1.62.4](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.62.3...v1.62.4) (2026-03-25)
+
+### Bug Fixes
+
+* Escape key closes all modal windows ([f6ac3cd](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/f6ac3cd1584402544f912206dcd5748423f412a8))
+* sprint issues fallback to JQL when Agile API returns empty ([#91](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/91)) ([56f714d](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/56f714d5afd0adbe8806f2036924425f73389dea))
 ## [1.62.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.62.2...v1.62.3) (2026-03-25)
 
 ### Features

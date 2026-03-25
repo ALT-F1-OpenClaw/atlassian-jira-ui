@@ -1,3 +1,3 @@
 """Single source of truth for backend version."""
 
-__version__ = "1.62.3"
+__version__ = "1.62.4"
