@@ -1,3 +1,12 @@
+## [1.62.5](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.62.4...v1.62.5) (2026-03-25)
+
+### Features
+
+* add API comparison test script — Taskara vs direct Jira API ([02fd9cf](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/02fd9cffc82c57c7d7a361ce5a9e202f46998d8f))
+
+### Bug Fixes
+
+* sprint listing now finds all sprints — pagination + merge ([#76](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/issues/76)) ([735d709](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/735d70907c54ca5017b7abdea24ff392394da627))
 ## [1.62.4](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.62.3...v1.62.4) (2026-03-25)
 
 ### Bug Fixes
