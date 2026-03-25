@@ -238,6 +238,13 @@ docker compose pull        # Pull latest from GHCR
 docker compose up -d       # Recreate with new images
 ```
 
+**Ansible** (`deploy/ansible/`): automated zero-to-live VPS setup
+- 6 roles: `common` (hardening), `docker`, `cloudflared` (tunnel), `app` (containers), `openappsec` (WAF), `portainer` (optional)
+- Tags: `common`, `docker`, `cloudflared`, `app`, `openappsec`, `portainer`, `config`, `update`
+- Templates: `docker-compose.yml.j2` + `env.j2` + `config.yml.j2`
+- Secrets: `group_vars/all.yml` (gitignored, use `all.example.yml` as template)
+- Production .env only needs: `ATLASSIAN_CLIENT_ID`, `ATLASSIAN_CLIENT_SECRET`, `APP_SECRET_KEY`, `APP_ENV=production` (JIRA_HOST/EMAIL/TOKEN optional)
+
 ### Screenshots
 
 - 17 auto-generated screenshots in `docs/APP_SCREENSHOTS.md`

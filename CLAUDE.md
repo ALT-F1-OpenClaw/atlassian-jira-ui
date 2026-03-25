@@ -195,6 +195,13 @@ Remaining: #52a-c (tooling), #53 (OpenTelemetry), #56-58 (deployment), #60-61 (J
 - **Discord Notifications**: Docker publish workflow sends ✅/❌ embed to Discord
 - **Stripe Phase 7**: roadmap tasks #77-85 for Taskara Pro (€3.99/mo), cashflow-lite repo created
 - **deploy/update-config.sh**: clean config update script from git
+- **Ansible playbook** (#56): 6 roles (common, docker, cloudflared, app, openappsec, portainer) for zero-to-live VPS deployment
+- **Board >100 warning**: amber banner when project has >100 issues
+- **JIRA_HOST/EMAIL/TOKEN optional**: not needed in production OAuth mode
+- **Architecture doc**: 6 diagrams (app, Cloudflare+VPS, Pi, CI/CD, data flow, containers)
+- **VPS checklist**: 46-step deployment checklist
+- **Launch playbook**: Product Hunt, LinkedIn, Twitter, Reddit, HN strategies
+- **API comparison test**: automated Taskara vs Jira API verification script
 - **Sprint listing fix** (#76): full pagination (boards + sprints), Agile API + Platform API merge, deduplicate by ID — 2 → 77 sprints
 - **Sprint issues JQL fallback** (#91): `_get_sprint_issues_with_fallback()` for burndown/velocity/issues
 - **API comparison test**: `scripts/api-comparison-test.py` — automated Taskara vs Jira API comparison
@@ -228,6 +235,11 @@ Two deployment options:
 
 **Updating images**: `docker compose pull && docker compose up -d`
 **Pin version**: set `APP_VERSION=vX.Y.Z` in `.env`, then `docker compose up -d`
+
+**Ansible** (`deploy/ansible/`): 6 roles for automated VPS setup
+- `ansible-playbook -i hosts site.yml` → full deploy
+- `ansible-playbook -i hosts site.yml --tags update` → pull + restart
+- Secrets in `group_vars/all.yml` (gitignored)
 
 ### Authentication (v1.54.0+)
 

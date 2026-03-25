@@ -297,6 +297,12 @@ Before going production-grade, re-enable these:
 | 103 | fix: await async get_session() in all auth endpoints (v1.62.2) | Complete |
 | 104 | feat: API comparison test script (`scripts/api-comparison-test.py`) — automated Taskara vs Jira API verification | Complete |
 | 105 | chore: Full rebrand "Jira UI" → "Taskara" across codebase (title, PWA, header, about, tests) | Complete |
+| 106 | docs: ARCHITECTURE.md — 6 infrastructure diagrams (app, Cloudflare+VPS, Pi, CI/CD, data flow, containers) | Complete |
+| 107 | docs: VPS_DEPLOYMENT_CHECKLIST.md — 46-step checklist for Cloudflare + OpenAppSec deploy | Complete |
+| 108 | docs: LAUNCH_MARKETING_PLAYBOOK.md — Product Hunt, LinkedIn, Twitter, Reddit, HN strategies | Complete |
+| 109 | fix: JIRA_HOST/EMAIL/TOKEN optional in production (OAuth doesn't need them) | Complete |
+| 110 | feat: Board >100 issues warning banner with link to List view | Complete |
+| 111 | docs: README restructured — users first, developers second | Complete |
 | 91 | fix: Sprint issues JQL fallback when Agile API returns empty — burndown/velocity/issues | Complete |
 | 92 | feat: Backlog view — show issues grouped by sprint (with issue counts) + unassigned backlog section, drag issues between sprints and backlog, matches Jira's Backlog tab | Planned |
 | 89 | feat: URL-based routing — reflect current view + context in the browser URL bar (e.g. `/board`, `/sprint/123`, `/issue/PROJ-45`, `/settings`) so browser refresh preserves state instead of going to homepage. Use React Router or `history.pushState` | Planned |
