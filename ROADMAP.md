@@ -256,7 +256,7 @@ Before going production-grade, re-enable these:
 | 25 | Project avatars from Jira API | Complete |
 | 26 | Backend tests (pytest) — 25 tests, all endpoints mocked | Complete |
 | 27 | E2E tests (Playwright) — 22 tests, full API mocking, PWA SW disabled | Complete |
-| 28 | Auto-generated app screenshots (`docs/APP_SCREENSHOTS.md`) — 17 views | Complete |
+| 28 | Auto-generated app screenshots (`docs/APP_SCREENSHOTS.md`) — 17 views, refreshed with Taskara branding | Complete |
 | 29 | HTTPS via Tailscale (Traefik + TLS certs) | Complete |
 | 46 | SearchableSelect — autocomplete dropdowns with type-to-filter (7 dropdowns replaced) | Complete |
 | 47 | Create Project modal — name, key, type, lead, description via `POST /api/projects` | Complete |
@@ -284,6 +284,17 @@ Before going production-grade, re-enable these:
 | 73 | Custom fields best practices — display/edit Jira custom fields (story points, sprint, epic link, team, environment, etc.) with proper field type handling (single/multi select, cascading, user picker, date, number, text, URL) | Planned |
 | 74 | Spaces support — display Jira Spaces (project groupings) in sidebar/dashboard with space name, type (team-managed/company-managed), quick links, open work items count, and boards. Jira uses Spaces instead of raw project lists on the "For you" page | Planned |
 | 75 | GitHub issue templates — bug report, feature request, question with pre-filled labels + config.yml with contact links | Complete |
+| 93 | docs: Secure VPS Deployment Guide (Cloudflare + OpenAppSec + hardening) | Complete |
+| 94 | docs: Observability Guide — OpenTelemetry + Grafana LGTM stack | Complete |
+| 95 | docs: Business Observability Guide — KPIs, analytics, dashboards | Complete |
+| 96 | docs: Contributing, API Reference, Troubleshooting, Changelog Highlights | Complete |
+| 97 | feat: Login page redesign — Taskara branding + trust signals + privacy messaging | Complete |
+| 98 | fix: OAuth callback error detection + error shown on login page | Complete |
+| 99 | fix: Escape key closes all 7 modals (useEscapeKey hook) | Complete |
+| 100 | feat: Discord notification on Docker publish success/failure | Complete |
+| 101 | feat: deploy/update-config.sh — clean config update from git | Complete |
+| 102 | fix: Baked nginx.conf into Docker image — /auth/ routing + BACKEND_HOST envsubst | Complete |
+| 103 | fix: await async get_session() in all auth endpoints (v1.62.2) | Complete |
 | 91 | fix: Sprint Dashboard shows 0 issues for sprints that have work items in Jira — likely Agile API `/sprint/{id}/issue` returns empty for certain project types (company-managed vs team-managed) or board configurations | Planned |
 | 92 | feat: Backlog view — show issues grouped by sprint (with issue counts) + unassigned backlog section, drag issues between sprints and backlog, matches Jira's Backlog tab | Planned |
 | 89 | feat: URL-based routing — reflect current view + context in the browser URL bar (e.g. `/board`, `/sprint/123`, `/issue/PROJ-45`, `/settings`) so browser refresh preserves state instead of going to homepage. Use React Router or `history.pushState` | Planned |
