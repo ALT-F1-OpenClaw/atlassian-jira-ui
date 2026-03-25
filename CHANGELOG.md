@@ -1,3 +1,12 @@
+## [1.62.3](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.62.2...v1.62.3) (2026-03-25)
+
+### Features
+
+* Discord notification on Docker publish success/failure ([633d34a](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/633d34aa007d9441f9b0b04d0dd9badd85418eb5))
+
+### Bug Fixes
+
+* Terms/Privacy links work on login page + added to all footers ([bf4d5cf](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/commit/bf4d5cff42989e0cd62e774e43e7e42d925c084b))
 ## [1.62.2](https://github.com/ALT-F1-OpenClaw/atlassian-jira-ui/compare/v1.62.1...v1.62.2) (2026-03-25)
 
 ### Bug Fixes
