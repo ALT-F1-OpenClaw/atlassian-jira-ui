@@ -25,7 +25,7 @@
       ClientAliveInterval 300
       ClientAliveCountMax 2
       X11Forwarding no
-      AllowUsers {{ deploy_user }}
+      AllowUsers {{ ssh_allowed_users | default(deploy_user) }}
     mode: "0644"
   notify: restart sshd
 

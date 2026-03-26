@@ -5,6 +5,9 @@
 # ── Deploy User ──
 deploy_user: deploy
 deploy_ssh_key: "ssh-ed25519 AAAA... your-public-key"
+# ⚠️ AllowUsers locks out ALL unlisted users! Add any existing users here.
+# Example: "deploy ubuntu admin"
+ssh_allowed_users: "deploy"
 
 # ── Domain ──
 domain: taskara.alt-f1.be

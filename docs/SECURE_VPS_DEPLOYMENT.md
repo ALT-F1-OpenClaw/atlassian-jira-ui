@@ -90,6 +90,15 @@ root# chown -R deploy:deploy /home/deploy/.ssh
 
 ### 2.2 Disable root login + password auth
 
+> ⚠️ **CRITICAL — `AllowUsers` locks out ALL users not listed!**
+> If your VPS has other SSH users (e.g., `ubuntu`, `admin`, your personal account), you **must** add them to the `AllowUsers` line or they will be permanently locked out after `sshd` restarts.
+>
+> **Check existing users first:**
+> ```bash
+> root# grep -E '/bin/(bash|sh|zsh)' /etc/passwd | cut -d: -f1
+> ```
+> Add every user that needs SSH access to the `AllowUsers` line below.
+
 ```bash
 root# cat > /etc/ssh/sshd_config.d/hardened.conf << 'EOF'
 PermitRootLogin no
@@ -99,17 +108,19 @@ MaxAuthTries 3
 ClientAliveInterval 300
 ClientAliveCountMax 2
 X11Forwarding no
+# ⚠️ Add ALL users who need SSH access — unlisted users are LOCKED OUT!
+# Example with multiple users: AllowUsers deploy ubuntu admin
 AllowUsers deploy
 EOF
 
 root# systemctl restart sshd
 ```
 
-> ⚠️ **Before closing this SSH session**, open a **new terminal** and verify you can SSH as `deploy`:
+> ⚠️ **Before closing this SSH session**, open a **new terminal** and verify:
 > ```bash
-> local$ ssh deploy@YOUR_VPS_IP
+> local$ ssh deploy@YOUR_VPS_IP    # Must work!
 > ```
-> If it works, close the root session. If not, fix the SSH config before locking yourself out.
+> If it fails, you still have the root session open to fix it. **Never close root until deploy SSH works.**
 
 ### 2.3 Firewall (UFW)
 
